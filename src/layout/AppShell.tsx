@@ -9,6 +9,7 @@ import {
   type RealtimeNotificationEvent,
 } from "../realtime/events";
 import type { NotificationItem, NotificationPage } from "../types/api";
+import { profileInitialsFromEmail } from "../utils/profileInitials";
 import { useTheme } from "./ThemeProvider";
 
 type AppShellProps = {
@@ -27,6 +28,7 @@ export function AppShell({ children }: AppShellProps) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [brandProfileImageSrc, setBrandProfileImageSrc] = useState("");
+  const profileInitials = profileInitialsFromEmail(currentUser?.email);
 
   const activeView = location.pathname.startsWith("/review")
     ? "review"
@@ -557,7 +559,7 @@ export function AppShell({ children }: AppShellProps) {
               {brandProfileImageSrc ? (
                 <img alt="" src={brandProfileImageSrc} />
               ) : (
-                "GW"
+                profileInitials
               )}
             </span>
             <span className="brand-text fw-light ms-2">{t("appName")}</span>

@@ -4,6 +4,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n/I18nProvider";
 import { useToast } from "../layout/ToastProvider";
 import type { CurrentUser, UserLocale, UserProfileImage } from "../types/api";
+import { profileInitialsFromEmail } from "../utils/profileInitials";
 
 const nullableText = (value: string) => {
   const trimmed = value.trim();
@@ -35,6 +36,7 @@ export function SettingsPage() {
   const [settingsError, setSettingsError] = useState("");
   const [profileImageSrc, setProfileImageSrc] = useState("");
   const [uploadingProfileImage, setUploadingProfileImage] = useState(false);
+  const profileInitials = profileInitialsFromEmail(currentUser?.email);
 
   const currentNickname = currentUser?.settings?.nickname ?? "";
   const currentHostname = currentUser?.hostname ?? "";
@@ -184,7 +186,7 @@ export function SettingsPage() {
                 {profileImageSrc ? (
                   <img alt="" src={profileImageSrc} />
                 ) : (
-                  <span>GW</span>
+                  <span>{profileInitials}</span>
                 )}
                 <span className="profile-avatar-overlay">
                   {uploadingProfileImage ? (
