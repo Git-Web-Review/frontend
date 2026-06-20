@@ -570,7 +570,7 @@ export function DashboardPage() {
     return (
       <div className={className}>
         <div className="card h-100">
-          <div className="card-header d-flex align-items-center gap-3">
+          <div className="card-header dashboard-section-header d-flex align-items-center gap-3">
             <h3 className="card-title flex-grow-1 mb-0">{title}</h3>
             <span className="badge text-bg-light border ms-auto flex-shrink-0">
               {page.total}

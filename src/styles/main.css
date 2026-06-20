@@ -173,6 +173,10 @@ button {
   text-align: start;
 }
 
+.dashboard-section-header::after {
+  content: none;
+}
+
 .review-delete-button {
   display: grid;
   width: 2rem;
