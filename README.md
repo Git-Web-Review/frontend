@@ -11,6 +11,7 @@ npm run dev
 
 The app expects these environment variables, provided by the root Docker Compose file during container development:
 
+- `FRONTEND_ALLOWED_HOSTS`
 - `VITE_BACKEND_URL`
 - `VITE_WEBSOCKET_URL`
 - `VITE_FIREBASE_API_KEY`
@@ -19,5 +20,7 @@ The app expects these environment variables, provided by the root Docker Compose
 - `VITE_FIREBASE_APP_ID`
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`
 - `VITE_FIREBASE_STORAGE_BUCKET`
+
+`FRONTEND_ALLOWED_HOSTS` configures Vite's dev/preview server host allowlist. Values are comma-separated, and `*` allows every host.
 
 See the root `README.md` and `example.env` for Firebase setup details.
