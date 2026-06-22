@@ -36,7 +36,7 @@ export function AdminPage() {
   const [newLinkRule, setNewLinkRule] = useState<LinkRuleDraft>({
     label: "Issue tracker example",
     regex: "Issue: (?<ISSUE_ID>\\d+)",
-    linkTemplate: "https://tracker.example.test/issues/${ISSUE_ID}",
+    linkTemplate: "",
     enabled: true,
   });
   const [loading, setLoading] = useState(false);
@@ -787,6 +787,7 @@ export function AdminPage() {
                 <input
                   className="form-control font-monospace"
                   id="new-link-rule-template"
+                  placeholder="https://tracker.example.test/issues/${ISSUE_ID}"
                   value={newLinkRule.linkTemplate}
                   onChange={(event) =>
                     setNewLinkRule((current) => ({

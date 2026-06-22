@@ -59,6 +59,9 @@ export function ReviewerSearchSelect({
   const renderUserLabel = (user: ReviewUserSummary) =>
     user.nickname || user.hostname || user.email;
 
+  const reviewerNeedsManualNotice = (user: ReviewUserSummary) =>
+    !user.mailNotificationsEnabled || !user.ircNotificationsEnabled;
+
   const searchReviewers = async (nextPage: number, append = false) => {
     const search = query.trim();
     if (!idToken || !search) {
@@ -173,6 +176,13 @@ export function ReviewerSearchSelect({
                 <span className="fw-semibold">{renderUserLabel(user)}</span>
                 <span className="reviewer-selected-email">{user.email}</span>
               </span>
+              {reviewerNeedsManualNotice(user) ? (
+                <i
+                  aria-label={t("reviewerNotificationsDisabled")}
+                  className="bi bi-exclamation-triangle-fill reviewer-notification-warning"
+                  title={t("reviewerNotificationsDisabled")}
+                />
+              ) : null}
               <button
                 className="btn btn-sm btn-link p-0 reviewer-selected-remove"
                 disabled={disabled}
@@ -229,16 +239,29 @@ export function ReviewerSearchSelect({
             ) : null}
             {query.trim()
               ? visibleResults.map((user) => (
-              <button
-                className="dropdown-item reviewer-search-option"
-                key={user.id}
-                type="button"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => addReviewer(user)}
-              >
-                <span className="fw-semibold">{renderUserLabel(user)}</span>
-                <span className="d-block small text-secondary">{user.email}</span>
-              </button>
+                  <button
+                    className="dropdown-item reviewer-search-option"
+                    key={user.id}
+                    type="button"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => addReviewer(user)}
+                  >
+                    <span className="d-flex align-items-center gap-2">
+                      <span className="fw-semibold">
+                        {renderUserLabel(user)}
+                      </span>
+                      {reviewerNeedsManualNotice(user) ? (
+                        <i
+                          aria-label={t("reviewerNotificationsDisabled")}
+                          className="bi bi-exclamation-triangle-fill reviewer-notification-warning"
+                          title={t("reviewerNotificationsDisabled")}
+                        />
+                      ) : null}
+                    </span>
+                    <span className="d-block small text-secondary">
+                      {user.email}
+                    </span>
+                  </button>
                 ))
               : null}
             {query.trim() && !loading && !visibleResults.length && !errorMessage ? (

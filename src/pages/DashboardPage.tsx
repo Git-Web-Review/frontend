@@ -13,6 +13,7 @@ import type {
   ReviewItem,
   ReviewPreview,
 } from "../types/api";
+import { reviewStatusBadgeClass } from "../utils/reviewStatus";
 
 type CommitLogMatchSource = {
   gitwebUrl: string;
@@ -47,7 +48,6 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const [gitwebUrl, setGitwebUrl] = useState("");
   const [createTitle, setCreateTitle] = useState("");
-  const [createDescription, setCreateDescription] = useState("");
   const [createReviewerUserIds, setCreateReviewerUserIds] = useState<string[]>(
     [],
   );
@@ -58,10 +58,11 @@ export function DashboardPage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [openReviewActionsId, setOpenReviewActionsId] = useState<string | null>(
+    null,
+  );
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [expandedDescriptionReviewIds, setExpandedDescriptionReviewIds] =
-    useState<string[]>([]);
   const [dashboard, setDashboard] = useState<ReviewDashboard>({
     owned: emptyDashboardPage(),
     assigned: emptyDashboardPage(),
@@ -77,6 +78,28 @@ export function DashboardPage() {
   const ownedLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const assignedLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const doneLoadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!openReviewActionsId) {
+      return;
+    }
+
+    const closeReviewActions = (event: MouseEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest(".review-actions")
+      ) {
+        return;
+      }
+
+      setOpenReviewActionsId(null);
+    };
+
+    document.addEventListener("mousedown", closeReviewActions);
+
+    return () => document.removeEventListener("mousedown", closeReviewActions);
+  }, [openReviewActionsId]);
 
   const dashboardQuery = (pages?: Partial<Record<DashboardSection, number>>) => {
     const params = new URLSearchParams({
@@ -242,7 +265,6 @@ export function DashboardPage() {
       );
       setPreview(nextPreview);
       setCreateTitle(nextPreview.title ?? "");
-      setCreateDescription(nextPreview.description ?? "");
       setCreateReviewerUserIds(
         nextPreview.reviewerUsers.map((reviewer) => reviewer.id),
       );
@@ -275,7 +297,6 @@ export function DashboardPage() {
       });
       setGitwebUrl("");
       setCreateTitle("");
-      setCreateDescription("");
       setCreateReviewerUserIds([]);
       setPreview(null);
       setCreateModalOpen(false);
@@ -296,7 +317,7 @@ export function DashboardPage() {
   };
 
   const canDeleteReview = (review: ReviewItem) =>
-    review.ownerId === currentUser?.id || currentUser?.role === "ADMIN";
+    review.ownerId === currentUser?.id;
 
   const deleteReview = async (review: ReviewItem) => {
     if (!idToken || !canDeleteReview(review)) {
@@ -308,6 +329,7 @@ export function DashboardPage() {
     }
 
     setDeletingReviewId(review.id);
+    setOpenReviewActionsId(null);
     setErrorMessage("");
     try {
       await apiRequest<ReviewDeletion>(`/v1/reviews/${review.id}`, idToken, {
@@ -330,12 +352,6 @@ export function DashboardPage() {
     review.commits[0]?.title ||
     review.gitwebUrl;
 
-  const reviewDescription = (review: ReviewItem) =>
-    review.description ||
-    review.gitwebLog ||
-    review.commits[0]?.rawMessage ||
-    "";
-
   const reviewerLabel = (reviewer: ReviewItem["reviewers"][number]) => {
     const displayName =
       reviewer.user.nickname || reviewer.user.hostname || reviewer.user.email;
@@ -348,17 +364,6 @@ export function DashboardPage() {
     review.reviewers.length
       ? review.reviewers.map(reviewerLabel).join("\n")
       : t("noReviewerOptions");
-
-  const isDescriptionExpanded = (reviewId: string) =>
-    expandedDescriptionReviewIds.includes(reviewId);
-
-  const toggleDescriptionExpanded = (reviewId: string) => {
-    setExpandedDescriptionReviewIds((current) =>
-      current.includes(reviewId)
-        ? current.filter((currentReviewId) => currentReviewId !== reviewId)
-        : [...current, reviewId],
-    );
-  };
 
   const shortHash = (value: string | null) => value?.slice(0, 12) ?? null;
 
@@ -475,7 +480,11 @@ export function DashboardPage() {
       >
         <div className="d-flex w-100 justify-content-between gap-3">
           <span className="fw-semibold text-break">{reviewTitle(review)}</span>
-          <span className="badge text-bg-primary align-self-start">
+          <span
+            className={`badge ${reviewStatusBadgeClass(
+              review.status,
+            )} align-self-start`}
+          >
             {t(`reviewStatus${review.status}`)}
           </span>
         </div>
@@ -498,32 +507,6 @@ export function DashboardPage() {
           ) : null}
         </div>
       </button>
-      {reviewDescription(review) ? (() => {
-        const description = reviewDescription(review);
-        const expanded = isDescriptionExpanded(review.id);
-        const canExpand = description.length > 220;
-        const visibleDescription =
-          canExpand && !expanded
-            ? description.slice(0, 220).trimEnd()
-            : description;
-
-        return (
-          <p className={expanded ? "review-list-description is-expanded mb-2 text-secondary" : "review-list-description mb-2 text-secondary"}>
-            {visibleDescription}
-            {canExpand ? (
-              <button
-                className="description-ellipsis-button"
-                type="button"
-                aria-label={expanded ? t("collapseDescription") : t("expandDescription")}
-                title={expanded ? t("collapseDescription") : t("expandDescription")}
-                onClick={() => toggleDescriptionExpanded(review.id)}
-              >
-                {expanded ? t("collapseDescription") : "..."}
-              </button>
-            ) : null}
-          </p>
-        );
-      })() : null}
       <div className="d-flex flex-wrap align-items-end justify-content-between gap-2 small text-secondary mt-2">
         <div className="d-flex flex-column gap-1">
           <span>{review.owner.email}</span>
@@ -538,20 +521,38 @@ export function DashboardPage() {
           </span>
         </div>
         {canDeleteReview(review) ? (
-          <button
-            aria-label={t("deleteReview")}
-            className="btn btn-outline-danger btn-sm review-delete-button"
-            title={t("deleteReview")}
-            type="button"
-            disabled={deletingReviewId === review.id}
-            onClick={() => void deleteReview(review)}
-          >
-            {deletingReviewId === review.id ? (
-              <span className="spinner-border spinner-border-sm" />
-            ) : (
-              <i className="bi bi-trash" aria-hidden="true" />
-            )}
-          </button>
+          <div className="dropdown position-relative review-actions">
+            <button
+              aria-expanded={openReviewActionsId === review.id}
+              aria-label={t("actions")}
+              className="btn btn-link btn-sm review-actions-toggle"
+              type="button"
+              onClick={() =>
+                setOpenReviewActionsId((currentId) =>
+                  currentId === review.id ? null : review.id,
+                )
+              }
+            >
+              <i className="bi bi-three-dots" aria-hidden="true" />
+            </button>
+            {openReviewActionsId === review.id ? (
+              <div className="dropdown-menu dropdown-menu-end show review-actions-menu">
+                <button
+                  className="dropdown-item text-danger d-flex align-items-center gap-2"
+                  type="button"
+                  disabled={deletingReviewId === review.id}
+                  onClick={() => void deleteReview(review)}
+                >
+                  {deletingReviewId === review.id ? (
+                    <span className="spinner-border spinner-border-sm" />
+                  ) : (
+                    <i className="bi bi-trash" aria-hidden="true" />
+                  )}
+                  {t("deleteReview")}
+                </button>
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </div>
@@ -611,25 +612,21 @@ export function DashboardPage() {
             <h3 className="card-title">{t("pasteGitweb")}</h3>
           </div>
           <div className="card-body">
-            <div className="row g-3 align-items-end">
-              <div className="col-lg-9">
-                <label className="form-label" htmlFor="gitweb-url">
-                  {t("gitwebUrl")}
-                </label>
-                <div className="input-group">
-                  <span className="input-group-text">
-                    <i className="bi bi-link-45deg" aria-hidden="true" />
-                  </span>
-                  <input
-                    className="form-control"
-                    id="gitweb-url"
-                    value={gitwebUrl}
-                    onChange={(event) => setGitwebUrl(event.target.value)}
-                    placeholder={t("pasteGitwebPlaceholder")}
-                  />
-                </div>
-              </div>
-              <div className="col-lg-3">
+            <div>
+              <label className="form-label" htmlFor="gitweb-url">
+                {t("gitwebUrl")}
+              </label>
+              <div className="input-group w-100">
+                <span className="input-group-text">
+                  <i className="bi bi-link-45deg" aria-hidden="true" />
+                </span>
+                <input
+                  className="form-control"
+                  id="gitweb-url"
+                  value={gitwebUrl}
+                  onChange={(event) => setGitwebUrl(event.target.value)}
+                  placeholder={t("pasteGitwebPlaceholder")}
+                />
                 <button
                   className="btn btn-primary d-inline-flex align-items-center gap-2"
                   onClick={() => void previewReview()}
@@ -707,21 +704,6 @@ export function DashboardPage() {
                           id="modal-review-title"
                           value={createTitle}
                           readOnly
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label
-                          className="form-label"
-                          htmlFor="modal-review-description"
-                        >
-                          {t("description")}
-                        </label>
-                        <textarea
-                          className="form-control"
-                          id="modal-review-description"
-                          readOnly
-                          rows={8}
-                          value={createDescription}
                         />
                       </div>
                     </div>

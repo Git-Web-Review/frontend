@@ -35,21 +35,7 @@ import type {
   ReviewStatus,
   ReviewUserSummary,
 } from "../types/api";
-
-const REVIEW_STATUSES: ReviewStatus[] = [
-  "PENDING",
-  "IN_REVIEW",
-  "APPROVED",
-  "CHANGES_REQUESTED",
-];
-
-const REVIEW_STATUS_BADGE_CLASSES: Record<ReviewStatus, string> = {
-  PENDING: "text-bg-secondary",
-  IN_REVIEW: "text-bg-info",
-  APPROVED: "text-bg-success",
-  CHANGES_REQUESTED: "text-bg-warning",
-  CLOSED: "text-bg-dark",
-};
+import { reviewStatusBadgeClass } from "../utils/reviewStatus";
 
 hljs.registerLanguage("bash", bash);
 hljs.registerLanguage("c", c);
@@ -74,7 +60,6 @@ const languageByExtension: Record<string, string> = {
   cpp: "cpp",
   css: "css",
   go: "go",
-  h: "c",
   hpp: "cpp",
   html: "xml",
   js: "javascript",
@@ -82,10 +67,6 @@ const languageByExtension: Record<string, string> = {
   jsx: "javascript",
   md: "markdown",
   patch: "diff",
-  py: "python",
-  sh: "bash",
-  ts: "typescript",
-  tsx: "typescript",
   xml: "xml",
   yaml: "yaml",
   yml: "yaml",
@@ -94,7 +75,6 @@ const languageByExtension: Record<string, string> = {
 const languageAliases: Record<string, string> = {
   docker: "dockerfile",
   htm: "xml",
-  html: "xml",
   js: "javascript",
   jsx: "javascript",
   md: "markdown",
@@ -103,7 +83,6 @@ const languageAliases: Record<string, string> = {
   shell: "bash",
   sh: "bash",
   ts: "typescript",
-  tsx: "typescript",
   yml: "yaml",
   zsh: "bash",
 };
@@ -113,24 +92,19 @@ const normalizeLanguage = (language: string | null | undefined) => {
     return null;
   }
 
-  const normalized = language.toLowerCase();
-  return languageAliases[normalized] ?? normalized;
+  return languageAliases[language] ?? language;
+};
+
+const languageForPath = (path: string) => {
+  const extension = path.split(".").pop();
+
+  return extension ? languageByExtension[extension.toLowerCase()] : null;
 };
 
 const languageFromClassName = (className: string | undefined) => {
   const match = /(?:^|\s)language-([^\s]+)/.exec(className ?? "");
+
   return normalizeLanguage(match?.[1]);
-};
-
-const languageForPath = (filePath: string) => {
-  const fileName = filePath.split("/").at(-1) ?? filePath;
-  const extension = fileName.includes(".") ? fileName.split(".").at(-1) : null;
-
-  if (fileName === "Dockerfile" || fileName.endsWith(".dockerfile")) {
-    return "dockerfile";
-  }
-
-  return extension ? languageByExtension[extension.toLowerCase()] : null;
 };
 
 const codeFromDiffLine = (line: string) => {
@@ -178,6 +152,16 @@ type CommentTarget = {
   lineNumber: number;
 };
 
+type ReviewCommentThread = CommentTarget & {
+  commentId: string;
+  reviewId: string;
+  done: boolean;
+  doneBy: ReviewComment["doneBy"];
+  doneAt: string | null;
+  createdAt: string;
+  messages: ReviewComment[];
+};
+
 type CommitLogMatch = {
   key: string;
   label: string;
@@ -198,7 +182,6 @@ export function ReviewPage() {
     CommitLogLinkRule[]
   >([]);
   const [title, setTitle] = useState("");
-  const [status, setStatus] = useState<ReviewStatus>("PENDING");
   const [reviewerUserIds, setReviewerUserIds] = useState<string[]>([]);
   const activeReviewTab = (
     searchParams.get("tab") === "files" ||
@@ -224,6 +207,18 @@ export function ReviewPage() {
   const [reviewComments, setReviewComments] = useState<ReviewComment[]>([]);
   const [loadingReviewComments, setLoadingReviewComments] = useState(false);
   const [savingDoneCommentIds, setSavingDoneCommentIds] = useState<string[]>([]);
+  const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editCommentDraft, setEditCommentDraft] = useState("");
+  const [savingEditCommentIds, setSavingEditCommentIds] = useState<string[]>(
+    [],
+  );
+  const [expandedCommentIds, setExpandedCommentIds] = useState<string[]>([]);
+  const [collapsedCommentIds, setCollapsedCommentIds] = useState<string[]>([]);
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [savingReplyCommentIds, setSavingReplyCommentIds] = useState<string[]>(
+    [],
+  );
   const [savingReviewAck, setSavingReviewAck] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
@@ -241,7 +236,6 @@ export function ReviewPage() {
       );
       setReview(nextReview);
       setTitle(nextReview.title ?? "");
-      setStatus(nextReview.status);
       setReviewerUserIds(
         nextReview.reviewers.map((reviewer) => reviewer.userId),
       );
@@ -252,6 +246,16 @@ export function ReviewPage() {
     } finally {
       setLoadingReview(false);
     }
+  };
+
+  const refreshReviewSnapshot = async () => {
+    if (!idToken) {
+      return;
+    }
+
+    setReview(
+      await apiRequest<ReviewItem>(`/v1/reviews/${reviewId}`, idToken),
+    );
   };
 
   const loadCommitLogLinkRules = async () => {
@@ -324,14 +328,8 @@ export function ReviewPage() {
 
   const sortedReviewerUserIds = (userIds: string[]) => [...userIds].sort();
 
-  const canEditReview =
-    !!review &&
-    (review.ownerId === currentUser?.id || currentUser?.role === "ADMIN");
+  const canDeleteReview = !!review && review.ownerId === currentUser?.id;
   const canEditReviewDetails = !!review && review.ownerId === currentUser?.id;
-  const canUpdateReviewStatus =
-    !!review &&
-    review.status !== "CLOSED" &&
-    review.reviewers.some((reviewer) => reviewer.userId === currentUser?.id);
   const canUpdateCommentDone =
     !!review &&
     (review.ownerId === currentUser?.id ||
@@ -339,36 +337,41 @@ export function ReviewPage() {
   const currentReviewer = review?.reviewers.find(
     (reviewer) => reviewer.userId === currentUser?.id,
   );
-  const openCommentCount = reviewComments.filter((comment) => !comment.done).length;
+  const openCommentCount = new Set(
+    reviewComments
+      .filter((comment) => !comment.done)
+      .map((comment) => comment.commentId),
+  ).size;
   const canAckReview =
     !!currentReviewer &&
     !currentReviewer.acknowledgedAt &&
     !loadingReviewComments &&
     openCommentCount === 0;
-  const reviewAcknowledged =
-    !!review &&
-    review.reviewers.length > 0 &&
-    review.reviewers.some((reviewer) => !!reviewer.acknowledgedAt);
   const canCloseReview =
     !!review &&
     review.ownerId === currentUser?.id &&
-    review.status !== "CLOSED" &&
-    reviewAcknowledged;
+    review.status === "ACKED";
+  const ackReviewDisabledReason = savingReviewAck
+    ? t("actionInProgress")
+    : loadingReviewComments || openCommentCount > 0
+      ? t("reviewAckRequiresDoneComments")
+      : undefined;
+  const closeReviewDisabledReason = savingCloseReview
+    ? t("actionInProgress")
+    : !canCloseReview
+      ? t("closeReviewRequiresAck")
+      : undefined;
   const hasReviewChanges =
     !!review &&
-    ((canEditReviewDetails &&
-      (title !== (review.title ?? "") ||
-        sortedReviewerUserIds(reviewerUserIds).join("\n") !==
-          sortedReviewerUserIds(
-            review.reviewers.map((reviewer) => reviewer.userId),
-          ).join("\n"))) ||
-      (canUpdateReviewStatus && status !== review.status));
+    canEditReviewDetails &&
+    (title !== (review.title ?? "") ||
+      sortedReviewerUserIds(reviewerUserIds).join("\n") !==
+        sortedReviewerUserIds(
+          review.reviewers.map((reviewer) => reviewer.userId),
+        ).join("\n"));
 
   const reviewStatusLabel = (reviewStatus: ReviewStatus) =>
     t(`reviewStatus${reviewStatus}`);
-
-  const reviewStatusBadgeClass = (reviewStatus: ReviewStatus) =>
-    REVIEW_STATUS_BADGE_CLASSES[reviewStatus];
 
   const renderUserLabel = (user: ReviewUserSummary) =>
     user.nickname || user.hostname || user.email;
@@ -402,7 +405,6 @@ export function ReviewPage() {
             reviewerUserIds,
           }
         : {}),
-      ...(canUpdateReviewStatus ? { status } : {}),
     };
 
     setSavingReview(true);
@@ -428,7 +430,7 @@ export function ReviewPage() {
   };
 
   const deleteReview = async () => {
-    if (!idToken || !review || !canEditReview) {
+    if (!idToken || !review || !canDeleteReview) {
       return;
     }
 
@@ -491,7 +493,6 @@ export function ReviewPage() {
         { method: "PATCH" },
       );
       setReview(nextReview);
-      setStatus(nextReview.status);
       showToast(t("reviewClosed"));
     } catch (error) {
       setErrorMessage(
@@ -518,8 +519,74 @@ export function ReviewPage() {
   const targetKey = (target: CommentTarget) =>
     `${target.commitHash ?? ""}:${target.filePath ?? ""}:${target.lineNumber}`;
 
-  const commentsForTarget = (target: CommentTarget) =>
-    reviewComments.filter((comment) => targetKey(comment) === targetKey(target));
+  const commentThreadsFrom = (comments: ReviewComment[]): ReviewCommentThread[] => {
+    const threadsById = new Map<string, ReviewCommentThread>();
+
+    for (const comment of [...comments].sort(
+      (left, right) =>
+        new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+    )) {
+      const existingThread = threadsById.get(comment.commentId);
+      if (existingThread) {
+        existingThread.messages.push(comment);
+        existingThread.done = comment.done;
+        existingThread.doneBy = comment.doneBy;
+        existingThread.doneAt = comment.doneAt;
+        continue;
+      }
+
+      threadsById.set(comment.commentId, {
+        commentId: comment.commentId,
+        reviewId: comment.reviewId,
+        commitHash: comment.commitHash,
+        filePath: comment.filePath,
+        lineNumber: comment.lineNumber,
+        done: comment.done,
+        doneBy: comment.doneBy,
+        doneAt: comment.doneAt,
+        createdAt: comment.createdAt,
+        messages: [comment],
+      });
+    }
+
+    return [...threadsById.values()].sort(
+      (left, right) =>
+        new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+    );
+  };
+
+  const commentThreadsForTarget = (target: CommentTarget) =>
+    commentThreadsFrom(
+      reviewComments.filter((comment) => targetKey(comment) === targetKey(target)),
+    );
+
+  const canDeleteComment = (comment: ReviewComment) =>
+    comment.author.id === currentUser?.id;
+
+  const canEditComment = (comment: ReviewComment) =>
+    comment.author.id === currentUser?.id;
+
+  const isCommentThreadExpanded = (thread: ReviewCommentThread) =>
+    thread.done
+      ? expandedCommentIds.includes(thread.commentId)
+      : !collapsedCommentIds.includes(thread.commentId);
+
+  const toggleCommentThreadExpanded = (thread: ReviewCommentThread) => {
+    if (thread.done) {
+      setExpandedCommentIds((current) =>
+        current.includes(thread.commentId)
+          ? current.filter((commentId) => commentId !== thread.commentId)
+          : [...current, thread.commentId],
+      );
+      return;
+    }
+
+    setCollapsedCommentIds((current) =>
+      current.includes(thread.commentId)
+        ? current.filter((commentId) => commentId !== thread.commentId)
+        : [...current, thread.commentId],
+    );
+  };
 
   const replaceCommentThread = (comments: ReviewComment[]) => {
     const commentId = comments[0]?.commentId;
@@ -535,16 +602,16 @@ export function ReviewPage() {
     );
   };
 
-  const updateCommentDone = async (comment: ReviewComment, done: boolean) => {
+  const updateCommentDone = async (thread: ReviewCommentThread, done: boolean) => {
     if (!idToken || !review || !canUpdateCommentDone) {
       return;
     }
 
-    setSavingDoneCommentIds((current) => [...current, comment.commentId]);
+    setSavingDoneCommentIds((current) => [...current, thread.commentId]);
     setErrorMessage("");
     try {
       const comments = await apiRequest<ReviewComment[]>(
-        `/v1/reviews/${review.id}/comments/${comment.commentId}`,
+        `/v1/reviews/${review.id}/comments/${thread.commentId}`,
         idToken,
         {
           method: "PATCH",
@@ -552,13 +619,124 @@ export function ReviewPage() {
         },
       );
       replaceCommentThread(comments);
+      await refreshReviewSnapshot();
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : t("backendError"),
       );
     } finally {
       setSavingDoneCommentIds((current) =>
-        current.filter((commentId) => commentId !== comment.commentId),
+        current.filter((commentId) => commentId !== thread.commentId),
+      );
+    }
+  };
+
+  const deleteComment = async (comment: ReviewComment) => {
+    if (!idToken || !review || !canDeleteComment(comment)) {
+      return;
+    }
+
+    if (!window.confirm(t("confirmDeleteComment"))) {
+      return;
+    }
+
+    setDeletingCommentIds((current) => [...current, comment.id]);
+    setErrorMessage("");
+    try {
+      await apiRequest<ReviewDeletion>(
+        `/v1/reviews/${review.id}/comments/${comment.commentId}/messages/${comment.id}`,
+        idToken,
+        { method: "DELETE" },
+      );
+      if (editingCommentId === comment.id) {
+        setEditingCommentId(null);
+        setEditCommentDraft("");
+      }
+      setReviewComments((current) =>
+        current.filter((currentComment) => currentComment.id !== comment.id),
+      );
+      await refreshReviewSnapshot();
+      showToast(t("commentDeleted"));
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : t("backendError"),
+      );
+    } finally {
+      setDeletingCommentIds((current) =>
+        current.filter((commentId) => commentId !== comment.id),
+      );
+    }
+  };
+
+  const startEditComment = (comment: ReviewComment) => {
+    setEditingCommentId(comment.id);
+    setEditCommentDraft(comment.message);
+  };
+
+  const cancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditCommentDraft("");
+  };
+
+  const updateCommentMessage = async (comment: ReviewComment) => {
+    const message = editCommentDraft.trim();
+    if (!idToken || !review || !canEditComment(comment) || !message) {
+      return;
+    }
+
+    setSavingEditCommentIds((current) => [...current, comment.id]);
+    setErrorMessage("");
+    try {
+      const comments = await apiRequest<ReviewComment[]>(
+        `/v1/reviews/${review.id}/comments/${comment.commentId}/messages/${comment.id}`,
+        idToken,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ message }),
+        },
+      );
+      replaceCommentThread(comments);
+      setEditingCommentId(null);
+      setEditCommentDraft("");
+      showToast(t("commentUpdated"));
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : t("backendError"),
+      );
+    } finally {
+      setSavingEditCommentIds((current) =>
+        current.filter((commentId) => commentId !== comment.id),
+      );
+    }
+  };
+
+  const addCommentReply = async (thread: ReviewCommentThread) => {
+    const message = (replyDrafts[thread.commentId] ?? "").trim();
+    if (!idToken || !review || !message) {
+      return;
+    }
+
+    setSavingReplyCommentIds((current) => [...current, thread.commentId]);
+    setErrorMessage("");
+    try {
+      const comments = await apiRequest<ReviewComment[]>(
+        `/v1/reviews/${review.id}/comments/${thread.commentId}/messages`,
+        idToken,
+        {
+          method: "POST",
+          body: JSON.stringify({ message }),
+        },
+      );
+      replaceCommentThread(comments);
+      setReplyDrafts((current) => ({ ...current, [thread.commentId]: "" }));
+      await refreshReviewSnapshot();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : t("backendError"),
+      );
+    } finally {
+      setSavingReplyCommentIds((current) =>
+        current.filter((commentId) => commentId !== thread.commentId),
       );
     }
   };
@@ -606,6 +784,7 @@ export function ReviewPage() {
         setReviewComments((current) => [...current, comment]);
         setInlineCommentDraft("");
         setInlineCommentTarget(null);
+        await refreshReviewSnapshot();
       }
     } catch (error) {
       setErrorMessage(
@@ -629,6 +808,7 @@ export function ReviewPage() {
       if (comment) {
         setReviewComments((current) => [...current, comment]);
         setCommentDraft("");
+        await refreshReviewSnapshot();
       }
     } catch (error) {
       setErrorMessage(
@@ -677,6 +857,153 @@ export function ReviewPage() {
       {value}
     </ReactMarkdown>
   );
+
+  const renderCommentMessages = (thread: ReviewCommentThread) => (
+    <div className="review-comment-messages">
+      {thread.messages.map((comment) => {
+        const editing = editingCommentId === comment.id;
+        const savingEdit = savingEditCommentIds.includes(comment.id);
+
+        return (
+          <div className="review-comment-message" key={comment.id}>
+            <div className="review-comment-message-meta">
+              <span className="fw-semibold">{renderUserLabel(comment.author)}</span>
+              <span>{new Date(comment.createdAt).toLocaleString()}</span>
+              {canEditComment(comment) && !editing ? (
+                <button
+                  aria-label={t("editComment")}
+                  className="btn btn-outline-secondary btn-sm"
+                  title={t("editComment")}
+                  type="button"
+                  onClick={() => startEditComment(comment)}
+                >
+                  <i className="bi bi-pencil" aria-hidden="true" />
+                </button>
+              ) : null}
+              {canDeleteComment(comment) ? (
+                <button
+                  aria-label={t("deleteComment")}
+                  className="btn btn-outline-danger btn-sm"
+                  disabled={deletingCommentIds.includes(comment.id)}
+                  title={t("deleteComment")}
+                  type="button"
+                  onClick={() => void deleteComment(comment)}
+                >
+                  {deletingCommentIds.includes(comment.id) ? (
+                    <span className="spinner-border spinner-border-sm" />
+                  ) : (
+                    <i className="bi bi-trash" aria-hidden="true" />
+                  )}
+                </button>
+              ) : null}
+            </div>
+            {editing ? (
+              <div className="review-comment-edit">
+                <textarea
+                  className="form-control form-control-sm"
+                  rows={3}
+                  value={editCommentDraft}
+                  onChange={(event) => setEditCommentDraft(event.target.value)}
+                />
+                <div className="d-flex justify-content-end gap-2 mt-2">
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    disabled={savingEdit}
+                    type="button"
+                    onClick={cancelEditComment}
+                  >
+                    {t("cancel")}
+                  </button>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    disabled={!editCommentDraft.trim() || savingEdit}
+                    type="button"
+                    onClick={() => void updateCommentMessage(comment)}
+                  >
+                    {savingEdit ? (
+                      <span className="spinner-border spinner-border-sm me-1" />
+                    ) : null}
+                    {t("save")}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="markdown-body">{renderMarkdown(comment.message)}</div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const renderCommentReplyForm = (thread: ReviewCommentThread) => {
+    const replyDraft = replyDrafts[thread.commentId] ?? "";
+    const savingReply = savingReplyCommentIds.includes(thread.commentId);
+
+    return (
+      <div className="review-comment-reply">
+        <textarea
+          className="form-control form-control-sm"
+          rows={2}
+          value={replyDraft}
+          onChange={(event) =>
+            setReplyDrafts((current) => ({
+              ...current,
+              [thread.commentId]: event.target.value,
+            }))
+          }
+          placeholder={t("replyCommentPlaceholder")}
+        />
+        <div className="d-flex justify-content-end mt-2">
+          <button
+            className="btn btn-primary btn-sm"
+            disabled={!replyDraft.trim() || savingReply}
+            type="button"
+            onClick={() => void addCommentReply(thread)}
+          >
+            {savingReply ? (
+              <span className="spinner-border spinner-border-sm me-1" />
+            ) : null}
+            {t("replyComment")}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCommentThreadControls = (
+    thread: ReviewCommentThread,
+    showTargetLabel = false,
+  ) => {
+    return (
+      <>
+        <span className="badge text-bg-light border">
+          {thread.messages.length} {t("commentMessages")}
+        </span>
+        {thread.done ? (
+          <span className="badge text-bg-success">{t("commentDone")}</span>
+        ) : null}
+        {showTargetLabel ? (
+          <span className="badge text-bg-secondary">
+            {commentTargetLabel(thread)}
+          </span>
+        ) : null}
+        {canUpdateCommentDone ? (
+          <button
+            className={`btn btn-sm ${thread.done ? "btn-outline-secondary" : "btn-outline-success"}`}
+            disabled={savingDoneCommentIds.includes(thread.commentId)}
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              void updateCommentDone(thread, !thread.done);
+            }}
+          >
+            {thread.done ? t("reopenComment") : t("markCommentDone")}
+          </button>
+        ) : null}
+      </>
+    );
+  };
 
   const diffLineClass = (line: string) => {
     if (line.startsWith("+") && !line.startsWith("+++")) {
@@ -911,7 +1238,7 @@ export function ReviewPage() {
                 filePath: file.path,
                 lineNumber,
               } satisfies CommentTarget;
-              const lineComments = commentsForTarget(lineTarget);
+              const lineCommentThreads = commentThreadsForTarget(lineTarget);
               const inlineComposerOpen =
                 !!inlineCommentTarget &&
                 targetKey(inlineCommentTarget) === targetKey(lineTarget);
@@ -973,47 +1300,42 @@ export function ReviewPage() {
                       </div>
                     </div>
                   ) : null}
-                  {lineComments.length ? (
+                  {lineCommentThreads.length ? (
                     <div className="diff-inline-comments">
-                      {lineComments.map((comment) => (
+                      {lineCommentThreads.map((thread) => (
                         <div
-                          className={`diff-inline-comment${comment.done ? " is-done" : ""}`}
-                          key={comment.id}
+                          className={`diff-inline-comment${thread.done ? " is-done" : ""}`}
+                          key={thread.commentId}
                         >
-                          <div className="diff-inline-comment-meta">
+                          <div
+                            aria-expanded={isCommentThreadExpanded(thread)}
+                            className="diff-inline-comment-meta comment-thread-header"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => toggleCommentThreadExpanded(thread)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                toggleCommentThreadExpanded(thread);
+                              }
+                            }}
+                          >
                             <span className="fw-semibold">
-                              {renderUserLabel(comment.author)}
+                              {renderUserLabel(thread.messages[0].author)}
                             </span>
-                            <span>{new Date(comment.createdAt).toLocaleString()}</span>
-                            {comment.done ? (
-                              <span className="badge text-bg-success">
-                                {t("commentDone")}
-                              </span>
-                            ) : null}
-                            {canUpdateCommentDone ? (
-                              <button
-                                className={`btn btn-sm ${comment.done ? "btn-outline-secondary" : "btn-outline-success"}`}
-                                disabled={savingDoneCommentIds.includes(
-                                  comment.commentId,
-                                )}
-                                type="button"
-                                onClick={() =>
-                                  void updateCommentDone(comment, !comment.done)
-                                }
-                              >
-                                {comment.done
-                                  ? t("reopenComment")
-                                  : t("markCommentDone")}
-                              </button>
-                            ) : null}
+                            <span>{new Date(thread.createdAt).toLocaleString()}</span>
+                            {renderCommentThreadControls(thread)}
                           </div>
-                          <div className="markdown-body">
-                            {renderMarkdown(comment.message)}
-                          </div>
-                          {comment.done && comment.doneAt ? (
-                            <div className="comment-done-meta">
-                              {t("commentDoneBy")} {comment.doneBy ? renderUserLabel(comment.doneBy) : t("notAvailable")} - {new Date(comment.doneAt).toLocaleString()}
-                            </div>
+                          {isCommentThreadExpanded(thread) ? (
+                            <>
+                              {renderCommentMessages(thread)}
+                              {thread.done && thread.doneAt ? (
+                                <div className="comment-done-meta">
+                                  {t("commentDoneBy")} {thread.doneBy ? renderUserLabel(thread.doneBy) : t("notAvailable")} - {new Date(thread.doneAt).toLocaleString()}
+                                </div>
+                              ) : null}
+                              {renderCommentReplyForm(thread)}
+                            </>
                           ) : null}
                         </div>
                       ))}
@@ -1052,6 +1374,7 @@ export function ReviewPage() {
   }
 
   const overviewCommitLogMatches = commitLogMatches(review);
+  const reviewCommentThreads = commentThreadsFrom(reviewComments);
 
   return (
     <div className="review-page">
@@ -1066,42 +1389,54 @@ export function ReviewPage() {
             <i className="bi bi-box-arrow-up-right me-1" aria-hidden="true" />
           </a>
           {currentReviewer && !currentReviewer.acknowledgedAt ? (
-            <button
-              className="btn btn-success d-inline-flex align-items-center gap-2"
-              disabled={!canAckReview || savingReviewAck}
+            <span
+              className="disabled-button-tooltip"
               title={
-                loadingReviewComments || openCommentCount > 0
-                  ? t("reviewAckRequiresDoneComments")
+                !canAckReview || savingReviewAck
+                  ? ackReviewDisabledReason
                   : undefined
               }
-              type="button"
-              onClick={() => void acknowledgeReview()}
             >
-              {savingReviewAck ? (
-                <span className="spinner-border spinner-border-sm" />
-              ) : (
-                <i className="bi bi-check2-circle" aria-hidden="true" />
-              )}
-              {t("ackReview")}
-            </button>
+              <button
+                className="btn btn-success d-inline-flex align-items-center gap-2"
+                disabled={!canAckReview || savingReviewAck}
+                type="button"
+                onClick={() => void acknowledgeReview()}
+              >
+                {savingReviewAck ? (
+                  <span className="spinner-border spinner-border-sm" />
+                ) : (
+                  <i className="bi bi-check2-circle" aria-hidden="true" />
+                )}
+                {t("ackReview")}
+              </button>
+            </span>
           ) : null}
           {review.ownerId === currentUser?.id && review.status !== "CLOSED" ? (
-            <button
-              className="btn btn-success d-inline-flex align-items-center gap-2"
-              type="button"
-              disabled={!canCloseReview || savingCloseReview}
-              title={!canCloseReview ? t("closeReviewRequiresAck") : undefined}
-              onClick={() => void closeReview()}
+            <span
+              className="disabled-button-tooltip"
+              title={
+                !canCloseReview || savingCloseReview
+                  ? closeReviewDisabledReason
+                  : undefined
+              }
             >
-              {savingCloseReview ? (
-                <span className="spinner-border spinner-border-sm" />
-              ) : (
-                <i className="bi bi-check2-all" aria-hidden="true" />
-              )}
-              {t("closeReview")}
-            </button>
+              <button
+                className="btn btn-success d-inline-flex align-items-center gap-2"
+                type="button"
+                disabled={!canCloseReview || savingCloseReview}
+                onClick={() => void closeReview()}
+              >
+                {savingCloseReview ? (
+                  <span className="spinner-border spinner-border-sm" />
+                ) : (
+                  <i className="bi bi-check2-all" aria-hidden="true" />
+                )}
+                {t("closeReview")}
+              </button>
+            </span>
           ) : null}
-          {canEditReview ? (
+          {canDeleteReview ? (
             <button
               className="btn btn-outline-danger d-inline-flex align-items-center gap-2"
               type="button"
@@ -1138,11 +1473,6 @@ export function ReviewPage() {
             <div className="d-flex align-items-center gap-2">
               {loadingReview ? (
                 <span className="spinner-border spinner-border-sm text-info" />
-              ) : null}
-              {currentReviewer?.acknowledgedAt ? (
-                <span className="badge text-bg-success">
-                  {t("reviewAcknowledged")}
-                </span>
               ) : null}
               <span className={`badge ${reviewStatusBadgeClass(review.status)}`}>
                 {reviewStatusLabel(review.status)}
@@ -1194,7 +1524,7 @@ export function ReviewPage() {
                 <i className="bi bi-chat-square-text me-1" aria-hidden="true" />
                 {t("discussion")}
                 <span className="badge text-bg-secondary ms-2">
-                  {reviewComments.length}
+                  {reviewCommentThreads.length}
                 </span>
               </button>
             </li>
@@ -1216,31 +1546,6 @@ export function ReviewPage() {
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
                   />
-                </div>
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <label className="form-label" htmlFor="review-status">
-                      {t("reviewState")}
-                    </label>
-                    <select
-                      className="form-select"
-                      disabled={!canUpdateReviewStatus}
-                      id="review-status"
-                      value={status}
-                      onChange={(event) =>
-                        setStatus(event.target.value as ReviewStatus)
-                      }
-                    >
-                      {review.status === "CLOSED" ? (
-                        <option value="CLOSED">{reviewStatusLabel("CLOSED")}</option>
-                      ) : null}
-                      {REVIEW_STATUSES.map((reviewStatus) => (
-                        <option key={reviewStatus} value={reviewStatus}>
-                          {reviewStatusLabel(reviewStatus)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
                 </div>
                 {reviewDescription(review) ? (
                   <dl className="review-description-summary mb-0 mt-3 small">
@@ -1394,7 +1699,7 @@ export function ReviewPage() {
                 </div>
               </div>
             </div>
-            {hasReviewChanges && (canEditReviewDetails || canUpdateReviewStatus) ? (
+            {hasReviewChanges && canEditReviewDetails ? (
               <div className="d-flex gap-2 mt-4">
                 <button
                   className="btn btn-success d-inline-flex align-items-center gap-2"
@@ -1414,7 +1719,7 @@ export function ReviewPage() {
         {activeReviewTab === "files" ? (
           <div className="card-body review-files-pane">
             {review.gitwebLog ? (
-              <details className="card mb-3 review-log-card">
+              <details className="card mb-3 review-log-card" open>
                 <summary className="card-header fw-semibold">
                   {t("gitwebLog")}
                 </summary>
@@ -1469,55 +1774,45 @@ export function ReviewPage() {
                 </div>
               </div>
             </div>
-            {reviewComments.length ? (
+            {reviewCommentThreads.length ? (
               <div className="timeline timeline-inverse mb-0">
-                {reviewComments.map((comment) => (
-                  <div className="time-label" key={comment.id}>
+                {reviewCommentThreads.map((thread) => (
+                  <div className="time-label" key={thread.commentId}>
                     <span className="text-bg-light">
-                      {new Date(comment.createdAt).toLocaleString()}
+                      {new Date(thread.createdAt).toLocaleString()}
                     </span>
-                    <div className={`card mt-2 review-comment-card${comment.done ? " is-done" : ""}`}>
-                      <div className="card-header d-flex justify-content-between gap-3">
+                    <div className={`card mt-2 review-comment-card${thread.done ? " is-done" : ""}`}>
+                      <div
+                        aria-expanded={isCommentThreadExpanded(thread)}
+                        className="card-header d-flex justify-content-between gap-3 comment-thread-header"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => toggleCommentThreadExpanded(thread)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            toggleCommentThreadExpanded(thread);
+                          }
+                        }}
+                      >
                         <span className="fw-semibold">
-                          {renderUserLabel(comment.author)}
+                          {renderUserLabel(thread.messages[0].author)}
                         </span>
                         <div className="d-flex flex-wrap align-items-center gap-2">
-                          {comment.done ? (
-                            <span className="badge text-bg-success">
-                              {t("commentDone")}
-                            </span>
-                          ) : null}
-                          <span className="badge text-bg-secondary">
-                            {commentTargetLabel(comment)}
-                          </span>
-                          {canUpdateCommentDone ? (
-                            <button
-                              className={`btn btn-sm ${comment.done ? "btn-outline-secondary" : "btn-outline-success"}`}
-                              disabled={savingDoneCommentIds.includes(
-                                comment.commentId,
-                              )}
-                              type="button"
-                              onClick={() =>
-                                void updateCommentDone(comment, !comment.done)
-                              }
-                            >
-                              {comment.done
-                                ? t("reopenComment")
-                                : t("markCommentDone")}
-                            </button>
-                          ) : null}
+                          {renderCommentThreadControls(thread, true)}
                         </div>
                       </div>
-                      <div className="card-body review-comment-body">
-                        <div className="markdown-body">
-                          {renderMarkdown(comment.message)}
+                      {isCommentThreadExpanded(thread) ? (
+                        <div className="card-body review-comment-body">
+                          {renderCommentMessages(thread)}
+                          {thread.done && thread.doneAt ? (
+                            <div className="comment-done-meta mt-2">
+                              {t("commentDoneBy")} {thread.doneBy ? renderUserLabel(thread.doneBy) : t("notAvailable")} - {new Date(thread.doneAt).toLocaleString()}
+                            </div>
+                          ) : null}
+                          {renderCommentReplyForm(thread)}
                         </div>
-                        {comment.done && comment.doneAt ? (
-                          <div className="comment-done-meta mt-2">
-                            {t("commentDoneBy")} {comment.doneBy ? renderUserLabel(comment.doneBy) : t("notAvailable")} - {new Date(comment.doneAt).toLocaleString()}
-                          </div>
-                        ) : null}
-                      </div>
+                      ) : null}
                     </div>
                   </div>
                 ))}

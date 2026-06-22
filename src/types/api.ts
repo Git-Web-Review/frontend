@@ -1,11 +1,6 @@
 export type UserRole = "USER" | "ADMIN";
 export type UserLocale = "FR" | "EN";
-export type ReviewStatus =
-  | "PENDING"
-  | "IN_REVIEW"
-  | "APPROVED"
-  | "CHANGES_REQUESTED"
-  | "CLOSED";
+export type ReviewStatus = "PENDING" | "IN_REVIEW" | "ACKED" | "CLOSED";
 
 export type ApiErrorCode =
   | "MISSING_AUTH_HEADER"
@@ -118,6 +113,8 @@ export type ReviewUserSummary = {
   email: string;
   hostname: string;
   nickname: string | null;
+  mailNotificationsEnabled: boolean;
+  ircNotificationsEnabled: boolean;
   hasProfileImage: boolean;
 };
 
