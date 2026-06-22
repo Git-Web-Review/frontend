@@ -1,5 +1,5 @@
 import { type RefObject, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { apiRequest } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
 import { ReviewerSearchSelect } from "../components/ReviewerSearchSelect";
@@ -31,6 +31,27 @@ type CommitLogMatch = {
 
 const shortHostname = (hostname: string) => hostname.split(".")[0] ?? hostname;
 
+const dashboardLinkFromSearch = (search: string) => {
+  const query = search.startsWith("?") ? search.slice(1) : search;
+  const linkPrefixIndex = query.search(/(?:^|&)link=/);
+  if (linkPrefixIndex === -1) {
+    return "";
+  }
+
+  const rawLink = query.slice(
+    linkPrefixIndex + (query[linkPrefixIndex] === "&" ? "&link=".length : "link=".length),
+  );
+  const decodedLink = (() => {
+    try {
+      return decodeURIComponent(rawLink);
+    } catch {
+      return rawLink;
+    }
+  })();
+
+  return decodedLink.trim().replace(/\\([?=;&])/g, "$1");
+};
+
 type DashboardSection = "owned" | "assigned" | "done";
 
 const DASHBOARD_PAGE_SIZE = 10;
@@ -48,6 +69,8 @@ export function DashboardPage() {
   const { t } = useI18n();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const dashboardLink = dashboardLinkFromSearch(location.search);
   const [gitwebUrl, setGitwebUrl] = useState("");
   const [createReviewerUserIds, setCreateReviewerUserIds] = useState<string[]>(
     [],
@@ -79,6 +102,7 @@ export function DashboardPage() {
   const ownedLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const assignedLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const doneLoadMoreRef = useRef<HTMLDivElement | null>(null);
+  const processedLinkRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!openReviewActionsId) {
@@ -243,11 +267,13 @@ export function DashboardPage() {
     return () => observer.disconnect();
   }, [idToken, dashboard, loadingDashboardSections]);
 
-  const previewReview = async () => {
-    if (!idToken || !gitwebUrl) {
+  const previewReview = async (nextGitwebUrl = gitwebUrl) => {
+    const normalizedGitwebUrl = nextGitwebUrl.trim();
+    if (!idToken || !normalizedGitwebUrl) {
       return;
     }
 
+    setGitwebUrl(normalizedGitwebUrl);
     setErrorMessage("");
     setPreviewLoading(true);
     try {
@@ -256,7 +282,7 @@ export function DashboardPage() {
         idToken,
         {
           method: "POST",
-          body: JSON.stringify({ gitwebUrl }),
+          body: JSON.stringify({ gitwebUrl: normalizedGitwebUrl }),
         },
       );
       setPreview(nextPreview);
@@ -272,6 +298,15 @@ export function DashboardPage() {
       setPreviewLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!idToken || !dashboardLink || processedLinkRef.current === dashboardLink) {
+      return;
+    }
+
+    processedLinkRef.current = dashboardLink;
+    void previewReview(dashboardLink);
+  }, [idToken, dashboardLink]);
 
   const createReview = async () => {
     if (!idToken || !preview) {

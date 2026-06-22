@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { ApiClientError, apiRequest } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n/I18nProvider";
@@ -20,9 +21,21 @@ type LinkRuleDraft = {
   enabled: boolean;
 };
 
-type AdminTab = "domains" | "notifications" | "users" | "admins" | "linkRules";
+const adminTabIds = [
+  "domains",
+  "notifications",
+  "users",
+  "admins",
+  "linkRules",
+] as const;
+
+type AdminTab = (typeof adminTabIds)[number];
+
+const isAdminTab = (value: string | null): value is AdminTab =>
+  adminTabIds.includes(value as AdminTab);
 
 export function AdminPage() {
+  const [searchParams] = useSearchParams();
   const { idToken } = useAuth();
   const { t } = useI18n();
   const { showToast } = useToast();
@@ -34,8 +47,8 @@ export function AdminPage() {
   >({});
   const [email, setEmail] = useState("");
   const [newLinkRule, setNewLinkRule] = useState<LinkRuleDraft>({
-    label: "Issue tracker example",
-    regex: "Issue: (?<ISSUE_ID>\\d+)",
+    label: "",
+    regex: "",
     linkTemplate: "",
     enabled: true,
   });
@@ -59,7 +72,8 @@ export function AdminPage() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [removingEmail, setRemovingEmail] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [activeTab, setActiveTab] = useState<AdminTab>("domains");
+  const requestedTab = searchParams.get("tab");
+  const activeTab: AdminTab = isAdminTab(requestedTab) ? requestedTab : "domains";
 
   const errorLabel = (error: unknown) => {
     if (error instanceof ApiClientError) {
@@ -411,16 +425,15 @@ export function AdminPage() {
         <ul className="nav nav-tabs admin-tabs" role="tablist">
           {adminTabs.map((tab) => (
             <li className="nav-item" key={tab.id} role="presentation">
-              <button
+              <Link
                 className={`nav-link d-inline-flex align-items-center gap-2 ${activeTab === tab.id ? "active" : ""}`}
-                type="button"
                 role="tab"
                 aria-selected={activeTab === tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                to={`/admin?tab=${tab.id}`}
               >
                 <i className={`bi ${tab.icon}`} aria-hidden="true" />
                 {tab.label}
-              </button>
+              </Link>
             </li>
           ))}
         </ul>
@@ -756,6 +769,7 @@ export function AdminPage() {
                   className="form-control"
                   id="new-link-rule-label"
                   value={newLinkRule.label}
+                  placeholder="Label"
                   onChange={(event) =>
                     setNewLinkRule((current) => ({
                       ...current,
@@ -772,6 +786,7 @@ export function AdminPage() {
                   className="form-control font-monospace"
                   id="new-link-rule-regex"
                   value={newLinkRule.regex}
+                  placeholder="Issue: (?<ISSUE_ID>\\d+)"
                   onChange={(event) =>
                     setNewLinkRule((current) => ({
                       ...current,
