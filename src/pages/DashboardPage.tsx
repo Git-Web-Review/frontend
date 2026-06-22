@@ -694,7 +694,7 @@ export function DashboardPage() {
                     </div>
                   ) : null}
                   <div className="row g-4">
-                    <div className="col-lg-7">
+                    <div className="col-lg-5">
                       <div className="mb-3">
                         <label className="form-label" htmlFor="modal-review-title">
                           {t("reviewTitle")}
@@ -706,8 +706,13 @@ export function DashboardPage() {
                           readOnly
                         />
                       </div>
+                      {preview.gitwebLog ? (
+                        <pre className="border rounded bg-body-tertiary p-3 mb-0 review-log-body">
+                          {preview.gitwebLog}
+                        </pre>
+                      ) : null}
                     </div>
-                    <div className="col-lg-5">
+                    <div className="col-lg-7">
                       <div className="commit-summary-grid mb-3">
                         <div className="commit-summary-item commit-summary-project">
                           <span className="commit-summary-icon">
@@ -797,16 +802,6 @@ export function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                  {preview.gitwebLog ? (
-                    <details className="card mt-4 review-log-card">
-                      <summary className="card-header fw-semibold">
-                        {t("gitwebLog")}
-                      </summary>
-                      <pre className="card-body mb-0 review-log-body">
-                        {preview.gitwebLog}
-                      </pre>
-                    </details>
-                  ) : null}
                 </div>
                 <div className="modal-footer">
                   <button
