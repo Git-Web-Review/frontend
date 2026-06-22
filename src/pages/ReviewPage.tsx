@@ -860,43 +860,60 @@ export function ReviewPage() {
 
   const renderCommentMessages = (thread: ReviewCommentThread) => (
     <div className="review-comment-messages">
-      {thread.messages.map((comment) => {
+      {thread.messages.map((comment, index) => {
+        const previousComment = thread.messages[index - 1];
+        const repeatedAuthor = previousComment?.author.id === comment.author.id;
         const editing = editingCommentId === comment.id;
         const savingEdit = savingEditCommentIds.includes(comment.id);
+        const canEdit = canEditComment(comment) && !editing;
+        const canDelete = canDeleteComment(comment);
+        const showMeta = !repeatedAuthor || canEdit || canDelete;
 
         return (
           <div className="review-comment-message" key={comment.id}>
-            <div className="review-comment-message-meta">
-              <span className="fw-semibold">{renderUserLabel(comment.author)}</span>
-              <span>{new Date(comment.createdAt).toLocaleString()}</span>
-              {canEditComment(comment) && !editing ? (
-                <button
-                  aria-label={t("editComment")}
-                  className="btn btn-outline-secondary btn-sm"
-                  title={t("editComment")}
-                  type="button"
-                  onClick={() => startEditComment(comment)}
-                >
-                  <i className="bi bi-pencil" aria-hidden="true" />
-                </button>
-              ) : null}
-              {canDeleteComment(comment) ? (
-                <button
-                  aria-label={t("deleteComment")}
-                  className="btn btn-outline-danger btn-sm"
-                  disabled={deletingCommentIds.includes(comment.id)}
-                  title={t("deleteComment")}
-                  type="button"
-                  onClick={() => void deleteComment(comment)}
-                >
-                  {deletingCommentIds.includes(comment.id) ? (
-                    <span className="spinner-border spinner-border-sm" />
-                  ) : (
-                    <i className="bi bi-trash" aria-hidden="true" />
-                  )}
-                </button>
-              ) : null}
-            </div>
+            {showMeta ? (
+              <div
+                className={`review-comment-message-meta${
+                  repeatedAuthor ? " is-compact" : ""
+                }`}
+              >
+                {!repeatedAuthor ? (
+                  <>
+                    <span className="fw-semibold">
+                      {renderUserLabel(comment.author)}
+                    </span>
+                    <span>{new Date(comment.createdAt).toLocaleString()}</span>
+                  </>
+                ) : null}
+                {canEdit ? (
+                  <button
+                    aria-label={t("editComment")}
+                    className="btn btn-outline-secondary btn-sm"
+                    title={t("editComment")}
+                    type="button"
+                    onClick={() => startEditComment(comment)}
+                  >
+                    <i className="bi bi-pencil" aria-hidden="true" />
+                  </button>
+                ) : null}
+                {canDelete ? (
+                  <button
+                    aria-label={t("deleteComment")}
+                    className="btn btn-outline-danger btn-sm"
+                    disabled={deletingCommentIds.includes(comment.id)}
+                    title={t("deleteComment")}
+                    type="button"
+                    onClick={() => void deleteComment(comment)}
+                  >
+                    {deletingCommentIds.includes(comment.id) ? (
+                      <span className="spinner-border spinner-border-sm" />
+                    ) : (
+                      <i className="bi bi-trash" aria-hidden="true" />
+                    )}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
             {editing ? (
               <div className="review-comment-edit">
                 <textarea

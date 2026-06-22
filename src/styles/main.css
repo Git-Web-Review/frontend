@@ -706,6 +706,11 @@ button {
   font-size: 0.8125rem;
 }
 
+.review-comment-message-meta.is-compact {
+  justify-content: flex-end;
+  margin-bottom: 0.125rem;
+}
+
 .review-comment-reply {
   margin-top: 0.75rem;
 }
