@@ -243,7 +243,25 @@ button {
 }
 
 .review-description-summary dd {
+  margin-bottom: 1rem;
+}
+
+.review-description-summary dd:last-child {
   margin-bottom: 0;
+}
+
+.review-readonly-value {
+  padding: 0.625rem 0.75rem;
+  background: var(--bs-tertiary-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.375rem;
+}
+
+.review-readonly-value .review-description {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
 }
 
 .review-log-body {

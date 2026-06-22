@@ -461,7 +461,7 @@ export function AdminPage() {
               rows={5}
               value={allowedDomains}
               onChange={(event) => setAllowedDomains(event.target.value)}
-              placeholder="6wind.com"
+              placeholder="company.com"
             />
             <p className="text-secondary small mt-2 mb-3">
               {t("allowedDomainsHelp")}

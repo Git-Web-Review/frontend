@@ -124,6 +124,8 @@ const stringFromPayload = (
   key: string,
 ) => (typeof payload[key] === "string" ? payload[key] : null);
 
+const shortHostname = (hostname: string) => hostname.split(".")[0] ?? hostname;
+
 const notificationMatchesReview = (
   event: RealtimeNotificationEvent,
   currentReview: ReviewItem,
@@ -181,7 +183,6 @@ export function ReviewPage() {
   const [commitLogLinkRules, setCommitLogLinkRules] = useState<
     CommitLogLinkRule[]
   >([]);
-  const [title, setTitle] = useState("");
   const [reviewerUserIds, setReviewerUserIds] = useState<string[]>([]);
   const activeReviewTab = (
     searchParams.get("tab") === "files" ||
@@ -235,7 +236,6 @@ export function ReviewPage() {
         idToken,
       );
       setReview(nextReview);
-      setTitle(nextReview.title ?? "");
       setReviewerUserIds(
         nextReview.reviewers.map((reviewer) => reviewer.userId),
       );
@@ -321,11 +321,6 @@ export function ReviewPage() {
     setSearchParams(tab === "overview" ? {} : { tab });
   };
 
-  const nullableText = (value: string) => {
-    const trimmed = value.trim();
-    return trimmed ? trimmed : null;
-  };
-
   const sortedReviewerUserIds = (userIds: string[]) => [...userIds].sort();
 
   const canDeleteReview = !!review && review.ownerId === currentUser?.id;
@@ -364,11 +359,10 @@ export function ReviewPage() {
   const hasReviewChanges =
     !!review &&
     canEditReviewDetails &&
-    (title !== (review.title ?? "") ||
-      sortedReviewerUserIds(reviewerUserIds).join("\n") !==
-        sortedReviewerUserIds(
-          review.reviewers.map((reviewer) => reviewer.userId),
-        ).join("\n"));
+    sortedReviewerUserIds(reviewerUserIds).join("\n") !==
+      sortedReviewerUserIds(
+        review.reviewers.map((reviewer) => reviewer.userId),
+      ).join("\n");
 
   const reviewStatusLabel = (reviewStatus: ReviewStatus) =>
     t(`reviewStatus${reviewStatus}`);
@@ -388,6 +382,19 @@ export function ReviewPage() {
     currentReview.commits[0]?.rawMessage ||
     "";
 
+  const fullReviewDescription = (currentReview: ReviewItem) =>
+    [
+      currentReview.description,
+      currentReview.gitwebLog,
+      currentReview.commits[0]?.rawMessage,
+    ].reduce(
+      (longestDescription: string, description) =>
+        description && description.length > longestDescription.length
+          ? description
+          : longestDescription,
+      "",
+    );
+
   const shortHash = (value: string | null) => value?.slice(0, 12) ?? null;
 
   const sourceBranchLabel = (currentReview: ReviewItem) =>
@@ -401,7 +408,6 @@ export function ReviewPage() {
     const body = {
       ...(canEditReviewDetails
         ? {
-            title: nullableText(title),
             reviewerUserIds,
           }
         : {}),
@@ -1070,7 +1076,7 @@ export function ReviewPage() {
       const url = new URL(currentReview.gitwebUrl);
       return {
         USERNAME: username,
-        HOSTNAME: url.hostname.replace(/\.dev\.6wind\.com$/, ""),
+        HOSTNAME: shortHostname(url.hostname),
         COMPONENT: component,
         HASH: params.get("h") ?? currentReview.sourceCommit ?? "",
       };
@@ -1552,32 +1558,32 @@ export function ReviewPage() {
           <div className="card-body">
             <div className="row g-4">
               <div className="col-lg-7">
-                <div className="mb-3">
-                  <label className="form-label" htmlFor="review-title">
-                    {t("reviewTitle")}
-                  </label>
-                  <input
-                    className="form-control"
-                    disabled={!canEditReviewDetails}
-                    id="review-title"
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                  />
-                </div>
-                {reviewDescription(review) ? (
-                  <dl className="review-description-summary mb-0 mt-3 small">
-                    <dt>{t("description")}</dt>
+                <dl className="review-description-summary mb-0 small">
+                  <dt>{t("reviewTitle")}</dt>
+                  <dd className="review-readonly-value text-break">
+                    {reviewTitle(review)}
+                  </dd>
+                  <dt>{t("description")}</dt>
+                  <dd className="review-readonly-value">
                     {(() => {
-                      const description = reviewDescription(review);
-                      const canExpand = description.length > 220;
-                      const visibleDescription =
-                        canExpand && !descriptionExpanded
-                          ? description.slice(0, 220).trimEnd()
-                          : description;
+                      const collapsedDescription = reviewDescription(review);
+                      const expandedDescription = fullReviewDescription(review);
+                      const canExpand = expandedDescription.length > 220;
+                      const visibleDescription = descriptionExpanded
+                        ? expandedDescription
+                        : canExpand
+                          ? collapsedDescription.slice(0, 220).trimEnd()
+                          : collapsedDescription;
 
                       return (
-                        <dd className={descriptionExpanded ? "review-description is-expanded" : "review-description"}>
-                          {visibleDescription}
+                        <div
+                          className={
+                            descriptionExpanded
+                              ? "review-description is-expanded"
+                              : "review-description"
+                          }
+                        >
+                          {visibleDescription || t("notAvailable")}
                           {canExpand ? (
                             <button
                               className="description-ellipsis-button"
@@ -1586,14 +1592,21 @@ export function ReviewPage() {
                               title={descriptionExpanded ? t("collapseDescription") : t("expandDescription")}
                               onClick={() => setDescriptionExpanded((current) => !current)}
                             >
-                              {descriptionExpanded ? t("collapseDescription") : "..."}
+                              <i
+                                className={
+                                  descriptionExpanded
+                                    ? "bi bi-chevron-up"
+                                    : "bi bi-chevron-down"
+                                }
+                                aria-hidden="true"
+                              />
                             </button>
                           ) : null}
-                        </dd>
+                        </div>
                       );
                     })()}
-                  </dl>
-                ) : null}
+                  </dd>
+                </dl>
                 <div className="commit-summary-grid mt-3 mb-3">
                     <div className="commit-summary-item commit-summary-project">
                       <span className="commit-summary-icon">

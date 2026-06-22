@@ -67,7 +67,7 @@
     "notificationMessage": "Message",
     "textNotificationSent": "Notification sent to {count} user(s).",
     "pasteGitweb": "Paste a git-web link",
-    "pasteGitwebPlaceholder": "http://you.dev.6wind/git/...",
+    "pasteGitwebPlaceholder": "http://you.company/git/...",
     "createReview": "Create review",
     "reviewCreateDetails": "Prepare review",
     "confirmCreateReview": "Create this review",

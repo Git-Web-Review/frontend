@@ -29,6 +29,8 @@ type CommitLogMatch = {
   index: number;
 };
 
+const shortHostname = (hostname: string) => hostname.split(".")[0] ?? hostname;
+
 type DashboardSection = "owned" | "assigned" | "done";
 
 const DASHBOARD_PAGE_SIZE = 10;
@@ -47,7 +49,6 @@ export function DashboardPage() {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [gitwebUrl, setGitwebUrl] = useState("");
-  const [createTitle, setCreateTitle] = useState("");
   const [createReviewerUserIds, setCreateReviewerUserIds] = useState<string[]>(
     [],
   );
@@ -242,11 +243,6 @@ export function DashboardPage() {
     return () => observer.disconnect();
   }, [idToken, dashboard, loadingDashboardSections]);
 
-  const nullableText = (value: string) => {
-    const trimmed = value.trim();
-    return trimmed ? trimmed : null;
-  };
-
   const previewReview = async () => {
     if (!idToken || !gitwebUrl) {
       return;
@@ -264,7 +260,6 @@ export function DashboardPage() {
         },
       );
       setPreview(nextPreview);
-      setCreateTitle(nextPreview.title ?? "");
       setCreateReviewerUserIds(
         nextPreview.reviewerUsers.map((reviewer) => reviewer.id),
       );
@@ -290,13 +285,10 @@ export function DashboardPage() {
         method: "POST",
         body: JSON.stringify({
           gitwebUrl: preview.gitwebUrl,
-          title: preview.title,
-          description: preview.description,
           reviewerUserIds: createReviewerUserIds,
         }),
       });
       setGitwebUrl("");
-      setCreateTitle("");
       setCreateReviewerUserIds([]);
       setPreview(null);
       setCreateModalOpen(false);
@@ -397,7 +389,7 @@ export function DashboardPage() {
       const url = new URL(source.gitwebUrl);
       return {
         USERNAME: username,
-        HOSTNAME: url.hostname.replace(/\.dev\.6wind\.com$/, ""),
+        HOSTNAME: shortHostname(url.hostname),
         COMPONENT: component,
         HASH: params.get("h") ?? source.sourceCommit ?? "",
       };
@@ -695,17 +687,9 @@ export function DashboardPage() {
                   ) : null}
                   <div className="row g-4">
                     <div className="col-lg-5">
-                      <div className="mb-3">
-                        <label className="form-label" htmlFor="modal-review-title">
-                          {t("reviewTitle")}
-                        </label>
-                        <input
-                          className="form-control"
-                          id="modal-review-title"
-                          value={createTitle}
-                          readOnly
-                        />
-                      </div>
+                      {preview.title ? (
+                        <h6 className="mb-3 text-break">{preview.title}</h6>
+                      ) : null}
                       {preview.gitwebLog ? (
                         <pre className="border rounded bg-body-tertiary p-3 mb-0 review-log-body">
                           {preview.gitwebLog}
