@@ -671,7 +671,7 @@ export function DashboardPage() {
       {createModalOpen && preview ? (
         <>
           <div className="modal d-block" role="dialog" aria-modal="true">
-            <div className="modal-dialog modal-xl modal-dialog-scrollable">
+            <div className="modal-dialog modal-xxl modal-dialog-scrollable">
               <div className="modal-content">
                 <div className="modal-header">
                   <div>

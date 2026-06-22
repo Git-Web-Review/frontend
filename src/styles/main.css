@@ -765,3 +765,7 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+.modal-xxl {
+  max-width: 70vw;
+}
