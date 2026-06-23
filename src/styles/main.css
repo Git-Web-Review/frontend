@@ -520,7 +520,7 @@ button {
 
 .diff-line {
   display: grid;
-  grid-template-columns: 1.75rem 3.25rem minmax(24rem, 1fr);
+  grid-template-columns: 1.75rem 4.5rem minmax(24rem, 1fr);
   min-height: 1.25rem;
   border-bottom: 1px solid var(--bs-border-color-translucent);
 }
@@ -545,6 +545,16 @@ button {
   background: rgba(var(--bs-danger-rgb), 0.12);
 }
 
+.diff-hunk-header {
+  padding: 0.45rem 0.75rem;
+  border-top: 1px solid rgba(var(--bs-primary-rgb), 0.28);
+  border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.28);
+  color: var(--bs-primary);
+  background: rgba(var(--bs-primary-rgb), 0.1);
+  font-family: var(--bs-font-monospace);
+  font-weight: 700;
+}
+
 .diff-comment-button {
   width: 100%;
   border: 0;
@@ -556,6 +566,10 @@ button {
 .diff-comment-button:hover {
   color: var(--bs-primary);
   background: rgba(var(--bs-primary-rgb), 0.12);
+}
+
+.diff-comment-button-placeholder {
+  background: rgba(var(--bs-secondary-rgb), 0.04);
 }
 
 .diff-line-number {

@@ -119,6 +119,77 @@ const codeFromDiffLine = (line: string) => {
   return line;
 };
 
+type DiffRenderRow =
+  | {
+      kind: "hunk";
+      key: string;
+      text: string;
+    }
+  | {
+      kind: "line";
+      key: string;
+      text: string;
+      lineNumber: number | null;
+    };
+
+const diffHunkHeaderPattern = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/;
+
+const diffRenderRows = (patch: string): DiffRenderRow[] => {
+  let oldLineNumber = 0;
+  let newLineNumber = 0;
+  let insideHunk = false;
+
+  return patch.split("\n").map((line, index) => {
+    const hunkMatch = diffHunkHeaderPattern.exec(line);
+    if (hunkMatch) {
+      oldLineNumber = Number(hunkMatch[1]);
+      newLineNumber = Number(hunkMatch[2]);
+      insideHunk = true;
+
+      return {
+        kind: "hunk",
+        key: `hunk-${index}`,
+        text: line,
+      };
+    }
+
+    if (!insideHunk) {
+      return {
+        kind: "line",
+        key: `metadata-${index}`,
+        text: line,
+        lineNumber: null,
+      };
+    }
+
+    if (line.startsWith("+") && !line.startsWith("+++")) {
+      const lineNumber = newLineNumber;
+      newLineNumber += 1;
+      return { kind: "line", key: `line-${index}`, text: line, lineNumber };
+    }
+
+    if (line.startsWith("-") && !line.startsWith("---")) {
+      const lineNumber = oldLineNumber;
+      oldLineNumber += 1;
+      return { kind: "line", key: `line-${index}`, text: line, lineNumber };
+    }
+
+    if (line.startsWith(" ")) {
+      const lineNumber = newLineNumber;
+      oldLineNumber += 1;
+      newLineNumber += 1;
+      return { kind: "line", key: `line-${index}`, text: line, lineNumber };
+    }
+
+    return {
+      kind: "line",
+      key: `metadata-${index}`,
+      text: line,
+      lineNumber: null,
+    };
+  });
+};
+
 const stringFromPayload = (
   payload: Record<string, unknown>,
   key: string,
@@ -1216,7 +1287,7 @@ export function ReviewPage() {
     }
 
     return currentReview.gitDiff.files.map((file) => {
-      const lines = file.patch.split("\n");
+      const rows = diffRenderRows(file.patch);
       const language = languageForPath(file.path);
 
       return (
@@ -1253,34 +1324,52 @@ export function ReviewPage() {
             </button>
           </div>
           <div className="diff-viewer">
-            {lines.map((line, index) => {
-              const lineNumber = index + 1;
-              const lineKind = diffLineClass(line);
-              const lineTarget = {
-                commitHash: currentReview.sourceCommit,
-                filePath: file.path,
-                lineNumber,
-              } satisfies CommentTarget;
-              const lineCommentThreads = commentThreadsForTarget(lineTarget);
+            {rows.map((row) => {
+              if (row.kind === "hunk") {
+                return (
+                  <div className="diff-line-block" key={row.key}>
+                    <div className="diff-hunk-header">{row.text}</div>
+                  </div>
+                );
+              }
+
+              const lineKind = diffLineClass(row.text);
+              const lineTarget = row.lineNumber === null
+                ? null
+                : {
+                    commitHash: currentReview.sourceCommit,
+                    filePath: file.path,
+                    lineNumber: row.lineNumber,
+                  } satisfies CommentTarget;
+              const lineCommentThreads = lineTarget
+                ? commentThreadsForTarget(lineTarget)
+                : [];
               const inlineComposerOpen =
+                !!lineTarget &&
                 !!inlineCommentTarget &&
                 targetKey(inlineCommentTarget) === targetKey(lineTarget);
 
               return (
-                <div className="diff-line-block" key={`${file.path}-${lineNumber}`}>
+                <div className="diff-line-block" key={row.key}>
                   <div className={`diff-line ${lineKind}`}>
-                    <button
-                      className="diff-comment-button"
-                      type="button"
-                      title={t("commentLine")}
-                      onClick={() => toggleInlineComment(lineTarget)}
-                    >
-                      <i className="bi bi-plus" aria-hidden="true" />
-                    </button>
-                    <span className="diff-line-number">{lineNumber}</span>
+                    {lineTarget ? (
+                      <button
+                        className="diff-comment-button"
+                        type="button"
+                        title={t("commentLine")}
+                        onClick={() => toggleInlineComment(lineTarget)}
+                      >
+                        <i className="bi bi-plus" aria-hidden="true" />
+                      </button>
+                    ) : (
+                      <span className="diff-comment-button-placeholder" />
+                    )}
+                    <span className="diff-line-number">
+                      {row.lineNumber ?? ""}
+                    </span>
                     <code
                       className="diff-line-code hljs"
-                      dangerouslySetInnerHTML={highlightedCode(line, language)}
+                      dangerouslySetInnerHTML={highlightedCode(row.text, language)}
                     />
                   </div>
                   {inlineComposerOpen ? (
