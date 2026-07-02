@@ -672,6 +672,13 @@ button.diff-line-number-link:hover {
   border-radius: 2px;
 }
 
+.review-field-image {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 0.375rem;
+  border: 1px solid var(--bs-border-color);
+}
+
 [data-bs-theme="dark"] .diff-line-code.hljs,
 [data-bs-theme="dark"] .hljs {
   color: #d0d7de;

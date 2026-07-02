@@ -33,6 +33,7 @@ import type {
   ReviewCommentSide,
   ReviewCommit,
   ReviewDeletion,
+  ReviewField,
   ReviewItem,
   ReviewStatus,
   ReviewUserSummary,
@@ -329,6 +330,11 @@ export function ReviewPage() {
   const [activeCommitId, setActiveCommitId] = useState<string | null>(null);
   const [commitNavOpen, setCommitNavOpen] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [reviewFieldDefs, setReviewFieldDefs] = useState<ReviewField[]>([]);
+  const [fieldValueDrafts, setFieldValueDrafts] = useState<
+    Record<string, string>
+  >({});
+  const [savingFieldIds, setSavingFieldIds] = useState<string[]>([]);
 
   const loadReview = async () => {
     if (!idToken) {
@@ -378,6 +384,16 @@ export function ReviewPage() {
     );
   };
 
+  const loadReviewFieldDefs = async () => {
+    if (!idToken) {
+      return;
+    }
+
+    setReviewFieldDefs(
+      await apiRequest<ReviewField[]>("/v1/review-fields", idToken),
+    );
+  };
+
   const loadReviewComments = async () => {
     if (!idToken) {
       setReviewComments([]);
@@ -397,11 +413,69 @@ export function ReviewPage() {
     }
   };
 
+  const savedFieldValue = (fieldId: string) =>
+    review?.fieldValues.find((fieldValue) => fieldValue.fieldId === fieldId)
+      ?.value ?? "";
+
+  const fieldPlaceholder = (type: ReviewField["type"]) => {
+    switch (type) {
+      case "LINK":
+        return t("fieldPlaceholderLink");
+      case "IMAGE":
+        return t("fieldPlaceholderImage");
+      case "NUMBER":
+        return t("fieldPlaceholderNumber");
+      default:
+        return t("fieldPlaceholderText");
+    }
+  };
+
+  const saveFieldValue = async (fieldId: string) => {
+    if (!idToken || !review) {
+      return;
+    }
+
+    const draft = (fieldValueDrafts[fieldId] ?? "").trim();
+    setSavingFieldIds((current) => [...current, fieldId]);
+    try {
+      const nextReview = await apiRequest<ReviewItem>(
+        `/v1/reviews/${reviewId}/fields/${fieldId}`,
+        idToken,
+        {
+          method: "PUT",
+          body: JSON.stringify({ value: draft || null }),
+        },
+      );
+      setReview(nextReview);
+      showToast(t("reviewFieldValueSaved"));
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : t("backendError"));
+    } finally {
+      setSavingFieldIds((current) => current.filter((id) => id !== fieldId));
+    }
+  };
+
   useEffect(() => {
     void loadReview();
     void loadCommitLogLinkRules();
+    void loadReviewFieldDefs();
     void loadReviewComments();
   }, [idToken, reviewId]);
+
+  useEffect(() => {
+    if (!review) {
+      return;
+    }
+
+    setFieldValueDrafts(
+      Object.fromEntries(
+        review.fieldValues.map((fieldValue) => [
+          fieldValue.fieldId,
+          fieldValue.value,
+        ]),
+      ),
+    );
+  }, [review]);
 
   useEffect(() => {
     if (!review) {
@@ -2248,6 +2322,95 @@ export function ReviewPage() {
                     onChange={setReviewerUserIds}
                   />
                 </div>
+                {reviewFieldDefs.length ? (
+                  <div className="mb-3">
+                    <span className="form-label d-block">
+                      {t("reviewFields")}
+                    </span>
+                    {reviewFieldDefs.map((field) => {
+                      const draft = fieldValueDrafts[field.id] ?? "";
+                      const saved = savedFieldValue(field.id);
+                      const changed = draft.trim() !== saved;
+                      const saving = savingFieldIds.includes(field.id);
+
+                      return (
+                        <div className="mb-2" key={field.id}>
+                          <label
+                            className="form-label small mb-1"
+                            htmlFor={`review-field-${field.id}`}
+                          >
+                            {field.name}
+                          </label>
+                          <div className="input-group input-group-sm">
+                            <input
+                              className="form-control"
+                              id={`review-field-${field.id}`}
+                              disabled={!canEditReviewDetails}
+                              placeholder={fieldPlaceholder(field.type)}
+                              type={
+                                field.type === "NUMBER"
+                                  ? "number"
+                                  : field.type === "TEXT"
+                                    ? "text"
+                                    : "url"
+                              }
+                              value={draft}
+                              onChange={(event) =>
+                                setFieldValueDrafts((current) => ({
+                                  ...current,
+                                  [field.id]: event.target.value,
+                                }))
+                              }
+                            />
+                            {canEditReviewDetails && changed ? (
+                              <button
+                                className="btn btn-outline-success d-inline-flex align-items-center gap-1"
+                                type="button"
+                                disabled={saving}
+                                onClick={() => void saveFieldValue(field.id)}
+                              >
+                                {saving ? (
+                                  <span className="spinner-border spinner-border-sm" />
+                                ) : (
+                                  <i className="bi bi-save" aria-hidden="true" />
+                                )}
+                                {t("save")}
+                              </button>
+                            ) : null}
+                          </div>
+                          {saved && field.type === "LINK" ? (
+                            <a
+                              className="small text-break d-inline-flex align-items-center gap-1 mt-1"
+                              href={saved}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              <i
+                                className="bi bi-box-arrow-up-right"
+                                aria-hidden="true"
+                              />
+                              {saved}
+                            </a>
+                          ) : null}
+                          {saved && field.type === "IMAGE" ? (
+                            <a
+                              className="d-block mt-1"
+                              href={saved}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              <img
+                                alt={field.name}
+                                className="review-field-image"
+                                src={saved}
+                              />
+                            </a>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
             </div>
             {hasReviewChanges && canEditReviewDetails ? (

@@ -10,6 +10,7 @@ import type {
   CommitLogLinkRule,
   ReviewDashboard,
   ReviewDeletion,
+  ReviewField,
   ReviewItem,
   ReviewPreview,
 } from "../types/api";
@@ -77,6 +78,10 @@ export function DashboardPage() {
     [],
   );
   const [createCommitHashes, setCreateCommitHashes] = useState<string[]>([]);
+  const [reviewFieldDefs, setReviewFieldDefs] = useState<ReviewField[]>([]);
+  const [createFieldValues, setCreateFieldValues] = useState<
+    Record<string, string>
+  >({});
   const [commitLogLinkRules, setCommitLogLinkRules] = useState<
     CommitLogLinkRule[]
   >([]);
@@ -215,9 +220,25 @@ export function DashboardPage() {
     }
   };
 
+  const loadReviewFieldDefs = async () => {
+    if (!idToken) {
+      setReviewFieldDefs([]);
+      return;
+    }
+
+    try {
+      setReviewFieldDefs(
+        await apiRequest<ReviewField[]>("/v1/review-fields", idToken),
+      );
+    } catch {
+      setReviewFieldDefs([]);
+    }
+  };
+
   useEffect(() => {
     void loadDashboard();
     void loadCommitLogLinkRules();
+    void loadReviewFieldDefs();
   }, [idToken]);
 
   useEffect(() => {
@@ -329,11 +350,15 @@ export function DashboardPage() {
           ...(preview.linkKind === "SUMMARY"
             ? { commitHashes: createCommitHashes }
             : {}),
+          fieldValues: Object.entries(createFieldValues)
+            .map(([fieldId, value]) => ({ fieldId, value: value.trim() }))
+            .filter((fieldValue) => fieldValue.value),
         }),
       });
       setGitwebUrl("");
       setCreateReviewerUserIds([]);
       setCreateCommitHashes([]);
+      setCreateFieldValues({});
       setPreview(null);
       setCreateModalOpen(false);
       showToast(t("reviewCreated"));
@@ -350,6 +375,19 @@ export function DashboardPage() {
 
   const closeCreateModal = () => {
     setCreateModalOpen(false);
+  };
+
+  const createFieldPlaceholder = (type: ReviewField["type"]) => {
+    switch (type) {
+      case "LINK":
+        return t("fieldPlaceholderLink");
+      case "IMAGE":
+        return t("fieldPlaceholderImage");
+      case "NUMBER":
+        return t("fieldPlaceholderNumber");
+      default:
+        return t("fieldPlaceholderText");
+    }
   };
 
   const toggleCreateCommitHash = (hash: string) => {
@@ -892,6 +930,42 @@ export function DashboardPage() {
                           onChange={setCreateReviewerUserIds}
                         />
                       </div>
+                      {reviewFieldDefs.length ? (
+                        <div className="mb-3">
+                          <span className="form-label d-block">
+                            {t("reviewFields")}
+                          </span>
+                          {reviewFieldDefs.map((field) => (
+                            <div className="mb-2" key={field.id}>
+                              <label
+                                className="form-label small mb-1"
+                                htmlFor={`create-review-field-${field.id}`}
+                              >
+                                {field.name}
+                              </label>
+                              <input
+                                className="form-control form-control-sm"
+                                id={`create-review-field-${field.id}`}
+                                placeholder={createFieldPlaceholder(field.type)}
+                                type={
+                                  field.type === "NUMBER"
+                                    ? "number"
+                                    : field.type === "TEXT"
+                                      ? "text"
+                                      : "url"
+                                }
+                                value={createFieldValues[field.id] ?? ""}
+                                onChange={(event) =>
+                                  setCreateFieldValues((current) => ({
+                                    ...current,
+                                    [field.id]: event.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>

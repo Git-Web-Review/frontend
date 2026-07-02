@@ -95,6 +95,30 @@ export type CommitLogLinkRuleDeletion = {
   deleted: boolean;
 };
 
+export type ReviewFieldType = "LINK" | "IMAGE" | "TEXT" | "NUMBER";
+
+export type ReviewField = {
+  id: string;
+  name: string;
+  type: ReviewFieldType;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ReviewFieldDeletion = {
+  id: string;
+  deleted: boolean;
+};
+
+export type ReviewFieldValue = {
+  id: string;
+  reviewId: string;
+  fieldId: string;
+  value: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type NotificationItem = {
   id: string;
   type:
@@ -202,6 +226,7 @@ export type ReviewItem = {
   updatedAt: string;
   commits: ReviewCommit[];
   reviewers: ReviewReviewer[];
+  fieldValues: ReviewFieldValue[];
   gitDiff: ReviewDiff;
 };
 
