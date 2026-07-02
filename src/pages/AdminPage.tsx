@@ -80,9 +80,43 @@ const adminTabIds = [
   "admins",
   "linkRules",
   "reviewFields",
+  "crons",
 ] as const;
 
 type AdminTab = (typeof adminTabIds)[number];
+
+type CronDraft = {
+  notificationPurgeEnabled: boolean;
+  notificationPurgeIntervalMinutes: string;
+  notificationPurgeAfterDays: string;
+  reviewAutoCloseEnabled: boolean;
+  reviewAutoCloseIntervalMinutes: string;
+};
+
+const defaultCronDraft: CronDraft = {
+  notificationPurgeEnabled: false,
+  notificationPurgeIntervalMinutes: "60",
+  notificationPurgeAfterDays: "30",
+  reviewAutoCloseEnabled: false,
+  reviewAutoCloseIntervalMinutes: "60",
+};
+
+const cronDraftFromSettings = (settings: GlobalSettings): CronDraft => ({
+  notificationPurgeEnabled: settings.notificationPurgeEnabled,
+  notificationPurgeIntervalMinutes: String(
+    settings.notificationPurgeIntervalMinutes,
+  ),
+  notificationPurgeAfterDays: String(settings.notificationPurgeAfterDays),
+  reviewAutoCloseEnabled: settings.reviewAutoCloseEnabled,
+  reviewAutoCloseIntervalMinutes: String(
+    settings.reviewAutoCloseIntervalMinutes,
+  ),
+});
+
+const parseCronNumber = (value: string): number | null => {
+  const parsed = Number.parseInt(value.trim(), 10);
+  return Number.isInteger(parsed) && parsed >= 1 ? parsed : null;
+};
 
 const isAdminTab = (value: string | null): value is AdminTab =>
   adminTabIds.includes(value as AdminTab);
@@ -140,6 +174,10 @@ export function AdminPage() {
   const [notificationMessage, setNotificationMessage] = useState("");
   const [allowedDomains, setAllowedDomains] = useState("");
   const [savedAllowedDomains, setSavedAllowedDomains] = useState<string[]>([]);
+  const [cronDraft, setCronDraft] = useState<CronDraft>(defaultCronDraft);
+  const [savedCronDraft, setSavedCronDraft] =
+    useState<CronDraft>(defaultCronDraft);
+  const [savingCron, setSavingCron] = useState(false);
   const [sendingNotification, setSendingNotification] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -264,6 +302,8 @@ export function AdminPage() {
       );
       setAllowedDomains(settings.allowedOAuthDomains.join("\n"));
       setSavedAllowedDomains(settings.allowedOAuthDomains);
+      setCronDraft(cronDraftFromSettings(settings));
+      setSavedCronDraft(cronDraftFromSettings(settings));
     } catch (error) {
       setErrorMessage(errorLabel(error));
     } finally {
@@ -519,6 +559,56 @@ export function AdminPage() {
     }
   };
 
+  const hasCronChanges =
+    JSON.stringify(cronDraft) !== JSON.stringify(savedCronDraft);
+
+  const cronDraftValid =
+    parseCronNumber(cronDraft.notificationPurgeIntervalMinutes) !== null &&
+    parseCronNumber(cronDraft.notificationPurgeAfterDays) !== null &&
+    parseCronNumber(cronDraft.reviewAutoCloseIntervalMinutes) !== null;
+
+  const updateCronDraft = (nextDraft: Partial<CronDraft>) => {
+    setCronDraft((current) => ({ ...current, ...nextDraft }));
+  };
+
+  const saveCronSettings = async () => {
+    if (!idToken || !hasCronChanges || !cronDraftValid) {
+      return;
+    }
+
+    setSavingCron(true);
+    setErrorMessage("");
+    try {
+      const settings = await apiRequest<GlobalSettings>(
+        "/v1/admin/settings",
+        idToken,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            notificationPurgeEnabled: cronDraft.notificationPurgeEnabled,
+            notificationPurgeIntervalMinutes: parseCronNumber(
+              cronDraft.notificationPurgeIntervalMinutes,
+            ),
+            notificationPurgeAfterDays: parseCronNumber(
+              cronDraft.notificationPurgeAfterDays,
+            ),
+            reviewAutoCloseEnabled: cronDraft.reviewAutoCloseEnabled,
+            reviewAutoCloseIntervalMinutes: parseCronNumber(
+              cronDraft.reviewAutoCloseIntervalMinutes,
+            ),
+          }),
+        },
+      );
+      setCronDraft(cronDraftFromSettings(settings));
+      setSavedCronDraft(cronDraftFromSettings(settings));
+      showToast(t("cronSettingsSaved"));
+    } catch (error) {
+      setErrorMessage(errorLabel(error));
+    } finally {
+      setSavingCron(false);
+    }
+  };
+
   const updateLinkRuleDraft = (
     ruleId: string,
     nextDraft: Partial<LinkRuleDraft>,
@@ -717,6 +807,7 @@ export function AdminPage() {
       label: t("reviewFields"),
       icon: "bi-input-cursor-text",
     },
+    { id: "crons", label: t("cronJobs"), icon: "bi-clock-history" },
   ];
 
   return (
@@ -785,6 +876,160 @@ export function AdminPage() {
                 )}
                 {t("save")}
               </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+      ) : null}
+
+      {activeTab === "crons" ? (
+      <div className="col-12">
+        <div className="card card-warning card-outline h-100">
+          <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <h3 className="card-title">{t("cronJobs")}</h3>
+            <RefreshButton
+              disabled={!idToken}
+              loading={loadingSettings}
+              onClick={() => void loadGlobalSettings()}
+            />
+          </div>
+          <div className="card-body d-flex flex-column gap-4">
+            <div>
+              <div className="form-check form-switch">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="cron-notification-purge-enabled"
+                  checked={cronDraft.notificationPurgeEnabled}
+                  onChange={(event) =>
+                    updateCronDraft({
+                      notificationPurgeEnabled: event.target.checked,
+                    })
+                  }
+                />
+                <label
+                  className="form-check-label fw-semibold"
+                  htmlFor="cron-notification-purge-enabled"
+                >
+                  {t("cronNotificationPurge")}
+                </label>
+              </div>
+              <p className="text-secondary small mb-2">
+                {t("cronNotificationPurgeHelp")}
+              </p>
+              {cronDraft.notificationPurgeEnabled ? (
+                <div className="row g-3 ms-4">
+                  <div className="col-12 col-sm-6 col-lg-3">
+                    <label
+                      className="form-label"
+                      htmlFor="cron-notification-purge-interval"
+                    >
+                      {t("cronIntervalMinutes")}
+                    </label>
+                    <input
+                      className={`form-control ${parseCronNumber(cronDraft.notificationPurgeIntervalMinutes) === null ? "is-invalid" : ""}`}
+                      id="cron-notification-purge-interval"
+                      type="number"
+                      min={1}
+                      value={cronDraft.notificationPurgeIntervalMinutes}
+                      onChange={(event) =>
+                        updateCronDraft({
+                          notificationPurgeIntervalMinutes: event.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="col-12 col-sm-6 col-lg-3">
+                    <label
+                      className="form-label"
+                      htmlFor="cron-notification-purge-days"
+                    >
+                      {t("cronRetentionDays")}
+                    </label>
+                    <input
+                      className={`form-control ${parseCronNumber(cronDraft.notificationPurgeAfterDays) === null ? "is-invalid" : ""}`}
+                      id="cron-notification-purge-days"
+                      type="number"
+                      min={1}
+                      value={cronDraft.notificationPurgeAfterDays}
+                      onChange={(event) =>
+                        updateCronDraft({
+                          notificationPurgeAfterDays: event.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div>
+              <div className="form-check form-switch">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="cron-review-auto-close-enabled"
+                  checked={cronDraft.reviewAutoCloseEnabled}
+                  onChange={(event) =>
+                    updateCronDraft({
+                      reviewAutoCloseEnabled: event.target.checked,
+                    })
+                  }
+                />
+                <label
+                  className="form-check-label fw-semibold"
+                  htmlFor="cron-review-auto-close-enabled"
+                >
+                  {t("cronReviewAutoClose")}
+                </label>
+              </div>
+              <p className="text-secondary small mb-2">
+                {t("cronReviewAutoCloseHelp")}
+              </p>
+              {cronDraft.reviewAutoCloseEnabled ? (
+                <div className="row g-3 ms-4">
+                  <div className="col-12 col-sm-6 col-lg-3">
+                    <label
+                      className="form-label"
+                      htmlFor="cron-review-auto-close-interval"
+                    >
+                      {t("cronIntervalMinutes")}
+                    </label>
+                    <input
+                      className={`form-control ${parseCronNumber(cronDraft.reviewAutoCloseIntervalMinutes) === null ? "is-invalid" : ""}`}
+                      id="cron-review-auto-close-interval"
+                      type="number"
+                      min={1}
+                      value={cronDraft.reviewAutoCloseIntervalMinutes}
+                      onChange={(event) =>
+                        updateCronDraft({
+                          reviewAutoCloseIntervalMinutes: event.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            {idToken && hasCronChanges ? (
+              <div>
+                <button
+                  className="btn btn-success d-inline-flex align-items-center gap-2"
+                  type="button"
+                  disabled={savingCron || !cronDraftValid}
+                  onClick={() => void saveCronSettings()}
+                >
+                  {savingCron ? (
+                    <span className="spinner-border spinner-border-sm" />
+                  ) : (
+                    <i className="bi bi-save" aria-hidden="true" />
+                  )}
+                  {t("save")}
+                </button>
+              </div>
             ) : null}
           </div>
         </div>

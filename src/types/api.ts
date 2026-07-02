@@ -94,6 +94,11 @@ export type AdminTextNotificationResponse = {
 export type GlobalSettings = {
   id: string;
   allowedOAuthDomains: string[];
+  notificationPurgeEnabled: boolean;
+  notificationPurgeIntervalMinutes: number;
+  notificationPurgeAfterDays: number;
+  reviewAutoCloseEnabled: boolean;
+  reviewAutoCloseIntervalMinutes: number;
   createdAt: string;
   updatedAt: string;
 };
