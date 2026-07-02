@@ -1,6 +1,13 @@
 export type UserRole = "USER" | "ADMIN";
 export type UserLocale = "FR" | "EN";
-export type ReviewStatus = "PENDING" | "IN_REVIEW" | "ACKED" | "CLOSED";
+export type ReviewStatus =
+  | "PENDING"
+  | "IN_REVIEW"
+  | "REVIEWED"
+  | "ACKED"
+  | "CLOSED";
+export type ReviewCommitStatus = "PENDING" | "IN_REVIEW" | "REVIEWED" | "ACKED";
+export type ReviewLinkKind = "COMMIT" | "SUMMARY";
 
 export type ApiErrorCode =
   | "MISSING_AUTH_HEADER"
@@ -94,7 +101,8 @@ export type NotificationItem = {
     | "TEXT"
     | "REVIEW_PENDING"
     | "REVIEW_STATUS_CHANGED"
-    | "COMMENT_RECEIVED";
+    | "COMMENT_RECEIVED"
+    | "COMMIT_REVIEWED";
   payload: unknown;
   seen: boolean;
   createdAt: string;
@@ -135,16 +143,28 @@ export type ReviewReviewer = {
   user: ReviewUserSummary;
 };
 
+export type ReviewCommitAck = {
+  id: string;
+  reviewCommitId: string;
+  userId: string;
+  acknowledgedAt: string;
+  user: ReviewUserSummary;
+};
+
 export type ReviewCommit = {
   id: string;
   reviewId: string;
   hash: string;
   title: string;
+  status: ReviewCommitStatus;
+  position: number;
   signedOffByName: string;
   signedOffByEmail: string;
   fixesHash: string | null;
   fixesTitle: string | null;
   rawMessage: string;
+  gitDiff: ReviewDiff;
+  acks: ReviewCommitAck[];
   createdAt: string;
 };
 
@@ -185,8 +205,18 @@ export type ReviewItem = {
   gitDiff: ReviewDiff;
 };
 
+export type ReviewPreviewCommitOption = {
+  hash: string;
+  title: string;
+  authorName: string;
+  authorEmail: string;
+  authoredAt: string | null;
+};
+
 export type ReviewPreview = {
   gitwebUrl: string;
+  linkKind: ReviewLinkKind;
+  commitOptions: ReviewPreviewCommitOption[];
   title: string | null;
   description: string | null;
   sourceProject: string | null;
@@ -205,13 +235,16 @@ export type ReviewDeletion = {
   deleted: boolean;
 };
 
+export type ReviewCommentSide = "BEFORE" | "AFTER";
+
 export type ReviewComment = {
   id: string;
   commentId: string;
   reviewId: string;
   commitHash: string | null;
   filePath: string | null;
-  lineNumber: number;
+  lineNumber: number | null;
+  side: ReviewCommentSide;
   author: ReviewUserSummary;
   done: boolean;
   doneBy: ReviewUserSummary | null;

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import hljs from "highlight.js/lib/core";
 import bash from "highlight.js/lib/languages/bash";
 import c from "highlight.js/lib/languages/c";
@@ -30,12 +30,18 @@ import {
 import type {
   CommitLogLinkRule,
   ReviewComment,
+  ReviewCommentSide,
+  ReviewCommit,
   ReviewDeletion,
   ReviewItem,
   ReviewStatus,
   ReviewUserSummary,
 } from "../types/api";
-import { reviewStatusBadgeClass } from "../utils/reviewStatus";
+import {
+  reviewCommitStatusBadgeClass,
+  reviewStatusBadgeClass,
+} from "../utils/reviewStatus";
+import { gitwebFetchErrorLabel } from "../utils/gitwebFetchError";
 
 hljs.registerLanguage("bash", bash);
 hljs.registerLanguage("c", c);
@@ -130,6 +136,7 @@ type DiffRenderRow =
       key: string;
       text: string;
       lineNumber: number | null;
+      side: ReviewCommentSide;
     };
 
 const diffHunkHeaderPattern = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/;
@@ -159,26 +166,45 @@ const diffRenderRows = (patch: string): DiffRenderRow[] => {
         key: `metadata-${index}`,
         text: line,
         lineNumber: null,
+        side: "AFTER",
       };
     }
 
     if (line.startsWith("+") && !line.startsWith("+++")) {
       const lineNumber = newLineNumber;
       newLineNumber += 1;
-      return { kind: "line", key: `line-${index}`, text: line, lineNumber };
+      return {
+        kind: "line",
+        key: `line-${index}`,
+        text: line,
+        lineNumber,
+        side: "AFTER",
+      };
     }
 
     if (line.startsWith("-") && !line.startsWith("---")) {
       const lineNumber = oldLineNumber;
       oldLineNumber += 1;
-      return { kind: "line", key: `line-${index}`, text: line, lineNumber };
+      return {
+        kind: "line",
+        key: `line-${index}`,
+        text: line,
+        lineNumber,
+        side: "BEFORE",
+      };
     }
 
     if (line.startsWith(" ")) {
       const lineNumber = newLineNumber;
       oldLineNumber += 1;
       newLineNumber += 1;
-      return { kind: "line", key: `line-${index}`, text: line, lineNumber };
+      return {
+        kind: "line",
+        key: `line-${index}`,
+        text: line,
+        lineNumber,
+        side: "AFTER",
+      };
     }
 
     return {
@@ -186,6 +212,7 @@ const diffRenderRows = (patch: string): DiffRenderRow[] => {
       key: `metadata-${index}`,
       text: line,
       lineNumber: null,
+      side: "AFTER",
     };
   });
 };
@@ -222,7 +249,8 @@ type ReviewTab = "overview" | "files" | "comments";
 type CommentTarget = {
   commitHash: string | null;
   filePath: string | null;
-  lineNumber: number;
+  lineNumber: number | null;
+  side: ReviewCommentSide;
 };
 
 type ReviewCommentThread = CommentTarget & {
@@ -266,12 +294,6 @@ export function ReviewPage() {
   const [savingCloseReview, setSavingCloseReview] = useState(false);
   const [deletingReview, setDeletingReview] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [commentTarget, setCommentTarget] = useState<CommentTarget>({
-    commitHash: null,
-    filePath: null,
-    lineNumber: 1,
-  });
-  const [commentDraft, setCommentDraft] = useState("");
   const [inlineCommentTarget, setInlineCommentTarget] =
     useState<CommentTarget | null>(null);
   const [inlineCommentDraft, setInlineCommentDraft] = useState("");
@@ -287,11 +309,25 @@ export function ReviewPage() {
   );
   const [expandedCommentIds, setExpandedCommentIds] = useState<string[]>([]);
   const [collapsedCommentIds, setCollapsedCommentIds] = useState<string[]>([]);
+  const [expandedDiscussionIds, setExpandedDiscussionIds] = useState<string[]>(
+    [],
+  );
+  const [pendingDiffAnchor, setPendingDiffAnchor] = useState<string | null>(
+    null,
+  );
+  const handledDiffLocationRef = useRef<string | null>(null);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [savingReplyCommentIds, setSavingReplyCommentIds] = useState<string[]>(
     [],
   );
   const [savingReviewAck, setSavingReviewAck] = useState(false);
+  const [savingCommitAckIds, setSavingCommitAckIds] = useState<string[]>([]);
+  const [reviewActionMenuOpen, setReviewActionMenuOpen] = useState(false);
+  const [commitActionMenuOpenId, setCommitActionMenuOpenId] = useState<
+    string | null
+  >(null);
+  const [activeCommitId, setActiveCommitId] = useState<string | null>(null);
+  const [commitNavOpen, setCommitNavOpen] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
   const loadReview = async () => {
@@ -368,6 +404,85 @@ export function ReviewPage() {
   }, [idToken, reviewId]);
 
   useEffect(() => {
+    if (!review) {
+      return;
+    }
+
+    setActiveCommitId((current) => {
+      if (current && review.commits.some((commit) => commit.id === current)) {
+        return current;
+      }
+      const firstOpenCommit = review.commits.find(
+        (commit) => commit.status !== "ACKED",
+      );
+      return (firstOpenCommit ?? review.commits[0])?.id ?? null;
+    });
+  }, [review]);
+
+  useEffect(() => {
+    if (!pendingDiffAnchor || activeReviewTab !== "files") {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      const element = document.getElementById(pendingDiffAnchor);
+      if (!element) {
+        return;
+      }
+
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.classList.add("diff-anchor-highlight");
+      window.setTimeout(() => {
+        element.classList.remove("diff-anchor-highlight");
+      }, 2000);
+      setPendingDiffAnchor(null);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [pendingDiffAnchor, activeReviewTab, activeCommitId]);
+
+  useEffect(() => {
+    if (!review || activeReviewTab !== "files") {
+      return;
+    }
+
+    const commitParam = searchParams.get("commit");
+    if (!commitParam) {
+      return;
+    }
+
+    const fileParam = searchParams.get("file");
+    const lineParam = searchParams.get("line");
+    const sideParam: ReviewCommentSide =
+      searchParams.get("side") === "BEFORE" ? "BEFORE" : "AFTER";
+    const signature = `${commitParam}:${fileParam ?? ""}:${lineParam ?? ""}:${sideParam}`;
+    if (handledDiffLocationRef.current === signature) {
+      return;
+    }
+
+    const commit = review.commits.find(
+      (currentCommit) =>
+        currentCommit.hash === commitParam ||
+        currentCommit.hash.startsWith(commitParam),
+    );
+    if (!commit) {
+      return;
+    }
+
+    handledDiffLocationRef.current = signature;
+    setActiveCommitId(commit.id);
+    const parsedLine = lineParam ? Number(lineParam) : Number.NaN;
+    setPendingDiffAnchor(
+      diffAnchorId({
+        commitHash: commit.hash,
+        filePath: fileParam,
+        lineNumber: Number.isInteger(parsedLine) ? parsedLine : null,
+        side: sideParam,
+      }),
+    );
+  }, [review, searchParams, activeReviewTab]);
+
+  useEffect(() => {
     if (!idToken || !review) {
       return;
     }
@@ -403,6 +518,26 @@ export function ReviewPage() {
   const currentReviewer = review?.reviewers.find(
     (reviewer) => reviewer.userId === currentUser?.id,
   );
+  const commitAckedByMe = (commit: ReviewCommit) =>
+    commit.acks.some((ack) => ack.userId === currentUser?.id);
+  const openCommentCountForCommit = (commitHash: string) =>
+    new Set(
+      reviewComments
+        .filter(
+          (comment) => !comment.done && comment.commitHash === commitHash,
+        )
+        .map((comment) => comment.commentId),
+    ).size;
+  const canAckCommit = (commit: ReviewCommit) =>
+    !!currentReviewer &&
+    review?.status !== "CLOSED" &&
+    commit.status !== "ACKED" &&
+    !commitAckedByMe(commit);
+  const canMarkCommitReviewed = (commit: ReviewCommit) =>
+    !!currentReviewer &&
+    review?.status !== "CLOSED" &&
+    commit.status !== "ACKED" &&
+    commit.status !== "REVIEWED";
   const openCommentCount = new Set(
     reviewComments
       .filter((comment) => !comment.done)
@@ -410,18 +545,20 @@ export function ReviewPage() {
   ).size;
   const canAckReview =
     !!currentReviewer &&
-    !currentReviewer.acknowledgedAt &&
-    !loadingReviewComments &&
-    openCommentCount === 0;
+    !!review &&
+    review.status !== "CLOSED" &&
+    review.commits.some((commit) => !commitAckedByMe(commit));
+  const canMarkReviewReviewed =
+    !!currentReviewer &&
+    !!review &&
+    review.status !== "CLOSED" &&
+    review.commits.some(
+      (commit) => commit.status !== "ACKED" && commit.status !== "REVIEWED",
+    );
   const canCloseReview =
     !!review &&
     review.ownerId === currentUser?.id &&
     review.status === "ACKED";
-  const ackReviewDisabledReason = savingReviewAck
-    ? t("actionInProgress")
-    : loadingReviewComments || openCommentCount > 0
-      ? t("reviewAckRequiresDoneComments")
-      : undefined;
   const closeReviewDisabledReason = savingCloseReview
     ? t("actionInProgress")
     : !canCloseReview
@@ -556,6 +693,82 @@ export function ReviewPage() {
     }
   };
 
+  const acknowledgeCommit = async (commit: ReviewCommit) => {
+    if (!idToken || !review || !canAckCommit(commit)) {
+      return;
+    }
+
+    setSavingCommitAckIds((current) => [...current, commit.id]);
+    setErrorMessage("");
+    try {
+      const nextReview = await apiRequest<ReviewItem>(
+        `/v1/reviews/${review.id}/commits/${commit.id}/ack`,
+        idToken,
+        { method: "PATCH" },
+      );
+      setReview(nextReview);
+      showToast(t("commitAcked"));
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : t("backendError"),
+      );
+    } finally {
+      setSavingCommitAckIds((current) =>
+        current.filter((commitId) => commitId !== commit.id),
+      );
+    }
+  };
+
+  const markReviewReviewed = async () => {
+    if (!idToken || !review || !canMarkReviewReviewed) {
+      return;
+    }
+
+    setSavingReviewAck(true);
+    setErrorMessage("");
+    try {
+      const nextReview = await apiRequest<ReviewItem>(
+        `/v1/reviews/${review.id}/reviewed`,
+        idToken,
+        { method: "PATCH" },
+      );
+      setReview(nextReview);
+      showToast(t("reviewMarkedReviewed"));
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : t("backendError"),
+      );
+    } finally {
+      setSavingReviewAck(false);
+    }
+  };
+
+  const markCommitReviewed = async (commit: ReviewCommit) => {
+    if (!idToken || !review || !canMarkCommitReviewed(commit)) {
+      return;
+    }
+
+    setSavingCommitAckIds((current) => [...current, commit.id]);
+    setErrorMessage("");
+    try {
+      const nextReview = await apiRequest<ReviewItem>(
+        `/v1/reviews/${review.id}/commits/${commit.id}/reviewed`,
+        idToken,
+        { method: "PATCH" },
+      );
+      setReview(nextReview);
+      showToast(t("commitMarkedReviewed"));
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : t("backendError"),
+      );
+    } finally {
+      setSavingCommitAckIds((current) =>
+        current.filter((commitId) => commitId !== commit.id),
+      );
+    }
+  };
+
   const closeReview = async () => {
     if (!idToken || !review || !canCloseReview) {
       return;
@@ -581,20 +794,62 @@ export function ReviewPage() {
   };
 
   const commentTargetLabel = (target: CommentTarget) => {
+    const commitPrefix = target.commitHash
+      ? `${target.commitHash.slice(0, 12)} - `
+      : "";
+
     if (!target.filePath) {
+      if (target.commitHash) {
+        return `${commitPrefix}${t("commitLogComment")}`;
+      }
       return t("generalReviewComment");
     }
 
-    return `${target.filePath}:${target.lineNumber}`;
-  };
+    if (target.lineNumber === null) {
+      return `${commitPrefix}${target.filePath}`;
+    }
 
-  const startLineComment = (target: CommentTarget) => {
-    setCommentTarget(target);
-    setActiveReviewTab("comments");
+    return `${commitPrefix}${target.filePath}:${target.lineNumber}${
+      target.side === "BEFORE" ? ` (${t("commentSideBefore")})` : ""
+    }`;
   };
 
   const targetKey = (target: CommentTarget) =>
-    `${target.commitHash ?? ""}:${target.filePath ?? ""}:${target.lineNumber}`;
+    `${target.commitHash ?? ""}:${target.filePath ?? ""}:${target.lineNumber ?? ""}:${target.side}`;
+
+  const diffAnchorId = (target: CommentTarget) =>
+    `diff-anchor-${targetKey(target)}`;
+
+  const openDiffLocation = (target: CommentTarget) => {
+    const params: Record<string, string> = { tab: "files" };
+    if (target.commitHash) {
+      params.commit = target.commitHash;
+    }
+    if (target.filePath) {
+      params.file = target.filePath;
+    }
+    if (target.lineNumber !== null) {
+      params.line = String(target.lineNumber);
+    }
+    if (target.side === "BEFORE") {
+      params.side = "BEFORE";
+    }
+
+    handledDiffLocationRef.current = null;
+    setSearchParams(params);
+  };
+
+  const threadDiffAvailable = (thread: ReviewCommentThread) =>
+    !!thread.commitHash &&
+    !!review?.commits.some((commit) => commit.hash === thread.commitHash);
+
+  const openDiffForThread = (thread: ReviewCommentThread) => {
+    if (!threadDiffAvailable(thread)) {
+      return;
+    }
+
+    openDiffLocation(thread);
+  };
 
   const commentThreadsFrom = (comments: ReviewComment[]): ReviewCommentThread[] => {
     const threadsById = new Map<string, ReviewCommentThread>();
@@ -618,6 +873,7 @@ export function ReviewPage() {
         commitHash: comment.commitHash,
         filePath: comment.filePath,
         lineNumber: comment.lineNumber,
+        side: comment.side,
         done: comment.done,
         doneBy: comment.doneBy,
         doneAt: comment.doneAt,
@@ -647,6 +903,17 @@ export function ReviewPage() {
     thread.done
       ? expandedCommentIds.includes(thread.commentId)
       : !collapsedCommentIds.includes(thread.commentId);
+
+  const isDiscussionExpanded = (thread: ReviewCommentThread) =>
+    expandedDiscussionIds.includes(thread.commentId);
+
+  const toggleDiscussionExpanded = (thread: ReviewCommentThread) => {
+    setExpandedDiscussionIds((current) =>
+      current.includes(thread.commentId)
+        ? current.filter((commentId) => commentId !== thread.commentId)
+        : [...current, thread.commentId],
+    );
+  };
 
   const toggleCommentThreadExpanded = (thread: ReviewCommentThread) => {
     if (thread.done) {
@@ -872,30 +1139,6 @@ export function ReviewPage() {
     }
   };
 
-  const addComment = async () => {
-    const message = commentDraft.trim();
-    if (!message) {
-      return;
-    }
-
-    setSavingComment(true);
-    setErrorMessage("");
-    try {
-      const comment = await createReviewComment(commentTarget, message);
-      if (comment) {
-        setReviewComments((current) => [...current, comment]);
-        setCommentDraft("");
-        await refreshReviewSnapshot();
-      }
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : t("backendError"),
-      );
-    } finally {
-      setSavingComment(false);
-    }
-  };
-
   const renderMarkdown = (value: string) => (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
@@ -1071,7 +1314,7 @@ export function ReviewPage() {
   ) => {
     return (
       <>
-        <span className="badge text-bg-light border">
+        <span className="badge review-meta-badge">
           {thread.messages.length} {t("commentMessages")}
         </span>
         {thread.done ? (
@@ -1111,12 +1354,20 @@ export function ReviewPage() {
 
   const highlightedCode = (line: string, language: string | null) => {
     const code = codeFromDiffLine(line);
-    const normalizedLanguage = normalizeLanguage(language);
-    if (!normalizedLanguage || !hljs.getLanguage(normalizedLanguage)) {
-      return { __html: hljs.highlightAuto(code).value || " " };
-    }
+    const trailingMatch = code.match(/[ \t]+$/);
+    const trailing = trailingMatch?.[0] ?? "";
+    const core = trailing ? code.slice(0, code.length - trailing.length) : code;
+    const trailingHtml = trailing
+      ? `<span class="diff-trailing-whitespace">${trailing}</span>`
+      : "";
 
-    return { __html: hljs.highlight(code, { language: normalizedLanguage }).value || " " };
+    const normalizedLanguage = normalizeLanguage(language);
+    const coreHtml =
+      !normalizedLanguage || !hljs.getLanguage(normalizedLanguage)
+        ? hljs.highlightAuto(core).value
+        : hljs.highlight(core, { language: normalizedLanguage }).value;
+
+    return { __html: coreHtml + trailingHtml || " " };
   };
 
   const gitwebParams = (gitwebUrl: string) => {
@@ -1277,8 +1528,90 @@ export function ReviewPage() {
     return nodes;
   };
 
-  const renderGitDiff = (currentReview: ReviewItem) => {
-    if (currentReview.gitDiff.files.length === 0) {
+  const renderInlineCommentComposer = () => (
+    <div className="diff-inline-comment-panel">
+      <div className="diff-inline-comment-editor">
+        <textarea
+          className="form-control"
+          rows={4}
+          value={inlineCommentDraft}
+          onChange={(event) => setInlineCommentDraft(event.target.value)}
+          placeholder={t("markdownCommentPlaceholder")}
+        />
+        <div className="diff-inline-comment-actions">
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            type="button"
+            onClick={() => {
+              setInlineCommentTarget(null);
+              setInlineCommentDraft("");
+            }}
+          >
+            {t("cancel")}
+          </button>
+          <button
+            className="btn btn-primary btn-sm"
+            type="button"
+            disabled={!inlineCommentDraft.trim() || savingComment}
+            onClick={() => void addInlineComment()}
+          >
+            {t("addComment")}
+          </button>
+        </div>
+      </div>
+      <div className="diff-inline-comment-preview markdown-body">
+        {inlineCommentDraft.trim()
+          ? renderMarkdown(inlineCommentDraft)
+          : t("markdownPreviewEmpty")}
+      </div>
+    </div>
+  );
+
+  const renderInlineCommentThreads = (threads: ReviewCommentThread[]) =>
+    threads.length ? (
+      <div className="diff-inline-comments">
+        {threads.map((thread) => (
+          <div
+            className={`diff-inline-comment${thread.done ? " is-done" : ""}`}
+            key={thread.commentId}
+          >
+            <div
+              aria-expanded={isCommentThreadExpanded(thread)}
+              className="diff-inline-comment-meta comment-thread-header"
+              role="button"
+              tabIndex={0}
+              onClick={() => toggleCommentThreadExpanded(thread)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  toggleCommentThreadExpanded(thread);
+                }
+              }}
+            >
+              <span className="fw-semibold">
+                {renderUserLabel(thread.messages[0].author)}
+              </span>
+              <span>{new Date(thread.createdAt).toLocaleString()}</span>
+              {renderCommentThreadControls(thread)}
+            </div>
+            {isCommentThreadExpanded(thread) ? (
+              <>
+                {renderCommentMessages(thread)}
+                {thread.done && thread.doneAt ? (
+                  <div className="comment-done-meta">
+                    {t("commentDoneBy")} {thread.doneBy ? renderUserLabel(thread.doneBy) : t("notAvailable")} - {new Date(thread.doneAt).toLocaleString()}
+                  </div>
+                ) : null}
+                {renderCommentReplyForm(thread)}
+              </>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    ) : null;
+
+  const renderGitDiff = (commit: ReviewCommit, diffFiles: ReviewItem["gitDiff"]["files"]) => {
+    if (diffFiles.length === 0) {
       return (
         <div className="empty-state border rounded">
           {t("diffNotAvailable")}
@@ -1286,12 +1619,26 @@ export function ReviewPage() {
       );
     }
 
-    return currentReview.gitDiff.files.map((file) => {
+    return diffFiles.map((file) => {
       const rows = diffRenderRows(file.patch);
       const language = languageForPath(file.path);
+      const fileTarget = {
+        commitHash: commit.hash,
+        filePath: file.path,
+        lineNumber: null,
+        side: "AFTER",
+      } satisfies CommentTarget;
+      const fileCommentThreads = commentThreadsForTarget(fileTarget);
+      const fileComposerOpen =
+        !!inlineCommentTarget &&
+        targetKey(inlineCommentTarget) === targetKey(fileTarget);
 
       return (
-        <div className="card mb-3" key={file.path}>
+        <div
+          className="card mb-3"
+          id={diffAnchorId(fileTarget)}
+          key={`${commit.hash}-${file.path}`}
+        >
           <div className="card-header d-flex align-items-center justify-content-between gap-3">
             <div>
               <span className="fw-semibold">{file.path}</span>
@@ -1311,18 +1658,14 @@ export function ReviewPage() {
             <button
               className="btn btn-outline-secondary btn-sm"
               type="button"
-              onClick={() =>
-                toggleInlineComment({
-                  commitHash: currentReview.sourceCommit,
-                  filePath: file.path,
-                  lineNumber: 1,
-                })
-              }
+              onClick={() => toggleInlineComment(fileTarget)}
             >
               <i className="bi bi-chat-left-text me-1" aria-hidden="true" />
               {t("commentFile")}
             </button>
           </div>
+          {fileComposerOpen ? renderInlineCommentComposer() : null}
+          {renderInlineCommentThreads(fileCommentThreads)}
           <div className="diff-viewer">
             {rows.map((row) => {
               if (row.kind === "hunk") {
@@ -1337,9 +1680,10 @@ export function ReviewPage() {
               const lineTarget = row.lineNumber === null
                 ? null
                 : {
-                    commitHash: currentReview.sourceCommit,
+                    commitHash: commit.hash,
                     filePath: file.path,
                     lineNumber: row.lineNumber,
+                    side: row.side,
                   } satisfies CommentTarget;
               const lineCommentThreads = lineTarget
                 ? commentThreadsForTarget(lineTarget)
@@ -1350,7 +1694,11 @@ export function ReviewPage() {
                 targetKey(inlineCommentTarget) === targetKey(lineTarget);
 
               return (
-                <div className="diff-line-block" key={row.key}>
+                <div
+                  className="diff-line-block"
+                  id={lineTarget ? diffAnchorId(lineTarget) : undefined}
+                  key={row.key}
+                >
                   <div className={`diff-line ${lineKind}`}>
                     {lineTarget ? (
                       <button
@@ -1364,95 +1712,27 @@ export function ReviewPage() {
                     ) : (
                       <span className="diff-comment-button-placeholder" />
                     )}
-                    <span className="diff-line-number">
-                      {row.lineNumber ?? ""}
-                    </span>
+                    {lineTarget ? (
+                      <button
+                        className="diff-line-number diff-line-number-link"
+                        type="button"
+                        title={t("lineLink")}
+                        onClick={() => openDiffLocation(lineTarget)}
+                      >
+                        {row.lineNumber ?? ""}
+                      </button>
+                    ) : (
+                      <span className="diff-line-number">
+                        {row.lineNumber ?? ""}
+                      </span>
+                    )}
                     <code
                       className="diff-line-code hljs"
                       dangerouslySetInnerHTML={highlightedCode(row.text, language)}
                     />
                   </div>
-                  {inlineComposerOpen ? (
-                    <div className="diff-inline-comment-panel">
-                      <div className="diff-inline-comment-editor">
-                        <textarea
-                          className="form-control"
-                          rows={4}
-                          value={inlineCommentDraft}
-                          onChange={(event) =>
-                            setInlineCommentDraft(event.target.value)
-                          }
-                          placeholder={t("markdownCommentPlaceholder")}
-                        />
-                        <div className="diff-inline-comment-actions">
-                          <button
-                            className="btn btn-outline-secondary btn-sm"
-                            type="button"
-                            onClick={() => {
-                              setInlineCommentTarget(null);
-                              setInlineCommentDraft("");
-                            }}
-                          >
-                            {t("cancel")}
-                          </button>
-                          <button
-                            className="btn btn-primary btn-sm"
-                            type="button"
-                            disabled={!inlineCommentDraft.trim() || savingComment}
-                            onClick={() => void addInlineComment()}
-                          >
-                            {t("addComment")}
-                          </button>
-                        </div>
-                      </div>
-                      <div className="diff-inline-comment-preview markdown-body">
-                        {inlineCommentDraft.trim()
-                          ? renderMarkdown(inlineCommentDraft)
-                          : t("markdownPreviewEmpty")}
-                      </div>
-                    </div>
-                  ) : null}
-                  {lineCommentThreads.length ? (
-                    <div className="diff-inline-comments">
-                      {lineCommentThreads.map((thread) => (
-                        <div
-                          className={`diff-inline-comment${thread.done ? " is-done" : ""}`}
-                          key={thread.commentId}
-                        >
-                          <div
-                            aria-expanded={isCommentThreadExpanded(thread)}
-                            className="diff-inline-comment-meta comment-thread-header"
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => toggleCommentThreadExpanded(thread)}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                toggleCommentThreadExpanded(thread);
-                              }
-                            }}
-                          >
-                            <span className="fw-semibold">
-                              {renderUserLabel(thread.messages[0].author)}
-                            </span>
-                            <span>{new Date(thread.createdAt).toLocaleString()}</span>
-                            {renderCommentThreadControls(thread)}
-                          </div>
-                          {isCommentThreadExpanded(thread) ? (
-                            <>
-                              {renderCommentMessages(thread)}
-                              {thread.done && thread.doneAt ? (
-                                <div className="comment-done-meta">
-                                  {t("commentDoneBy")} {thread.doneBy ? renderUserLabel(thread.doneBy) : t("notAvailable")} - {new Date(thread.doneAt).toLocaleString()}
-                                </div>
-                              ) : null}
-                              {renderCommentReplyForm(thread)}
-                            </>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
+                  {inlineComposerOpen ? renderInlineCommentComposer() : null}
+                  {renderInlineCommentThreads(lineCommentThreads)}
                 </div>
               );
             })}
@@ -1487,6 +1767,161 @@ export function ReviewPage() {
 
   const overviewCommitLogMatches = commitLogMatches(review);
   const reviewCommentThreads = commentThreadsFrom(reviewComments);
+  const activeCommit =
+    review.commits.find((commit) => commit.id === activeCommitId) ??
+    review.commits[0] ??
+    null;
+  const commitLogTarget = activeCommit
+    ? ({
+        commitHash: activeCommit.hash,
+        filePath: null,
+        lineNumber: null,
+        side: "AFTER",
+      } satisfies CommentTarget)
+    : null;
+  const activeCommitIndex = activeCommit
+    ? review.commits.findIndex((commit) => commit.id === activeCommit.id)
+    : -1;
+  const commitDiffFiles = (commit: ReviewCommit) =>
+    commit.gitDiff.files.length || review.commits.length > 1
+      ? commit.gitDiff.files
+      : review.gitDiff.files;
+  const ackedCommitCount = review.commits.filter(
+    (commit) => commit.status === "ACKED",
+  ).length;
+  const reviewerActionSplit = (options: {
+    menuOpen: boolean;
+    setMenuOpen: (open: boolean) => void;
+    saving: boolean;
+    canAck: boolean;
+    canReviewDone: boolean;
+    preferReviewDone: boolean;
+    ackLabel: string;
+    onAck: () => void;
+    onReviewDone: () => void;
+    small?: boolean;
+  }) => {
+    const reviewDoneAction = options.canReviewDone
+      ? {
+          label: t("reviewDone"),
+          icon: "bi-clipboard-check",
+          onClick: options.onReviewDone,
+        }
+      : null;
+    const ackAction = options.canAck
+      ? {
+          label: options.ackLabel,
+          icon: "bi-check2-circle",
+          onClick: options.onAck,
+        }
+      : null;
+    const primary =
+      options.preferReviewDone && reviewDoneAction
+        ? reviewDoneAction
+        : (ackAction ?? reviewDoneAction);
+    if (!primary) {
+      return null;
+    }
+    const secondaryActions = [reviewDoneAction, ackAction].filter(
+      (action): action is NonNullable<typeof action> =>
+        !!action && action !== primary,
+    );
+    const sizeClass = options.small ? " btn-sm" : "";
+
+    return (
+      <div className="btn-group review-action-group flex-shrink-0">
+        <button
+          className={`btn btn-success${sizeClass} d-inline-flex align-items-center gap-2`}
+          disabled={options.saving}
+          type="button"
+          onClick={() => {
+            options.setMenuOpen(false);
+            primary.onClick();
+          }}
+        >
+          {options.saving ? (
+            <span className="spinner-border spinner-border-sm" />
+          ) : (
+            <i className={`bi ${primary.icon}`} aria-hidden="true" />
+          )}
+          {primary.label}
+        </button>
+        {secondaryActions.length ? (
+          <>
+            <button
+              aria-expanded={options.menuOpen}
+              className={`btn btn-success${sizeClass} dropdown-toggle dropdown-toggle-split`}
+              disabled={options.saving}
+              type="button"
+              onClick={() => options.setMenuOpen(!options.menuOpen)}
+            >
+              <span className="visually-hidden">{t("moreActions")}</span>
+            </button>
+            <ul
+              className={`dropdown-menu dropdown-menu-end review-action-menu${
+                options.menuOpen ? " show" : ""
+              }`}
+            >
+              {secondaryActions.map((action) => (
+                <li key={action.label}>
+                  <button
+                    className="dropdown-item d-flex align-items-center gap-2"
+                    type="button"
+                    onClick={() => {
+                      options.setMenuOpen(false);
+                      action.onClick();
+                    }}
+                  >
+                    <i className={`bi ${action.icon}`} aria-hidden="true" />
+                    {action.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+      </div>
+    );
+  };
+  const commitAckControls = (commit: ReviewCommit) => (
+    <>
+      {commit.acks.length ? (
+        <span
+          className="badge review-meta-badge flex-shrink-0"
+          title={commit.acks
+            .map((ack) => renderUserLabel(ack.user))
+            .join(", ")}
+        >
+          <i className="bi bi-check2-circle me-1" aria-hidden="true" />
+          {commit.acks.length}
+        </span>
+      ) : null}
+      {currentReviewer &&
+      review.status !== "CLOSED" &&
+      commit.status !== "ACKED" &&
+      !commitAckedByMe(commit)
+        ? reviewerActionSplit({
+            menuOpen: commitActionMenuOpenId === commit.id,
+            setMenuOpen: (open) =>
+              setCommitActionMenuOpenId(open ? commit.id : null),
+            saving: savingCommitAckIds.includes(commit.id),
+            canAck: canAckCommit(commit),
+            canReviewDone: canMarkCommitReviewed(commit),
+            preferReviewDone: openCommentCountForCommit(commit.hash) > 0,
+            ackLabel: t("ackCommit"),
+            onAck: () => void acknowledgeCommit(commit),
+            onReviewDone: () => void markCommitReviewed(commit),
+            small: true,
+          })
+        : null}
+    </>
+  );
+  const totalDiffFileCount = review.commits.length
+    ? review.commits.reduce(
+        (sum, commit) => sum + commitDiffFiles(commit).length,
+        0,
+      )
+    : review.gitDiff.files.length;
 
   return (
     <div className="review-page">
@@ -1500,30 +1935,21 @@ export function ReviewPage() {
           >
             <i className="bi bi-box-arrow-up-right me-1" aria-hidden="true" />
           </a>
-          {currentReviewer && !currentReviewer.acknowledgedAt ? (
-            <span
-              className="disabled-button-tooltip"
-              title={
-                !canAckReview || savingReviewAck
-                  ? ackReviewDisabledReason
-                  : undefined
-              }
-            >
-              <button
-                className="btn btn-success d-inline-flex align-items-center gap-2"
-                disabled={!canAckReview || savingReviewAck}
-                type="button"
-                onClick={() => void acknowledgeReview()}
-              >
-                {savingReviewAck ? (
-                  <span className="spinner-border spinner-border-sm" />
-                ) : (
-                  <i className="bi bi-check2-circle" aria-hidden="true" />
-                )}
-                {t("ackReview")}
-              </button>
-            </span>
-          ) : null}
+          {currentReviewer &&
+          review.status !== "CLOSED" &&
+          review.commits.some((commit) => !commitAckedByMe(commit))
+            ? reviewerActionSplit({
+                menuOpen: reviewActionMenuOpen,
+                setMenuOpen: setReviewActionMenuOpen,
+                saving: savingReviewAck,
+                canAck: canAckReview,
+                canReviewDone: canMarkReviewReviewed,
+                preferReviewDone: openCommentCount > 0,
+                ackLabel: t("ackReview"),
+                onAck: () => void acknowledgeReview(),
+                onReviewDone: () => void markReviewReviewed(),
+              })
+            : null}
           {review.ownerId === currentUser?.id && review.status !== "CLOSED" ? (
             <span
               className="disabled-button-tooltip"
@@ -1586,6 +2012,12 @@ export function ReviewPage() {
               {loadingReview ? (
                 <span className="spinner-border spinner-border-sm text-info" />
               ) : null}
+              {review.commits.length > 1 ? (
+                <span className="badge review-meta-badge">
+                  {ackedCommitCount}/{review.commits.length}{" "}
+                  {t("commitsAckedProgress")}
+                </span>
+              ) : null}
               <span className={`badge ${reviewStatusBadgeClass(review.status)}`}>
                 {reviewStatusLabel(review.status)}
               </span>
@@ -1619,7 +2051,7 @@ export function ReviewPage() {
                 <i className="bi bi-file-diff me-1" aria-hidden="true" />
                 {t("filesChanged")}
                 <span className="badge text-bg-secondary ms-2">
-                  {review.gitDiff.files.length}
+                  {totalDiffFileCount}
                 </span>
               </button>
             </li>
@@ -1786,7 +2218,7 @@ export function ReviewPage() {
                     <>
                       <dt className="col-4">{t("gitwebFetchError")}</dt>
                       <dd className="col-8 text-danger text-break">
-                        {review.gitwebFetchError}
+                        {gitwebFetchErrorLabel(review.gitwebFetchError, t)}
                       </dd>
                     </>
                   ) : null}
@@ -1837,80 +2269,176 @@ export function ReviewPage() {
 
         {activeReviewTab === "files" ? (
           <div className="card-body review-files-pane">
-            {review.gitwebLog ? (
-              <details className="card mb-3 review-log-card" open>
-                <summary className="card-header fw-semibold">
-                  {t("gitwebLog")}
-                </summary>
-                <pre className="card-body mb-0 review-log-body">
-                  {linkedCommitLog(review.gitwebLog, review)}
-                </pre>
-              </details>
-            ) : null}
-            {renderGitDiff(review)}
+            {review.commits.length ? (
+              <>
+                {review.commits.length > 1 ? (
+                  <div className="review-commit-nav d-flex align-items-center gap-2 mb-3">
+                    <div className="dropdown position-relative flex-grow-1 min-w-0">
+                      <button
+                        aria-expanded={commitNavOpen}
+                        className="btn btn-outline-secondary w-100 d-flex align-items-center gap-2 review-commit-nav-toggle"
+                        type="button"
+                        onClick={() => setCommitNavOpen((current) => !current)}
+                      >
+                        <span className="badge review-meta-badge flex-shrink-0">
+                          {activeCommitIndex + 1}/{review.commits.length}
+                        </span>
+                        <span className="font-monospace small flex-shrink-0">
+                          {activeCommit?.hash.slice(0, 12)}
+                        </span>
+                        <span className="text-truncate flex-grow-1 text-start">
+                          {activeCommit?.title}
+                        </span>
+                        {activeCommit ? (
+                          <span
+                            className={`badge ${reviewCommitStatusBadgeClass(activeCommit.status)} flex-shrink-0`}
+                          >
+                            {t(`commitStatus${activeCommit.status}`)}
+                          </span>
+                        ) : null}
+                        <i
+                          className={`bi ${commitNavOpen ? "bi-chevron-up" : "bi-chevron-down"} flex-shrink-0`}
+                          aria-hidden="true"
+                        />
+                      </button>
+                      {commitNavOpen ? (
+                        <div className="dropdown-menu show w-100 review-commit-nav-menu">
+                          {review.commits.map((commit, index) => (
+                            <button
+                              className={`dropdown-item d-flex align-items-center gap-2 review-commit-nav-item${
+                                commit.id === activeCommit?.id ? " active" : ""
+                              }`}
+                              key={commit.id}
+                              type="button"
+                              onClick={() => {
+                                setActiveCommitId(commit.id);
+                                setCommitNavOpen(false);
+                              }}
+                            >
+                              <span className="badge review-meta-badge flex-shrink-0">
+                                {index + 1}/{review.commits.length}
+                              </span>
+                              <span className="font-monospace small flex-shrink-0">
+                                {commit.hash.slice(0, 12)}
+                              </span>
+                              <span className="text-truncate flex-grow-1 text-start">
+                                {commit.title}
+                              </span>
+                              {commitAckedByMe(commit) ? (
+                                <i
+                                  className="bi bi-check2-circle text-success flex-shrink-0"
+                                  aria-hidden="true"
+                                  title={t("commitAcked")}
+                                />
+                              ) : null}
+                              <span
+                                className={`badge ${reviewCommitStatusBadgeClass(commit.status)} flex-shrink-0`}
+                              >
+                                {t(`commitStatus${commit.status}`)}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                    {activeCommit ? commitAckControls(activeCommit) : null}
+                  </div>
+                ) : null}
+                {activeCommit ? (
+                  <>
+                    <div className="card mb-3">
+                      {review.commits.length === 1 ? (
+                        <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+                          <div className="d-flex flex-wrap align-items-center gap-2">
+                            <span className="fw-semibold text-break">
+                              {activeCommit.title}
+                            </span>
+                            <span className="font-monospace small text-secondary">
+                              {activeCommit.hash.slice(0, 12)}
+                            </span>
+                            <span
+                              className={`badge ${reviewCommitStatusBadgeClass(activeCommit.status)}`}
+                            >
+                              {t(`commitStatus${activeCommit.status}`)}
+                            </span>
+                          </div>
+                          <div className="d-flex flex-wrap align-items-center gap-2">
+                            {commitAckControls(activeCommit)}
+                          </div>
+                        </div>
+                      ) : null}
+                      {activeCommit.rawMessage && commitLogTarget ? (
+                        <details
+                          className="review-log-card"
+                          id={diffAnchorId(commitLogTarget)}
+                          open
+                        >
+                          <summary className="card-header fw-semibold">
+                            <span className="d-flex align-items-center justify-content-between gap-3">
+                              <span>{t("gitwebLog")}</span>
+                              <button
+                                className="btn btn-outline-secondary btn-sm"
+                                type="button"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  toggleInlineComment(commitLogTarget);
+                                }}
+                              >
+                                <i
+                                  className="bi bi-chat-left-text me-1"
+                                  aria-hidden="true"
+                                />
+                                {t("commentCommitLog")}
+                              </button>
+                            </span>
+                          </summary>
+                          <pre className="card-body mb-0 review-log-body">
+                            {linkedCommitLog(activeCommit.rawMessage, review)}
+                          </pre>
+                          {inlineCommentTarget &&
+                          targetKey(inlineCommentTarget) ===
+                            targetKey(commitLogTarget)
+                            ? renderInlineCommentComposer()
+                            : null}
+                          {renderInlineCommentThreads(
+                            commentThreadsForTarget(commitLogTarget),
+                          )}
+                        </details>
+                      ) : null}
+                    </div>
+                    {renderGitDiff(activeCommit, commitDiffFiles(activeCommit))}
+                  </>
+                ) : null}
+              </>
+            ) : (
+              <div className="empty-state border rounded">
+                {t("diffNotAvailable")}
+              </div>
+            )}
           </div>
         ) : null}
 
         {activeReviewTab === "comments" ? (
           <div className="card-body">
-            <div className="card mb-3">
-              <div className="card-header">
-                <span className="fw-semibold">{t("newComment")}</span>
-                <span className="badge text-bg-secondary ms-2">
-                  {commentTargetLabel(commentTarget)}
-                </span>
-              </div>
-              <div className="card-body">
-                <textarea
-                  className="form-control"
-                  rows={4}
-                  value={commentDraft}
-                  onChange={(event) => setCommentDraft(event.target.value)}
-                  placeholder={t("commentPlaceholder")}
-                />
-                <div className="d-flex justify-content-between align-items-center mt-3">
-                  <button
-                    className="btn btn-outline-secondary"
-                    type="button"
-                    onClick={() =>
-                      setCommentTarget({
-                        commitHash: null,
-                        filePath: null,
-                        lineNumber: 1,
-                      })
-                    }
-                  >
-                    {t("generalReviewComment")}
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    disabled={!commentDraft.trim() || savingComment}
-                    type="button"
-                    onClick={() => void addComment()}
-                  >
-                    {t("addComment")}
-                  </button>
-                </div>
-              </div>
-            </div>
             {reviewCommentThreads.length ? (
               <div className="timeline timeline-inverse mb-0">
                 {reviewCommentThreads.map((thread) => (
                   <div className="time-label" key={thread.commentId}>
-                    <span className="text-bg-light">
+                    <span className="review-meta-badge">
                       {new Date(thread.createdAt).toLocaleString()}
                     </span>
                     <div className={`card mt-2 review-comment-card${thread.done ? " is-done" : ""}`}>
                       <div
-                        aria-expanded={isCommentThreadExpanded(thread)}
+                        aria-expanded={isDiscussionExpanded(thread)}
                         className="card-header d-flex justify-content-between gap-3 comment-thread-header"
                         role="button"
                         tabIndex={0}
-                        onClick={() => toggleCommentThreadExpanded(thread)}
+                        onClick={() => toggleDiscussionExpanded(thread)}
                         onKeyDown={(event) => {
                           if (event.key === "Enter" || event.key === " ") {
                             event.preventDefault();
-                            toggleCommentThreadExpanded(thread);
+                            toggleDiscussionExpanded(thread);
                           }
                         }}
                       >
@@ -1918,20 +2446,42 @@ export function ReviewPage() {
                           {renderUserLabel(thread.messages[0].author)}
                         </span>
                         <div className="d-flex flex-wrap align-items-center gap-2">
+                          {threadDiffAvailable(thread) ? (
+                            <button
+                              className="btn btn-outline-primary btn-sm"
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openDiffForThread(thread);
+                              }}
+                            >
+                              <i
+                                className="bi bi-file-diff me-1"
+                                aria-hidden="true"
+                              />
+                              {t("viewDiff")}
+                            </button>
+                          ) : null}
                           {renderCommentThreadControls(thread, true)}
                         </div>
                       </div>
-                      {isCommentThreadExpanded(thread) ? (
-                        <div className="card-body review-comment-body">
-                          {renderCommentMessages(thread)}
-                          {thread.done && thread.doneAt ? (
-                            <div className="comment-done-meta mt-2">
-                              {t("commentDoneBy")} {thread.doneBy ? renderUserLabel(thread.doneBy) : t("notAvailable")} - {new Date(thread.doneAt).toLocaleString()}
-                            </div>
-                          ) : null}
-                          {renderCommentReplyForm(thread)}
-                        </div>
-                      ) : null}
+                      <div className="card-body review-comment-body">
+                        {isDiscussionExpanded(thread) ? (
+                          <>
+                            {renderCommentMessages(thread)}
+                            {thread.done && thread.doneAt ? (
+                              <div className="comment-done-meta mt-2">
+                                {t("commentDoneBy")} {thread.doneBy ? renderUserLabel(thread.doneBy) : t("notAvailable")} - {new Date(thread.doneAt).toLocaleString()}
+                              </div>
+                            ) : null}
+                            {renderCommentReplyForm(thread)}
+                          </>
+                        ) : (
+                          <div className="markdown-body">
+                            {renderMarkdown(thread.messages[0].message)}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

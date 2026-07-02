@@ -14,6 +14,7 @@ import type {
   ReviewPreview,
 } from "../types/api";
 import { reviewStatusBadgeClass } from "../utils/reviewStatus";
+import { gitwebFetchErrorLabel } from "../utils/gitwebFetchError";
 
 type CommitLogMatchSource = {
   gitwebUrl: string;
@@ -75,6 +76,7 @@ export function DashboardPage() {
   const [createReviewerUserIds, setCreateReviewerUserIds] = useState<string[]>(
     [],
   );
+  const [createCommitHashes, setCreateCommitHashes] = useState<string[]>([]);
   const [commitLogLinkRules, setCommitLogLinkRules] = useState<
     CommitLogLinkRule[]
   >([]);
@@ -289,6 +291,9 @@ export function DashboardPage() {
       setCreateReviewerUserIds(
         nextPreview.reviewerUsers.map((reviewer) => reviewer.id),
       );
+      setCreateCommitHashes(
+        nextPreview.commitOptions.map((option) => option.hash),
+      );
       setCreateModalOpen(true);
     } catch (error) {
       setErrorMessage(
@@ -321,10 +326,14 @@ export function DashboardPage() {
         body: JSON.stringify({
           gitwebUrl: preview.gitwebUrl,
           reviewerUserIds: createReviewerUserIds,
+          ...(preview.linkKind === "SUMMARY"
+            ? { commitHashes: createCommitHashes }
+            : {}),
         }),
       });
       setGitwebUrl("");
       setCreateReviewerUserIds([]);
+      setCreateCommitHashes([]);
       setPreview(null);
       setCreateModalOpen(false);
       showToast(t("reviewCreated"));
@@ -341,6 +350,14 @@ export function DashboardPage() {
 
   const closeCreateModal = () => {
     setCreateModalOpen(false);
+  };
+
+  const toggleCreateCommitHash = (hash: string) => {
+    setCreateCommitHashes((current) =>
+      current.includes(hash)
+        ? current.filter((item) => item !== hash)
+        : [...current, hash],
+    );
   };
 
   const canDeleteReview = (review: ReviewItem) =>
@@ -517,19 +534,26 @@ export function DashboardPage() {
         </div>
         <div className="d-flex flex-wrap gap-2 small">
           {review.sourceProject ? (
-            <span className="badge text-bg-light border">
+            <span className="badge review-meta-badge">
               <i className="bi bi-folder2-open me-1" aria-hidden="true" />
               {review.sourceProject}
             </span>
           ) : null}
-          <span className="badge text-bg-light border">
+          <span className="badge review-meta-badge">
             <i className="bi bi-diagram-3 me-1" aria-hidden="true" />
             {sourceBranchLabel(review.sourceBranch)}
           </span>
           {shortHash(review.sourceCommit) ? (
-            <span className="badge text-bg-light border">
+            <span className="badge review-meta-badge">
               <i className="bi bi-git me-1" aria-hidden="true" />
               {shortHash(review.sourceCommit)}
+            </span>
+          ) : null}
+          {review.commits.length > 1 ? (
+            <span className="badge review-meta-badge">
+              <i className="bi bi-check2-circle me-1" aria-hidden="true" />
+              {review.commits.filter((commit) => commit.status === "ACKED").length}
+              /{review.commits.length} {t("commitsAckedProgress")}
             </span>
           ) : null}
         </div>
@@ -600,7 +624,7 @@ export function DashboardPage() {
         <div className="card h-100">
           <div className="card-header dashboard-section-header d-flex align-items-center gap-3">
             <h3 className="card-title flex-grow-1 mb-0">{title}</h3>
-            <span className="badge text-bg-light border ms-auto flex-shrink-0">
+            <span className="badge review-meta-badge ms-auto flex-shrink-0">
               {page.total}
             </span>
           </div>
@@ -717,7 +741,8 @@ export function DashboardPage() {
                 <div className="modal-body">
                   {preview.gitwebFetchError ? (
                     <div className="alert alert-warning">
-                      {t("gitwebFetchError")}: {preview.gitwebFetchError}
+                      {t("gitwebFetchError")}:{" "}
+                      {gitwebFetchErrorLabel(preview.gitwebFetchError, t)}
                     </div>
                   ) : null}
                   <div className="row g-4">
@@ -725,7 +750,55 @@ export function DashboardPage() {
                       {preview.title ? (
                         <h6 className="mb-3 text-break">{preview.title}</h6>
                       ) : null}
-                      {preview.gitwebLog ? (
+                      {preview.linkKind === "SUMMARY" ? (
+                        <div className="border rounded">
+                          <div className="d-flex align-items-center justify-content-between gap-2 border-bottom px-3 py-2">
+                            <span className="fw-semibold">
+                              {t("commitSelectionTitle")}
+                            </span>
+                            <span className="badge review-meta-badge">
+                              {createCommitHashes.length}/
+                              {preview.commitOptions.length}
+                            </span>
+                          </div>
+                          {preview.commitOptions.length ? (
+                            <div className="list-group list-group-flush commit-selection-list">
+                              {preview.commitOptions.map((option) => (
+                                <label
+                                  className="list-group-item d-flex align-items-start gap-2 commit-selection-item"
+                                  key={option.hash}
+                                >
+                                  <input
+                                    checked={createCommitHashes.includes(
+                                      option.hash,
+                                    )}
+                                    className="form-check-input mt-1 flex-shrink-0"
+                                    type="checkbox"
+                                    onChange={() =>
+                                      toggleCreateCommitHash(option.hash)
+                                    }
+                                  />
+                                  <span className="d-flex flex-column">
+                                    <span className="text-break">
+                                      {option.title}
+                                    </span>
+                                    <span className="small text-secondary font-monospace">
+                                      {option.hash.slice(0, 12)}
+                                      {option.authorName
+                                        ? ` - ${option.authorName}`
+                                        : ""}
+                                    </span>
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="p-3 text-secondary">
+                              {t("commitSelectionEmpty")}
+                            </div>
+                          )}
+                        </div>
+                      ) : preview.gitwebLog ? (
                         <pre className="border rounded bg-body-tertiary p-3 mb-0 review-log-body">
                           {preview.gitwebLog}
                         </pre>
@@ -833,7 +906,11 @@ export function DashboardPage() {
                   <button
                     className="btn btn-primary d-inline-flex align-items-center gap-2"
                     type="button"
-                    disabled={createLoading}
+                    disabled={
+                      createLoading ||
+                      (preview.linkKind === "SUMMARY" &&
+                        createCommitHashes.length === 0)
+                    }
                     onClick={() => void createReview()}
                   >
                     {createLoading ? (

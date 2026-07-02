@@ -233,6 +233,37 @@ export function AppShell({ children }: AppShellProps) {
     await loadNotifications();
   };
 
+  useEffect(() => {
+    if (!idToken) {
+      return;
+    }
+
+    const reviewPathMatch = location.pathname.match(/^\/review\/([^/]+)/);
+    if (!reviewPathMatch) {
+      return;
+    }
+
+    const reviewId = reviewPathMatch[1];
+    const unseenIds = notifications
+      .filter(
+        (notification) =>
+          !notification.seen &&
+          reviewNotificationPayload(notification)?.reviewId === reviewId,
+      )
+      .map((notification) => notification.id);
+    if (unseenIds.length === 0) {
+      return;
+    }
+
+    void (async () => {
+      await apiRequest("/v1/notifications/seen", idToken, {
+        method: "PATCH",
+        body: JSON.stringify({ notificationIds: unseenIds }),
+      });
+      await loadNotifications();
+    })();
+  }, [idToken, location.pathname, notifications]);
+
   const unreadCount = notifications.filter(
     (notification) => !notification.seen,
   ).length;
@@ -256,7 +287,9 @@ export function AppShell({ children }: AppShellProps) {
   const reviewNotificationPayload = (notification: NotificationItem) => {
     if (
       (notification.type !== "REVIEW_PENDING" &&
-        notification.type !== "REVIEW_STATUS_CHANGED") ||
+        notification.type !== "REVIEW_STATUS_CHANGED" &&
+        notification.type !== "COMMIT_REVIEWED" &&
+        notification.type !== "COMMENT_RECEIVED") ||
       typeof notification.payload !== "object" ||
       notification.payload === null
     ) {
@@ -341,6 +374,10 @@ export function AppShell({ children }: AppShellProps) {
       return t("notificationReviewStatusChanged");
     }
 
+    if (notification.type === "COMMIT_REVIEWED") {
+      return t("notificationCommitReviewed");
+    }
+
     if (notification.type === "COMMENT_RECEIVED") {
       return t("notificationCommentReceived");
     }
@@ -355,7 +392,9 @@ export function AppShell({ children }: AppShellProps) {
     const reviewPayload = reviewNotificationPayload(notification);
     if (reviewPayload) {
       const actor =
-        notification.type === "REVIEW_STATUS_CHANGED"
+        notification.type === "REVIEW_STATUS_CHANGED" ||
+        notification.type === "COMMIT_REVIEWED" ||
+        notification.type === "COMMENT_RECEIVED"
           ? reviewPayload.actorNickname || reviewPayload.actorEmail
           : reviewPayload.ownerEmail;
 
@@ -372,7 +411,11 @@ export function AppShell({ children }: AppShellProps) {
               <span className="d-block">
                 {notification.type === "REVIEW_STATUS_CHANGED"
                   ? t("updatedBy")
-                  : t("openedBy")} {actor}
+                  : notification.type === "COMMIT_REVIEWED"
+                    ? t("reviewedBy")
+                    : notification.type === "COMMENT_RECEIVED"
+                      ? t("commentedBy")
+                      : t("openedBy")} {actor}
               </span>
             ) : null}
           </div>

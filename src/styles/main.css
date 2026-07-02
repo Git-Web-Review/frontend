@@ -174,6 +174,58 @@ button {
   text-align: start;
 }
 
+.review-status-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.review-meta-badge {
+  color: var(--bs-body-color);
+  background-color: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color);
+}
+
+.commit-selection-list {
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.commit-selection-item {
+  cursor: pointer;
+}
+
+.review-commit-nav .review-commit-nav-item.active .review-meta-badge {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.review-commit-nav .review-commit-nav-item.active .text-success {
+  color: #fff !important;
+}
+
+.review-commit-nav .min-w-0 {
+  min-width: 0;
+}
+
+.review-commit-nav-menu {
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.review-action-group {
+  position: relative;
+}
+
+.review-action-group .review-action-menu {
+  top: 100%;
+  right: 0;
+  left: auto;
+  margin-top: 0.125rem;
+}
+
 .dashboard-section-header::after {
   content: none;
 }
@@ -533,6 +585,16 @@ button {
   border-bottom: 0;
 }
 
+.diff-anchor-highlight {
+  outline: 2px solid rgba(var(--bs-primary-rgb), 0.8);
+  outline-offset: -1px;
+  transition: outline-color 0.3s ease;
+}
+
+.card-header.d-flex::after {
+  display: none;
+}
+
 .diff-line-context {
   background: var(--bs-body-bg);
 }
@@ -553,6 +615,13 @@ button {
   background: rgba(var(--bs-primary-rgb), 0.1);
   font-family: var(--bs-font-monospace);
   font-weight: 700;
+}
+
+[data-bs-theme="dark"] .diff-hunk-header {
+  color: #f778ba;
+  border-top-color: rgba(247, 120, 186, 0.35);
+  border-bottom-color: rgba(247, 120, 186, 0.35);
+  background: rgba(247, 120, 186, 0.1);
 }
 
 .diff-comment-button {
@@ -580,11 +649,27 @@ button {
   background: rgba(var(--bs-secondary-rgb), 0.08);
 }
 
+button.diff-line-number-link {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.diff-line-number-link:hover {
+  color: var(--bs-primary);
+  text-decoration: underline;
+}
+
 .diff-line-code {
   padding: 0.125rem 0.5rem;
   color: var(--bs-body-color);
   white-space: pre;
   background: transparent;
+}
+
+.diff-trailing-whitespace {
+  background: rgba(var(--bs-danger-rgb), 0.55);
+  border-radius: 2px;
 }
 
 [data-bs-theme="dark"] .diff-line-code.hljs,
@@ -638,6 +723,16 @@ button {
   color: #c9d1d9;
 }
 
+[data-bs-theme="dark"] .hljs-literal,
+[data-bs-theme="dark"] .hljs-number,
+[data-bs-theme="dark"] .hljs-variable,
+[data-bs-theme="dark"] .hljs-template-variable,
+[data-bs-theme="dark"] .hljs-link,
+[data-bs-theme="dark"] .hljs-bullet,
+[data-bs-theme="dark"] .hljs-selector-pseudo {
+  color: #79c0ff;
+}
+
 [data-bs-theme="dark"] .hljs-addition {
   color: #aff5b4;
 }
@@ -648,7 +743,6 @@ button {
 
 .diff-inline-comment-panel,
 .diff-inline-comments {
-  margin-left: 5.75rem;
   padding: 0.75rem;
   border-left: 3px solid var(--bs-primary);
   background: rgba(var(--bs-primary-rgb), 0.06);
@@ -782,11 +876,6 @@ button {
 @media (max-width: 575.98px) {
   .dropdown-menu-lg.notification-dropdown {
     width: min(360px, calc(100vw - 24px));
-  }
-
-  .diff-inline-comment-panel,
-  .diff-inline-comments {
-    margin-left: 0;
   }
 
   .diff-inline-comment-panel {
