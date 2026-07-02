@@ -323,6 +323,24 @@ button {
   white-space: pre-wrap;
 }
 
+.review-log-card > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.review-log-card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.review-log-chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.review-log-card:not([open]) .review-log-chevron {
+  transform: rotate(-90deg);
+}
+
 .review-user-list {
   max-height: 260px;
   overflow: auto;

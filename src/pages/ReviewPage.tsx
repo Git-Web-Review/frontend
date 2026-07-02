@@ -1274,7 +1274,7 @@ export function ReviewPage() {
                 {canEdit ? (
                   <button
                     aria-label={t("editComment")}
-                    className="btn btn-outline-secondary btn-sm"
+                    className="btn btn-sm border-0 p-1"
                     title={t("editComment")}
                     type="button"
                     onClick={() => startEditComment(comment)}
@@ -1285,7 +1285,7 @@ export function ReviewPage() {
                 {canDelete ? (
                   <button
                     aria-label={t("deleteComment")}
-                    className="btn btn-outline-danger btn-sm"
+                    className="btn btn-sm border-0 p-1 text-danger"
                     disabled={deletingCommentIds.includes(comment.id)}
                     title={t("deleteComment")}
                     type="button"
@@ -1393,7 +1393,7 @@ export function ReviewPage() {
         ) : null}
         {canUpdateCommentDone ? (
           <button
-            className={`btn btn-sm ${thread.done ? "btn-outline-secondary" : "btn-outline-success"}`}
+            className={`btn btn-sm border-0 p-1 ${thread.done ? "text-secondary" : "text-success"}`}
             disabled={savingDoneCommentIds.includes(thread.commentId)}
             type="button"
             onClick={(event) => {
@@ -1662,7 +1662,7 @@ export function ReviewPage() {
           id={diffAnchorId(fileTarget)}
           key={`${commit.hash}-${file.path}`}
         >
-          <div className="card-header d-flex align-items-center justify-content-between gap-3">
+          <div className="card-header py-1 d-flex align-items-center justify-content-between gap-3">
             <div>
               <span className="fw-semibold">{file.path}</span>
               <span className="badge text-bg-secondary ms-2">{file.status}</span>
@@ -1679,12 +1679,13 @@ export function ReviewPage() {
               ) : null}
             </div>
             <button
-              className="btn btn-outline-secondary btn-sm"
+              className="btn btn-sm border-0 p-1"
               type="button"
+              title={t("commentFile")}
+              aria-label={t("commentFile")}
               onClick={() => toggleInlineComment(fileTarget)}
             >
-              <i className="bi bi-chat-left-text me-1" aria-hidden="true" />
-              {t("commentFile")}
+              <i className="bi bi-chat-left-text" aria-hidden="true" />
             </button>
           </div>
           {fileComposerOpen ? renderInlineCommentComposer() : null}
@@ -2497,10 +2498,18 @@ export function ReviewPage() {
                         >
                           <summary className="card-header fw-semibold">
                             <span className="d-flex align-items-center justify-content-between gap-3">
-                              <span>{t("gitwebLog")}</span>
+                              <span className="d-inline-flex align-items-center gap-2">
+                                {t("gitwebLog")}
+                                <i
+                                  className="bi bi-chevron-down review-log-chevron"
+                                  aria-hidden="true"
+                                />
+                              </span>
                               <button
-                                className="btn btn-outline-secondary btn-sm"
+                                className="btn btn-sm border-0 p-1"
                                 type="button"
+                                title={t("commentCommitLog")}
+                                aria-label={t("commentCommitLog")}
                                 onClick={(event) => {
                                   event.preventDefault();
                                   event.stopPropagation();
@@ -2508,10 +2517,9 @@ export function ReviewPage() {
                                 }}
                               >
                                 <i
-                                  className="bi bi-chat-left-text me-1"
+                                  className="bi bi-chat-left-text"
                                   aria-hidden="true"
                                 />
-                                {t("commentCommitLog")}
                               </button>
                             </span>
                           </summary>
