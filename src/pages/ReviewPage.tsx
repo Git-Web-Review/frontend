@@ -1804,6 +1804,30 @@ export function ReviewPage() {
   const activeCommitIndex = activeCommit
     ? review.commits.findIndex((commit) => commit.id === activeCommit.id)
     : -1;
+  const activeCommitHasComments =
+    !!activeCommit &&
+    reviewComments.some(
+      (comment) => comment.commitHash === activeCommit.hash,
+    );
+  const scrollToNextComment = () => {
+    const elements = [
+      ...document.querySelectorAll<HTMLElement>(".diff-inline-comment"),
+    ];
+    if (!elements.length) {
+      return;
+    }
+
+    const next =
+      elements.find(
+        (element) =>
+          element.getBoundingClientRect().top > window.innerHeight / 2 + 24,
+      ) ?? elements[0];
+    next.scrollIntoView({ behavior: "smooth", block: "center" });
+    next.classList.add("diff-anchor-highlight");
+    window.setTimeout(() => {
+      next.classList.remove("diff-anchor-highlight");
+    }, 2000);
+  };
   const commitDiffFiles = (commit: ReviewCommit) =>
     commit.gitDiff.files.length || review.commits.length > 1
       ? commit.gitDiff.files
@@ -2355,6 +2379,18 @@ export function ReviewPage() {
 
         {activeReviewTab === "files" ? (
           <div className="card-body review-files-pane">
+            {activeCommitHasComments ? (
+              <button
+                className="btn btn-primary next-comment-button d-inline-flex align-items-center gap-2"
+                title={t("nextComment")}
+                type="button"
+                onClick={scrollToNextComment}
+              >
+                <i className="bi bi-chat-left-text" aria-hidden="true" />
+                <i className="bi bi-arrow-down" aria-hidden="true" />
+                <span className="visually-hidden">{t("nextComment")}</span>
+              </button>
+            ) : null}
             {review.commits.length ? (
               <>
                 {review.commits.length > 1 ? (

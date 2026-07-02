@@ -153,6 +153,7 @@
     "gitwebFetchError": "Fetch error",
     "gitwebLog": "Commit log",
     "commitLogMatches": "Commit details",
+    "nextComment": "Next comment",
     "commitLogMatch": "Match",
     "expandDescription": "Show full description",
     "collapseDescription": "Collapse description",

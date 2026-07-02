@@ -696,6 +696,15 @@ button.diff-line-number-link:hover {
   border: 1px solid var(--bs-border-color);
 }
 
+.next-comment-button {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 1030;
+  border-radius: 50rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.25);
+}
+
 [data-bs-theme="dark"] .diff-line-code.hljs,
 [data-bs-theme="dark"] .hljs {
   color: #d0d7de;
