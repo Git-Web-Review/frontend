@@ -264,14 +264,6 @@ type ReviewCommentThread = CommentTarget & {
   messages: ReviewComment[];
 };
 
-type CommitLogMatch = {
-  key: string;
-  label: string;
-  text: string;
-  href: string;
-  index: number;
-};
-
 export function ReviewPage() {
   const { reviewId = "" } = useParams<{ reviewId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1500,49 +1492,6 @@ export function ReviewPage() {
       return match.groups?.[groupName] ?? templateVariables[groupName] ?? "";
     });
 
-  const commitLogMatches = (currentReview: ReviewItem): CommitLogMatch[] => {
-    const text = currentReview.gitwebLog ?? "";
-    const templateVariables = gitwebTemplateVariables(currentReview);
-    const matches: CommitLogMatch[] = [];
-    const seenMatches = new Set<string>();
-
-    for (const rule of commitLogLinkRules) {
-      if (!rule.enabled) {
-        continue;
-      }
-
-      try {
-        const regex = new RegExp(rule.regex, "g");
-        let match: RegExpExecArray | null;
-        while ((match = regex.exec(text))) {
-          if (match[0].length === 0) {
-            regex.lastIndex += 1;
-            continue;
-          }
-
-          const href = hrefFromRule(rule, match, templateVariables);
-          const key = `${rule.id}:${match.index}:${match[0]}:${href}`;
-          if (seenMatches.has(key)) {
-            continue;
-          }
-
-          seenMatches.add(key);
-          matches.push({
-            key,
-            label: rule.label || t("commitLogMatch"),
-            text: match[0],
-            href,
-            index: match.index,
-          });
-        }
-      } catch {
-        continue;
-      }
-    }
-
-    return matches.sort((left, right) => left.index - right.index);
-  };
-
   const linkedCommitLog = (
     text: string,
     currentReview: ReviewItem,
@@ -1839,7 +1788,6 @@ export function ReviewPage() {
     );
   }
 
-  const overviewCommitLogMatches = commitLogMatches(review);
   const reviewCommentThreads = commentThreadsFrom(reviewComments);
   const activeCommit =
     review.commits.find((commit) => commit.id === activeCommitId) ??
@@ -2178,7 +2126,9 @@ export function ReviewPage() {
                               : "review-description"
                           }
                         >
-                          {visibleDescription || t("notAvailable")}
+                          {visibleDescription
+                            ? linkedCommitLog(visibleDescription, review)
+                            : t("notAvailable")}
                           {canExpand ? (
                             <button
                               className="description-ellipsis-button"
@@ -2250,33 +2200,6 @@ export function ReviewPage() {
                       </span>
                     </div>
                 </div>
-                {overviewCommitLogMatches.length ? (
-                  <div className="commit-log-match-panel mb-3">
-                    <div className="commit-log-match-title">
-                      <i className="bi bi-stars" aria-hidden="true" />
-                      {t("commitLogMatches")}
-                    </div>
-                    <div className="commit-log-match-list">
-                      {overviewCommitLogMatches.map((match) => (
-                        <a
-                          className="commit-log-match-chip"
-                          href={match.href}
-                          key={match.key}
-                          rel="noreferrer"
-                          target="_blank"
-                        >
-                          <span className="commit-log-match-label">
-                            {match.label}
-                          </span>
-                          <span className="commit-log-match-value">
-                            {match.text}
-                          </span>
-                          <i className="bi bi-box-arrow-up-right" aria-hidden="true" />
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
                 <dl className="row mb-0 small">
                   <dt className="col-4">{t("gitwebUrl")}</dt>
                   <dd className="col-8 text-break">

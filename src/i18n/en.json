@@ -42,7 +42,7 @@
     "cronIntervalMinutes": "Frequency (minutes)",
     "cronRetentionDays": "Retention (days)",
     "cronSettingsSaved": "Cron configuration saved.",
-    "commitLogLinkRules": "Commit log links",
+    "commitLogLinkRules": "Commit log hyperlinks",
     "ruleLabel": "Label",
     "ruleRegex": "Regex",
     "ruleLinkTemplate": "Link",

@@ -42,7 +42,7 @@
     "cronIntervalMinutes": "Fréquence (minutes)",
     "cronRetentionDays": "Rétention (jours)",
     "cronSettingsSaved": "Configuration des crons enregistrée.",
-    "commitLogLinkRules": "Hyperliens des commit log",
+    "commitLogLinkRules": "Hyperliens commit logs",
     "ruleLabel": "Libellé",
     "ruleRegex": "Regex",
     "ruleLinkTemplate": "Lien",
