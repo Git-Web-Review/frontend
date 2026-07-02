@@ -32,10 +32,12 @@ import type {
   ReviewComment,
   ReviewCommentSide,
   ReviewCommit,
+  ReviewCommitChangeKind,
   ReviewDeletion,
   ReviewField,
   ReviewItem,
   ReviewStatus,
+  ReviewSyncPreview,
   ReviewUserSummary,
 } from "../types/api";
 import {
@@ -327,6 +329,13 @@ export function ReviewPage() {
     Record<string, string>
   >({});
   const [savingFieldIds, setSavingFieldIds] = useState<string[]>([]);
+  const [syncModalOpen, setSyncModalOpen] = useState(false);
+  const [syncPreview, setSyncPreview] = useState<ReviewSyncPreview | null>(
+    null,
+  );
+  const [loadingSyncPreview, setLoadingSyncPreview] = useState(false);
+  const [syncingReview, setSyncingReview] = useState(false);
+  const [syncCommitHashes, setSyncCommitHashes] = useState<string[]>([]);
 
   const loadReview = async () => {
     if (!idToken) {
@@ -446,6 +455,87 @@ export function ReviewPage() {
       setSavingFieldIds((current) => current.filter((id) => id !== fieldId));
     }
   };
+
+  const openSyncModal = async () => {
+    if (!idToken) {
+      return;
+    }
+
+    setSyncModalOpen(true);
+    setSyncPreview(null);
+    setLoadingSyncPreview(true);
+    try {
+      const preview = await apiRequest<ReviewSyncPreview>(
+        `/v1/reviews/${reviewId}/sync/preview`,
+        idToken,
+        { method: "POST" },
+      );
+      setSyncPreview(preview);
+      setSyncCommitHashes(preview.commits.map((commit) => commit.hash));
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : t("backendError"));
+      setSyncModalOpen(false);
+    } finally {
+      setLoadingSyncPreview(false);
+    }
+  };
+
+  const closeSyncModal = () => {
+    setSyncModalOpen(false);
+    setSyncPreview(null);
+  };
+
+  const toggleSyncCommit = (hash: string) => {
+    setSyncCommitHashes((current) =>
+      current.includes(hash)
+        ? current.filter((currentHash) => currentHash !== hash)
+        : [...current, hash],
+    );
+  };
+
+  const applySync = async () => {
+    if (!idToken || !syncPreview || syncCommitHashes.length === 0) {
+      return;
+    }
+
+    setSyncingReview(true);
+    try {
+      await apiRequest<ReviewItem>(`/v1/reviews/${reviewId}/sync`, idToken, {
+        method: "POST",
+        body: JSON.stringify({ commitHashes: syncCommitHashes }),
+      });
+      showToast(t("reviewSynced"));
+      closeSyncModal();
+      await loadReview();
+      await loadReviewComments();
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : t("backendError"));
+    } finally {
+      setSyncingReview(false);
+    }
+  };
+
+  const changeKindBadgeClass = (kind: ReviewCommitChangeKind) => {
+    switch (kind) {
+      case "NEW":
+        return "text-bg-info";
+      case "MODIFIED":
+        return "text-bg-warning";
+      case "REBASED":
+        return "text-bg-secondary";
+      default:
+        return "review-meta-badge";
+    }
+  };
+
+  const commitChangeKindBadge = (commit: ReviewCommit) =>
+    review && review.version > 1 && commit.changeKind ? (
+      <span
+        className={`badge ${changeKindBadgeClass(commit.changeKind)} flex-shrink-0`}
+      >
+        {t(`changeKind${commit.changeKind}`)}
+      </span>
+    ) : null;
 
   useEffect(() => {
     void loadReview();
@@ -1998,6 +2088,21 @@ export function ReviewPage() {
               })
             : null}
           {review.ownerId === currentUser?.id && review.status !== "CLOSED" ? (
+            <button
+              className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
+              type="button"
+              disabled={loadingSyncPreview || syncingReview}
+              onClick={() => void openSyncModal()}
+            >
+              {loadingSyncPreview || syncingReview ? (
+                <span className="spinner-border spinner-border-sm" />
+              ) : (
+                <i className="bi bi-arrow-repeat" aria-hidden="true" />
+              )}
+              {t("syncReview")}
+            </button>
+          ) : null}
+          {review.ownerId === currentUser?.id && review.status !== "CLOSED" ? (
             <span
               className="disabled-button-tooltip"
               title={
@@ -2065,6 +2170,12 @@ export function ReviewPage() {
                   {t("commitsAckedProgress")}
                 </span>
               ) : null}
+              <span
+                className="badge review-meta-badge"
+                title={t("reviewVersion")}
+              >
+                v{review.version}
+              </span>
               <span className={`badge ${reviewStatusBadgeClass(review.status)}`}>
                 {reviewStatusLabel(review.status)}
               </span>
@@ -2412,6 +2523,7 @@ export function ReviewPage() {
                         <span className="text-truncate flex-grow-1 text-start">
                           {activeCommit?.title}
                         </span>
+                        {activeCommit ? commitChangeKindBadge(activeCommit) : null}
                         {activeCommit ? (
                           <span
                             className={`badge ${reviewCommitStatusBadgeClass(activeCommit.status)} flex-shrink-0`}
@@ -2447,6 +2559,7 @@ export function ReviewPage() {
                               <span className="text-truncate flex-grow-1 text-start">
                                 {commit.title}
                               </span>
+                              {commitChangeKindBadge(commit)}
                               {commitAckedByMe(commit) ? (
                                 <i
                                   className="bi bi-check2-circle text-success flex-shrink-0"
@@ -2624,6 +2737,136 @@ export function ReviewPage() {
           </div>
         ) : null}
       </div>
+
+      {syncModalOpen ? (
+        <>
+          <div className="modal d-block" role="dialog" aria-modal="true">
+            <div className="modal-dialog modal-lg">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <div>
+                    <h5 className="modal-title">{t("syncReviewTitle")}</h5>
+                    {syncPreview?.sourceBranch ? (
+                      <div className="small text-secondary text-break">
+                        {syncPreview.sourceBranch}
+                      </div>
+                    ) : null}
+                  </div>
+                  <button
+                    className="btn-close"
+                    type="button"
+                    aria-label="Close"
+                    onClick={closeSyncModal}
+                  />
+                </div>
+                <div className="modal-body">
+                  {loadingSyncPreview ? (
+                    <div className="d-flex align-items-center gap-2 text-secondary">
+                      <span className="spinner-border spinner-border-sm" />
+                      {t("loadingSyncPreview")}
+                    </div>
+                  ) : null}
+                  {syncPreview && !syncPreview.hasChanges ? (
+                    <div className="alert alert-info mb-0">
+                      {t("syncNoChanges")}
+                    </div>
+                  ) : null}
+                  {syncPreview?.hasChanges ? (
+                    <>
+                      <p className="text-secondary small mb-3">
+                        {t("syncCreatesVersion")}{" "}
+                        <span className="badge review-meta-badge">
+                          v{syncPreview.version + 1}
+                        </span>
+                      </p>
+                      <div className="list-group mb-3">
+                        {syncPreview.commits.map((commit) => (
+                          <label
+                            className="list-group-item d-flex align-items-center gap-2"
+                            key={commit.hash}
+                          >
+                            <input
+                              checked={syncCommitHashes.includes(commit.hash)}
+                              className="form-check-input flex-shrink-0 mt-0"
+                              type="checkbox"
+                              onChange={() => toggleSyncCommit(commit.hash)}
+                            />
+                            <span className="font-monospace small flex-shrink-0">
+                              {commit.hash.slice(0, 12)}
+                            </span>
+                            <span className="text-truncate flex-grow-1">
+                              {commit.title}
+                            </span>
+                            <span
+                              className={`badge ${changeKindBadgeClass(commit.changeKind)} flex-shrink-0`}
+                            >
+                              {t(`changeKind${commit.changeKind}`)}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      {syncPreview.droppedCommits.length ? (
+                        <>
+                          <span className="form-label d-block">
+                            {t("syncDroppedCommits")}
+                          </span>
+                          <div className="list-group">
+                            {syncPreview.droppedCommits.map((commit) => (
+                              <div
+                                className="list-group-item d-flex align-items-center gap-2 text-secondary"
+                                key={commit.hash}
+                              >
+                                <i
+                                  className="bi bi-x-circle flex-shrink-0"
+                                  aria-hidden="true"
+                                />
+                                <span className="font-monospace small flex-shrink-0">
+                                  {commit.hash.slice(0, 12)}
+                                </span>
+                                <span className="text-truncate flex-grow-1 text-decoration-line-through">
+                                  {commit.title}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : null}
+                    </>
+                  ) : null}
+                </div>
+                <div className="modal-footer">
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={closeSyncModal}
+                  >
+                    {t("cancel")}
+                  </button>
+                  <button
+                    className="btn btn-primary d-inline-flex align-items-center gap-2"
+                    type="button"
+                    disabled={
+                      !syncPreview?.hasChanges ||
+                      syncCommitHashes.length === 0 ||
+                      syncingReview
+                    }
+                    onClick={() => void applySync()}
+                  >
+                    {syncingReview ? (
+                      <span className="spinner-border spinner-border-sm" />
+                    ) : (
+                      <i className="bi bi-arrow-repeat" aria-hidden="true" />
+                    )}
+                    {t("syncApply")}
+                    {syncPreview ? ` v${syncPreview.version + 1}` : null}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop show" />
+        </>
+      ) : null}
     </div>
   );
 }

@@ -289,7 +289,8 @@ export function AppShell({ children }: AppShellProps) {
       (notification.type !== "REVIEW_PENDING" &&
         notification.type !== "REVIEW_STATUS_CHANGED" &&
         notification.type !== "COMMIT_REVIEWED" &&
-        notification.type !== "COMMENT_RECEIVED") ||
+        notification.type !== "COMMENT_RECEIVED" &&
+        notification.type !== "REVIEW_NEW_VERSION") ||
       typeof notification.payload !== "object" ||
       notification.payload === null
     ) {
@@ -382,6 +383,10 @@ export function AppShell({ children }: AppShellProps) {
       return t("notificationCommentReceived");
     }
 
+    if (notification.type === "REVIEW_NEW_VERSION") {
+      return t("notificationReviewNewVersion");
+    }
+
     return t("notifications");
   };
 
@@ -394,7 +399,8 @@ export function AppShell({ children }: AppShellProps) {
       const actor =
         notification.type === "REVIEW_STATUS_CHANGED" ||
         notification.type === "COMMIT_REVIEWED" ||
-        notification.type === "COMMENT_RECEIVED"
+        notification.type === "COMMENT_RECEIVED" ||
+        notification.type === "REVIEW_NEW_VERSION"
           ? reviewPayload.actorNickname || reviewPayload.actorEmail
           : reviewPayload.ownerEmail;
 
@@ -415,7 +421,9 @@ export function AppShell({ children }: AppShellProps) {
                     ? t("reviewedBy")
                     : notification.type === "COMMENT_RECEIVED"
                       ? t("commentedBy")
-                      : t("openedBy")} {actor}
+                      : notification.type === "REVIEW_NEW_VERSION"
+                        ? t("syncedBy")
+                        : t("openedBy")} {actor}
               </span>
             ) : null}
           </div>

@@ -149,7 +149,8 @@ export type NotificationItem = {
     | "REVIEW_PENDING"
     | "REVIEW_STATUS_CHANGED"
     | "COMMENT_RECEIVED"
-    | "COMMIT_REVIEWED";
+    | "COMMIT_REVIEWED"
+    | "REVIEW_NEW_VERSION";
   payload: unknown;
   seen: boolean;
   createdAt: string;
@@ -198,6 +199,12 @@ export type ReviewCommitAck = {
   user: ReviewUserSummary;
 };
 
+export type ReviewCommitChangeKind =
+  | "NEW"
+  | "UNCHANGED"
+  | "REBASED"
+  | "MODIFIED";
+
 export type ReviewCommit = {
   id: string;
   reviewId: string;
@@ -205,6 +212,8 @@ export type ReviewCommit = {
   title: string;
   status: ReviewCommitStatus;
   position: number;
+  patchId: string | null;
+  changeKind: ReviewCommitChangeKind | null;
   signedOffByName: string;
   signedOffByEmail: string;
   fixesHash: string | null;
@@ -234,6 +243,7 @@ export type ReviewItem = {
   title: string | null;
   description: string | null;
   status: ReviewStatus;
+  version: number;
   ownerId: string;
   owner: ReviewUserSummary;
   sourceProject: string | null;
@@ -276,6 +286,25 @@ export type ReviewPreview = {
   reviewerEmails: string[];
   reviewerUsers: ReviewUserSummary[];
   gitDiff: ReviewDiff;
+};
+
+export type ReviewSyncCommitPreview = {
+  hash: string;
+  title: string;
+  changeKind: ReviewCommitChangeKind;
+  previousHash: string | null;
+  previousTitle: string | null;
+  authorName: string;
+  authoredAt: string | null;
+};
+
+export type ReviewSyncPreview = {
+  reviewId: string;
+  version: number;
+  sourceBranch: string | null;
+  hasChanges: boolean;
+  commits: ReviewSyncCommitPreview[];
+  droppedCommits: { hash: string; title: string }[];
 };
 
 export type ReviewDeletion = {

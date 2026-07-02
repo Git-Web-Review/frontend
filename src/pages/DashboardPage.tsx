@@ -587,6 +587,12 @@ export function DashboardPage() {
               {shortHash(review.sourceCommit)}
             </span>
           ) : null}
+          {review.version > 1 ? (
+            <span className="badge review-meta-badge" title={t("reviewVersion")}>
+              <i className="bi bi-arrow-repeat me-1" aria-hidden="true" />
+              v{review.version}
+            </span>
+          ) : null}
           {review.commits.length > 1 ? (
             <span className="badge review-meta-badge">
               <i className="bi bi-check2-circle me-1" aria-hidden="true" />
