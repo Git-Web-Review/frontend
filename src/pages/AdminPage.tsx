@@ -4,6 +4,7 @@ import { ApiClientError, apiRequest } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
 import { RefreshButton } from "../components/RefreshButton";
 import { useI18n } from "../i18n/I18nProvider";
+import type { TranslationKey } from "../i18n/translations";
 import { useToast } from "../layout/ToastProvider";
 import type {
   AdminGrant,
@@ -13,10 +14,45 @@ import type {
   CommitLogLinkRuleDeletion,
   CurrentUser,
   GlobalSettings,
+  NotificationCategory,
+  NotificationPreferences,
   ReviewField,
   ReviewFieldDeletion,
   ReviewFieldType,
+  UserLocale,
+  UserSettings,
 } from "../types/api";
+
+const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
+  "reviewStarted",
+  "reviewPending",
+  "reviewDone",
+  "reviewAcked",
+  "reviewClosed",
+  "commentReceived",
+];
+
+const NOTIFICATION_CATEGORY_LABELS: Record<
+  NotificationCategory,
+  TranslationKey
+> = {
+  reviewStarted: "notifCategoryReviewStarted",
+  reviewPending: "notifCategoryReviewPending",
+  reviewDone: "notifCategoryReviewDone",
+  reviewAcked: "notifCategoryReviewAcked",
+  reviewClosed: "notifCategoryReviewClosed",
+  commentReceived: "notifCategoryCommentReceived",
+};
+
+type UserSettingsDraft = {
+  nickname: string;
+  hostname: string;
+  locale: UserLocale;
+  mailNotificationsEnabled: boolean;
+  ircNotificationsEnabled: boolean;
+  ircNickname: string;
+  notificationPreferences: NotificationPreferences;
+};
 
 type LinkRuleDraft = {
   label: string;
@@ -57,6 +93,10 @@ export function AdminPage() {
   const { t } = useI18n();
   const { showToast } = useToast();
   const [users, setUsers] = useState<CurrentUser[]>([]);
+  const [editingUser, setEditingUser] = useState<CurrentUser | null>(null);
+  const [userSettingsDraft, setUserSettingsDraft] =
+    useState<UserSettingsDraft | null>(null);
+  const [savingUserSettings, setSavingUserSettings] = useState(false);
   const [admins, setAdmins] = useState<AdminGrant[]>([]);
   const [linkRules, setLinkRules] = useState<CommitLogLinkRule[]>([]);
   const [linkRuleDrafts, setLinkRuleDrafts] = useState<
@@ -581,6 +621,91 @@ export function AdminPage() {
     }
   };
 
+  const openUserSettings = (user: CurrentUser) => {
+    setEditingUser(user);
+    setUserSettingsDraft({
+      nickname: user.settings?.nickname ?? "",
+      hostname: user.hostname,
+      locale: user.settings?.locale ?? "EN",
+      mailNotificationsEnabled:
+        user.settings?.mailNotificationsEnabled ?? false,
+      ircNotificationsEnabled: user.settings?.ircNotificationsEnabled ?? false,
+      ircNickname: user.settings?.ircNickname ?? "",
+      notificationPreferences: user.settings?.notificationPreferences ?? {},
+    });
+  };
+
+  const closeUserSettings = () => {
+    setEditingUser(null);
+    setUserSettingsDraft(null);
+  };
+
+  const draftIrcNicknameRequired =
+    !!userSettingsDraft &&
+    userSettingsDraft.ircNotificationsEnabled &&
+    !userSettingsDraft.ircNickname.trim();
+
+  const draftCategoryEnabled = (
+    medium: "mail" | "irc",
+    category: NotificationCategory,
+  ) => userSettingsDraft?.notificationPreferences[medium]?.[category] ?? true;
+
+  const toggleDraftCategory = (
+    medium: "mail" | "irc",
+    category: NotificationCategory,
+  ) =>
+    setUserSettingsDraft((draft) =>
+      draft
+        ? {
+            ...draft,
+            notificationPreferences: {
+              ...draft.notificationPreferences,
+              [medium]: {
+                ...draft.notificationPreferences[medium],
+                [category]: !(
+                  draft.notificationPreferences[medium]?.[category] ?? true
+                ),
+              },
+            },
+          }
+        : draft,
+    );
+
+  const saveUserSettings = async () => {
+    if (!idToken || !editingUser || !userSettingsDraft || draftIrcNicknameRequired) {
+      return;
+    }
+
+    setSavingUserSettings(true);
+    try {
+      const hostname = userSettingsDraft.hostname.trim();
+      await apiRequest<UserSettings>(
+        `/v1/admin/users/${editingUser.id}/settings`,
+        idToken,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            nickname: userSettingsDraft.nickname.trim() || null,
+            ...(hostname ? { hostname } : {}),
+            locale: userSettingsDraft.locale,
+            mailNotificationsEnabled:
+              userSettingsDraft.mailNotificationsEnabled,
+            ircNotificationsEnabled: userSettingsDraft.ircNotificationsEnabled,
+            ircNickname: userSettingsDraft.ircNickname.trim() || null,
+            notificationPreferences: userSettingsDraft.notificationPreferences,
+          }),
+        },
+      );
+      showToast(t("userSettingsSaved"));
+      closeUserSettings();
+      await loadUsers();
+    } catch (error) {
+      showToast(errorLabel(error));
+    } finally {
+      setSavingUserSettings(false);
+    }
+  };
+
   const adminTabs: { id: AdminTab; label: string; icon: string }[] = [
     { id: "domains", label: t("allowedDomains"), icon: "bi-shield-check" },
     { id: "notifications", label: t("sendTextNotification"), icon: "bi-send" },
@@ -738,6 +863,7 @@ export function AdminPage() {
                       <th>{t("mailNotifications")}</th>
                       <th>{t("ircNotifications")}</th>
                       <th>{t("createdAt")}</th>
+                      <th className="text-end">{t("actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -773,6 +899,16 @@ export function AdminPage() {
                         </td>
                         <td className="text-secondary">
                           {new Date(user.createdAt).toLocaleString()}
+                        </td>
+                        <td className="text-end">
+                          <button
+                            className="btn btn-outline-secondary btn-sm"
+                            title={t("editUserSettings")}
+                            type="button"
+                            onClick={() => openUserSettings(user)}
+                          >
+                            <i className="bi bi-pencil" aria-hidden="true" />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -1272,6 +1408,249 @@ export function AdminPage() {
           </div>
         </div>
       </div>
+      ) : null}
+
+      {editingUser && userSettingsDraft ? (
+        <>
+          <div className="modal d-block" role="dialog" aria-modal="true">
+            <div className="modal-dialog">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <div>
+                    <h5 className="modal-title">{t("editUserSettings")}</h5>
+                    <div className="small text-secondary text-break">
+                      {editingUser.email}
+                    </div>
+                  </div>
+                  <button
+                    className="btn-close"
+                    type="button"
+                    aria-label="Close"
+                    onClick={closeUserSettings}
+                  />
+                </div>
+                <div className="modal-body">
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="user-settings-nickname">
+                      {t("nickname")}
+                    </label>
+                    <input
+                      className="form-control"
+                      id="user-settings-nickname"
+                      type="text"
+                      value={userSettingsDraft.nickname}
+                      onChange={(event) =>
+                        setUserSettingsDraft((draft) =>
+                          draft
+                            ? { ...draft, nickname: event.target.value }
+                            : draft,
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="user-settings-hostname">
+                      {t("hostname")}
+                    </label>
+                    <input
+                      className="form-control"
+                      id="user-settings-hostname"
+                      type="text"
+                      value={userSettingsDraft.hostname}
+                      onChange={(event) =>
+                        setUserSettingsDraft((draft) =>
+                          draft
+                            ? { ...draft, hostname: event.target.value }
+                            : draft,
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="user-settings-locale">
+                      {t("locale")}
+                    </label>
+                    <select
+                      className="form-select"
+                      id="user-settings-locale"
+                      value={userSettingsDraft.locale}
+                      onChange={(event) =>
+                        setUserSettingsDraft((draft) =>
+                          draft
+                            ? {
+                                ...draft,
+                                locale: event.target.value as UserLocale,
+                              }
+                            : draft,
+                        )
+                      }
+                    >
+                      <option value="FR">FR</option>
+                      <option value="EN">EN</option>
+                    </select>
+                  </div>
+                  <div className="form-check form-switch mb-2">
+                    <input
+                      checked={userSettingsDraft.mailNotificationsEnabled}
+                      className="form-check-input"
+                      id="user-settings-mail-notifications"
+                      role="switch"
+                      type="checkbox"
+                      onChange={(event) =>
+                        setUserSettingsDraft((draft) =>
+                          draft
+                            ? {
+                                ...draft,
+                                mailNotificationsEnabled: event.target.checked,
+                              }
+                            : draft,
+                        )
+                      }
+                    />
+                    <label
+                      className="form-check-label"
+                      htmlFor="user-settings-mail-notifications"
+                    >
+                      {t("mailNotifications")}
+                    </label>
+                  </div>
+                  {userSettingsDraft.mailNotificationsEnabled ? (
+                    <div className="notification-preference-toggles ms-4 mb-3">
+                      {NOTIFICATION_CATEGORIES.map((category) => (
+                        <div
+                          className="form-check form-switch"
+                          key={`user-settings-mail-${category}`}
+                        >
+                          <input
+                            checked={draftCategoryEnabled("mail", category)}
+                            className="form-check-input"
+                            id={`user-settings-mail-${category}`}
+                            type="checkbox"
+                            onChange={() =>
+                              toggleDraftCategory("mail", category)
+                            }
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor={`user-settings-mail-${category}`}
+                          >
+                            {t(NOTIFICATION_CATEGORY_LABELS[category])}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  <div className="form-check form-switch mb-2">
+                    <input
+                      checked={userSettingsDraft.ircNotificationsEnabled}
+                      className="form-check-input"
+                      id="user-settings-irc-notifications"
+                      role="switch"
+                      type="checkbox"
+                      onChange={(event) =>
+                        setUserSettingsDraft((draft) =>
+                          draft
+                            ? {
+                                ...draft,
+                                ircNotificationsEnabled: event.target.checked,
+                              }
+                            : draft,
+                        )
+                      }
+                    />
+                    <label
+                      className="form-check-label"
+                      htmlFor="user-settings-irc-notifications"
+                    >
+                      {t("ircNotifications")}
+                    </label>
+                  </div>
+                  {userSettingsDraft.ircNotificationsEnabled ? (
+                    <>
+                      <div className="mb-2">
+                        <label
+                          className="form-label"
+                          htmlFor="user-settings-irc-nickname"
+                        >
+                          {t("ircNickname")}
+                        </label>
+                        <input
+                          className={
+                            draftIrcNicknameRequired
+                              ? "form-control is-invalid"
+                              : "form-control"
+                          }
+                          id="user-settings-irc-nickname"
+                          type="text"
+                          value={userSettingsDraft.ircNickname}
+                          onChange={(event) =>
+                            setUserSettingsDraft((draft) =>
+                              draft
+                                ? { ...draft, ircNickname: event.target.value }
+                                : draft,
+                            )
+                          }
+                        />
+                        {draftIrcNicknameRequired ? (
+                          <div className="invalid-feedback">
+                            {t("ircNicknameRequired")}
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="notification-preference-toggles ms-4 mb-0">
+                        {NOTIFICATION_CATEGORIES.map((category) => (
+                          <div
+                            className="form-check form-switch"
+                            key={`user-settings-irc-${category}`}
+                          >
+                            <input
+                              checked={draftCategoryEnabled("irc", category)}
+                              className="form-check-input"
+                              id={`user-settings-irc-${category}`}
+                              type="checkbox"
+                              onChange={() =>
+                                toggleDraftCategory("irc", category)
+                              }
+                            />
+                            <label
+                              className="form-check-label"
+                              htmlFor={`user-settings-irc-${category}`}
+                            >
+                              {t(NOTIFICATION_CATEGORY_LABELS[category])}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+                <div className="modal-footer">
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={closeUserSettings}
+                  >
+                    {t("cancel")}
+                  </button>
+                  <button
+                    className="btn btn-primary d-inline-flex align-items-center gap-2"
+                    type="button"
+                    disabled={savingUserSettings || draftIrcNicknameRequired}
+                    onClick={() => void saveUserSettings()}
+                  >
+                    {savingUserSettings ? (
+                      <span className="spinner-border spinner-border-sm" />
+                    ) : (
+                      <i className="bi bi-check-lg" aria-hidden="true" />
+                    )}
+                    {t("save")}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop show" />
+        </>
       ) : null}
     </div>
   );

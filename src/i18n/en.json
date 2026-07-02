@@ -9,6 +9,8 @@
     "settings": "Settings",
     "admin": "Admin",
     "users": "Users",
+    "editUserSettings": "Edit user settings",
+    "userSettingsSaved": "User settings saved.",
     "admins": "Admins",
     "email": "Email",
     "role": "Role",
