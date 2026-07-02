@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ApiClientError, apiRequest } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
+import { RefreshButton } from "../components/RefreshButton";
 import { useI18n } from "../i18n/I18nProvider";
 import { useToast } from "../layout/ToastProvider";
 import type {
@@ -450,19 +451,11 @@ export function AdminPage() {
         <div className="card card-success card-outline h-100">
           <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
             <h3 className="card-title">{t("allowedDomains")}</h3>
-            <button
-              className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
-              type="button"
-              disabled={loadingSettings || !idToken}
+            <RefreshButton
+              disabled={!idToken}
+              loading={loadingSettings}
               onClick={() => void loadGlobalSettings()}
-            >
-              {loadingSettings ? (
-                <span className="spinner-border spinner-border-sm" />
-              ) : (
-                <i className="bi bi-arrow-clockwise" aria-hidden="true" />
-              )}
-              {t("refresh")}
-            </button>
+            />
           </div>
           <div className="card-body">
             <label className="form-label" htmlFor="allowed-domains">
@@ -550,22 +543,13 @@ export function AdminPage() {
       {activeTab === "users" ? (
       <div className="col-12">
         <div className="card h-100">
-          <div className="card-header d-flex flex-wrap align-items-center gap-1">
+          <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
             <h3 className="card-title mb-0">{t("users")}</h3>
-            <button
-              aria-label={t("refresh")}
-              className="btn btn-link btn-sm text-secondary text-decoration-none p-1 lh-1"
-              title={t("refresh")}
-              type="button"
-              disabled={loadingUsers || !idToken}
+            <RefreshButton
+              disabled={!idToken}
+              loading={loadingUsers}
               onClick={() => void loadUsers()}
-            >
-              {loadingUsers ? (
-                <span className="spinner-border spinner-border-sm" />
-              ) : (
-                <i className="bi bi-arrow-clockwise" aria-hidden="true" />
-              )}
-            </button>
+            />
           </div>
           <div className="card-body p-0">
             {users.length ? (
@@ -635,24 +619,8 @@ export function AdminPage() {
       <div className="col-12">
         <div className="card h-100">
           <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <div className="d-inline-flex align-items-center gap-1">
-              <h3 className="card-title mb-0">{t("admins")}</h3>
-              <button
-                aria-label={t("refresh")}
-                className="btn btn-link btn-sm text-secondary text-decoration-none p-1 lh-1"
-                title={t("refresh")}
-                type="button"
-                disabled={loading || !idToken}
-                onClick={() => void loadAdmins()}
-              >
-                {loading ? (
-                  <span className="spinner-border spinner-border-sm" />
-                ) : (
-                  <i className="bi bi-arrow-clockwise" aria-hidden="true" />
-                )}
-              </button>
-            </div>
-            <div className="d-flex flex-wrap align-items-center gap-2 ms-lg-auto">
+            <h3 className="card-title mb-0">{t("admins")}</h3>
+            <div className="d-flex flex-wrap align-items-center gap-2">
               <div className="input-group input-group-sm admin-add-input">
                 <span className="input-group-text">
                   <i className="bi bi-envelope" aria-hidden="true" />
@@ -684,6 +652,11 @@ export function AdminPage() {
                   {t("addAdmin")}
                 </button>
               </div>
+              <RefreshButton
+                disabled={!idToken}
+                loading={loading}
+                onClick={() => void loadAdmins()}
+              />
             </div>
           </div>
           <div className="card-body p-0">
@@ -739,22 +712,13 @@ export function AdminPage() {
       {activeTab === "linkRules" ? (
       <div className="col-12">
         <div className="card card-primary card-outline">
-          <div className="card-header d-flex flex-wrap align-items-center gap-1">
+          <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
             <h3 className="card-title mb-0">{t("commitLogLinkRules")}</h3>
-            <button
-              aria-label={t("refresh")}
-              className="btn btn-link btn-sm text-secondary text-decoration-none p-1 lh-1"
-              title={t("refresh")}
-              type="button"
-              disabled={loadingLinkRules || !idToken}
+            <RefreshButton
+              disabled={!idToken}
+              loading={loadingLinkRules}
               onClick={() => void loadLinkRules()}
-            >
-              {loadingLinkRules ? (
-                <span className="spinner-border spinner-border-sm" />
-              ) : (
-                <i className="bi bi-arrow-clockwise" aria-hidden="true" />
-              )}
-            </button>
+            />
           </div>
           <div className="card-body">
             <p className="text-secondary small mb-3">
