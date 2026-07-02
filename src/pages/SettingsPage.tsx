@@ -2,13 +2,41 @@ import { useEffect, useRef, useState } from "react";
 import { apiRequest, backendUrl } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n/I18nProvider";
+import type { TranslationKey } from "../i18n/translations";
 import { useToast } from "../layout/ToastProvider";
-import type { CurrentUser, UserLocale, UserProfileImage } from "../types/api";
+import type {
+  CurrentUser,
+  NotificationCategory,
+  NotificationPreferences,
+  UserLocale,
+  UserProfileImage,
+} from "../types/api";
 import { profileInitialsFromEmail } from "../utils/profileInitials";
 
 const nullableText = (value: string) => {
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
+};
+
+const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
+  "reviewStarted",
+  "reviewPending",
+  "reviewDone",
+  "reviewAcked",
+  "reviewClosed",
+  "commentReceived",
+];
+
+const NOTIFICATION_CATEGORY_LABELS: Record<
+  NotificationCategory,
+  TranslationKey
+> = {
+  reviewStarted: "notifCategoryReviewStarted",
+  reviewPending: "notifCategoryReviewPending",
+  reviewDone: "notifCategoryReviewDone",
+  reviewAcked: "notifCategoryReviewAcked",
+  reviewClosed: "notifCategoryReviewClosed",
+  commentReceived: "notifCategoryCommentReceived",
 };
 
 export function SettingsPage() {
@@ -32,6 +60,10 @@ export function SettingsPage() {
   const [ircNickname, setIrcNickname] = useState(
     currentUser?.settings?.ircNickname ?? "",
   );
+  const [notificationPreferences, setNotificationPreferences] =
+    useState<NotificationPreferences>(
+      currentUser?.settings?.notificationPreferences ?? {},
+    );
   const [saving, setSaving] = useState(false);
   const [settingsError, setSettingsError] = useState("");
   const [profileImageSrc, setProfileImageSrc] = useState("");
@@ -46,6 +78,8 @@ export function SettingsPage() {
   const currentIrcNotificationsEnabled =
     currentUser?.settings?.ircNotificationsEnabled ?? false;
   const currentIrcNickname = currentUser?.settings?.ircNickname ?? "";
+  const currentNotificationPreferences =
+    currentUser?.settings?.notificationPreferences ?? {};
   const ircNicknameRequired = ircNotificationsEnabled && !ircNickname.trim();
   const hasSettingsChanges =
     nickname !== currentNickname ||
@@ -53,7 +87,26 @@ export function SettingsPage() {
     locale !== currentLocale ||
     mailNotificationsEnabled !== currentMailNotificationsEnabled ||
     ircNotificationsEnabled !== currentIrcNotificationsEnabled ||
-    ircNickname !== currentIrcNickname;
+    ircNickname !== currentIrcNickname ||
+    JSON.stringify(notificationPreferences) !==
+      JSON.stringify(currentNotificationPreferences);
+
+  const categoryEnabled = (
+    medium: "mail" | "irc",
+    category: NotificationCategory,
+  ) => notificationPreferences[medium]?.[category] ?? true;
+
+  const toggleCategory = (
+    medium: "mail" | "irc",
+    category: NotificationCategory,
+  ) =>
+    setNotificationPreferences((current) => ({
+      ...current,
+      [medium]: {
+        ...current[medium],
+        [category]: !(current[medium]?.[category] ?? true),
+      },
+    }));
 
   useEffect(() => {
     let objectUrl = "";
@@ -132,6 +185,7 @@ export function SettingsPage() {
           mailNotificationsEnabled,
           ircNotificationsEnabled,
           ircNickname: nullableText(ircNickname),
+          notificationPreferences,
         }),
       });
       await refreshCurrentUser();
@@ -170,6 +224,28 @@ export function SettingsPage() {
       }
     }
   };
+
+  const renderNotificationCategoryToggles = (medium: "mail" | "irc") => (
+    <div className="notification-preference-toggles ms-4 mb-3">
+      {NOTIFICATION_CATEGORIES.map((category) => (
+        <div className="form-check form-switch" key={`${medium}-${category}`}>
+          <input
+            className="form-check-input"
+            id={`${medium}-${category}`}
+            type="checkbox"
+            checked={categoryEnabled(medium, category)}
+            onChange={() => toggleCategory(medium, category)}
+          />
+          <label
+            className="form-check-label"
+            htmlFor={`${medium}-${category}`}
+          >
+            {t(NOTIFICATION_CATEGORY_LABELS[category])}
+          </label>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="row justify-content-center">
@@ -250,9 +326,16 @@ export function SettingsPage() {
                 {t("mailNotifications")}
               </label>
             </div>
-            <div className="row g-3 align-items-end mb-3">
+            {mailNotificationsEnabled
+              ? renderNotificationCategoryToggles("mail")
+              : null}
+            <div className="row g-3 mb-3">
               <div className="col-md-5">
-                <div className="form-check form-switch mb-md-2">
+                <div
+                  className={`form-check form-switch mb-0${
+                    ircNotificationsEnabled ? " irc-toggle-align" : ""
+                  }`}
+                >
                   <input
                     className="form-check-input"
                     id="irc-notifications"
@@ -293,6 +376,9 @@ export function SettingsPage() {
                 </div>
               ) : null}
             </div>
+            {ircNotificationsEnabled
+              ? renderNotificationCategoryToggles("irc")
+              : null}
             {settingsError ? (
               <div className="alert alert-danger mb-0">{settingsError}</div>
             ) : null}

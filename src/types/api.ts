@@ -29,6 +29,23 @@ export type ApiError = {
   message: string;
 };
 
+export type NotificationCategory =
+  | "reviewStarted"
+  | "reviewPending"
+  | "reviewDone"
+  | "reviewAcked"
+  | "reviewClosed"
+  | "commentReceived";
+
+export type NotificationMediumPreferences = Partial<
+  Record<NotificationCategory, boolean>
+>;
+
+export type NotificationPreferences = {
+  mail?: NotificationMediumPreferences;
+  irc?: NotificationMediumPreferences;
+};
+
 export type UserSettings = {
   userId: string;
   nickname: string | null;
@@ -37,6 +54,7 @@ export type UserSettings = {
   mailNotificationsEnabled: boolean;
   ircNotificationsEnabled: boolean;
   ircNickname: string | null;
+  notificationPreferences: NotificationPreferences | null;
 };
 
 export type UserProfileImage = {
