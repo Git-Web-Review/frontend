@@ -199,6 +199,20 @@ export type ReviewCommitAck = {
   user: ReviewUserSummary;
 };
 
+export type ReviewFileView = {
+  id: string;
+  reviewCommitId: string;
+  userId: string;
+  filePath: string;
+  createdAt: string;
+};
+
+export type FileViewedResponse = {
+  commitId: string;
+  filePath: string;
+  viewed: boolean;
+};
+
 export type ReviewCommitChangeKind =
   | "NEW"
   | "UNCHANGED"
@@ -221,6 +235,7 @@ export type ReviewCommit = {
   rawMessage: string;
   gitDiff: ReviewDiff;
   acks: ReviewCommitAck[];
+  fileViews: ReviewFileView[];
   createdAt: string;
 };
 

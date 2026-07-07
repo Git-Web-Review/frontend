@@ -190,6 +190,7 @@
     "backToDashboard": "Back to dashboard",
     "diffNotAvailable": "No diff available for this review.",
     "commentFile": "Comment whole file",
+    "fileViewed": "Viewed",
     "commentCommitLog": "Comment commit log",
     "commitLogComment": "commit log",
     "commentLine": "Comment this line",

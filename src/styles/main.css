@@ -723,6 +723,15 @@ button.diff-line-number-link:hover {
   box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.25);
 }
 
+.diff-file-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.diff-file-header .form-check-label {
+  cursor: pointer;
+}
+
 [data-bs-theme="dark"] .diff-line-code.hljs,
 [data-bs-theme="dark"] .hljs {
   color: #d0d7de;

@@ -386,6 +386,10 @@ export function ReviewPage() {
     Record<string, string>
   >({});
   const [savingFieldIds, setSavingFieldIds] = useState<string[]>([]);
+  const [expandedFileKeys, setExpandedFileKeys] = useState<
+    Record<string, boolean>
+  >({});
+  const [savingFileViewKeys, setSavingFileViewKeys] = useState<string[]>([]);
   const [syncModalOpen, setSyncModalOpen] = useState(false);
   const [syncPreview, setSyncPreview] = useState<ReviewSyncPreview | null>(
     null,
@@ -517,7 +521,6 @@ export function ReviewPage() {
     if (!idToken) {
       return;
     }
-
     setSyncModalOpen(true);
     setSyncPreview(null);
     setLoadingSyncPreview(true);
@@ -569,6 +572,77 @@ export function ReviewPage() {
       showToast(error instanceof Error ? error.message : t("backendError"));
     } finally {
       setSyncingReview(false);
+    }
+  };
+
+  const fileViewKey = (commitId: string, filePath: string) =>
+    `${commitId}:${filePath}`;
+
+  const isFileViewedByMe = (commit: ReviewCommit, filePath: string) =>
+    commit.fileViews.some(
+      (view) => view.userId === currentUser?.id && view.filePath === filePath,
+    );
+
+  const toggleFileViewed = async (commit: ReviewCommit, filePath: string) => {
+    if (!idToken || !review) {
+      return;
+    }
+
+    const key = fileViewKey(commit.id, filePath);
+    const nextViewed = !isFileViewedByMe(commit, filePath);
+    setSavingFileViewKeys((current) => [...current, key]);
+    try {
+      await apiRequest(
+        `/v1/reviews/${review.id}/commits/${commit.id}/files/viewed`,
+        idToken,
+        {
+          method: "PUT",
+          body: JSON.stringify({ filePath, viewed: nextViewed }),
+        },
+      );
+      setReview((current) =>
+        current
+          ? {
+              ...current,
+              commits: current.commits.map((currentCommit) =>
+                currentCommit.id === commit.id
+                  ? {
+                      ...currentCommit,
+                      fileViews: nextViewed
+                        ? [
+                            ...currentCommit.fileViews,
+                            {
+                              id: key,
+                              reviewCommitId: commit.id,
+                              userId: currentUser?.id ?? "",
+                              filePath,
+                              createdAt: new Date().toISOString(),
+                            },
+                          ]
+                        : currentCommit.fileViews.filter(
+                            (view) =>
+                              !(
+                                view.userId === currentUser?.id &&
+                                view.filePath === filePath
+                              ),
+                          ),
+                    }
+                  : currentCommit,
+              ),
+            }
+          : current,
+      );
+      setExpandedFileKeys((current) => {
+        const next = { ...current };
+        delete next[key];
+        return next;
+      });
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : t("backendError"));
+    } finally {
+      setSavingFileViewKeys((current) =>
+        current.filter((currentKey) => currentKey !== key),
+      );
     }
   };
 
@@ -684,6 +758,12 @@ export function ReviewPage() {
 
     handledDiffLocationRef.current = signature;
     setActiveCommitId(commit.id);
+    if (fileParam) {
+      setExpandedFileKeys((current) => ({
+        ...current,
+        [`${commit.id}:${fileParam}`]: true,
+      }));
+    }
     const parsedLine = lineParam ? Number(lineParam) : Number.NaN;
     setPendingDiffAnchor(
       diffAnchorId({
@@ -1785,6 +1865,11 @@ export function ReviewPage() {
       const fileComposerOpen =
         !!inlineCommentTarget &&
         targetKey(inlineCommentTarget) === targetKey(fileTarget);
+      const viewKey = fileViewKey(commit.id, file.path);
+      const viewed = isFileViewedByMe(commit, file.path);
+      const fileExpanded = expandedFileKeys[viewKey] ?? !viewed;
+      const canMarkViewed =
+        review?.ownerId === currentUser?.id || !!currentReviewer;
 
       return (
         <div
@@ -1792,8 +1877,32 @@ export function ReviewPage() {
           id={diffAnchorId(fileTarget)}
           key={`${commit.hash}-${file.path}`}
         >
-          <div className="card-header py-1 d-flex align-items-center justify-content-between gap-3">
+          <div
+            aria-expanded={fileExpanded}
+            className="card-header py-1 d-flex align-items-center justify-content-between gap-3 diff-file-header"
+            role="button"
+            tabIndex={0}
+            onClick={() =>
+              setExpandedFileKeys((current) => ({
+                ...current,
+                [viewKey]: !fileExpanded,
+              }))
+            }
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setExpandedFileKeys((current) => ({
+                  ...current,
+                  [viewKey]: !fileExpanded,
+                }));
+              }
+            }}
+          >
             <div>
+              <i
+                className={`bi ${fileExpanded ? "bi-chevron-down" : "bi-chevron-right"} me-2`}
+                aria-hidden="true"
+              />
               <span className="fw-semibold">{file.path}</span>
               <span className="badge text-bg-secondary ms-2">{file.status}</span>
               <span className="badge text-bg-success ms-2">
@@ -1808,18 +1917,43 @@ export function ReviewPage() {
                 </span>
               ) : null}
             </div>
-            <button
-              className="btn btn-sm border-0 p-1"
-              type="button"
-              title={t("commentFile")}
-              aria-label={t("commentFile")}
-              onClick={() => toggleInlineComment(fileTarget)}
+            <div
+              className="d-flex align-items-center gap-3"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
             >
-              <i className="bi bi-chat-left-text" aria-hidden="true" />
-            </button>
+              {canMarkViewed ? (
+                <div className="form-check mb-0">
+                  <input
+                    checked={viewed}
+                    className="form-check-input"
+                    disabled={savingFileViewKeys.includes(viewKey)}
+                    id={`file-viewed-${viewKey}`}
+                    type="checkbox"
+                    onChange={() => void toggleFileViewed(commit, file.path)}
+                  />
+                  <label
+                    className="form-check-label small"
+                    htmlFor={`file-viewed-${viewKey}`}
+                  >
+                    {t("fileViewed")}
+                  </label>
+                </div>
+              ) : null}
+              <button
+                className="btn btn-sm border-0 p-1"
+                type="button"
+                title={t("commentFile")}
+                aria-label={t("commentFile")}
+                onClick={() => toggleInlineComment(fileTarget)}
+              >
+                <i className="bi bi-chat-left-text" aria-hidden="true" />
+              </button>
+            </div>
           </div>
           {fileComposerOpen ? renderInlineCommentComposer() : null}
           {renderInlineCommentThreads(fileCommentThreads)}
+          {fileExpanded ? (
           <div className="diff-viewer">
             {rows.map((row) => {
               if (row.kind === "hunk") {
@@ -1891,6 +2025,7 @@ export function ReviewPage() {
               );
             })}
           </div>
+          ) : null}
         </div>
       );
     });
