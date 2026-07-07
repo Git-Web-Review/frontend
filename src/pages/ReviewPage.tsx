@@ -116,6 +116,64 @@ const languageFromClassName = (className: string | undefined) => {
   return normalizeLanguage(match?.[1]);
 };
 
+const highlightCacheLimit = 50000;
+const highlightCache = new Map<string, string>();
+
+function InlineCommentComposer({
+  saving,
+  labels,
+  renderMarkdown,
+  onCancel,
+  onSubmit,
+}: {
+  saving: boolean;
+  labels: {
+    placeholder: string;
+    cancel: string;
+    submit: string;
+    previewEmpty: string;
+  };
+  renderMarkdown: (value: string) => ReactNode;
+  onCancel: () => void;
+  onSubmit: (message: string) => void;
+}) {
+  const [draft, setDraft] = useState("");
+
+  return (
+    <div className="diff-inline-comment-panel">
+      <div className="diff-inline-comment-editor">
+        <textarea
+          className="form-control"
+          rows={4}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder={labels.placeholder}
+        />
+        <div className="diff-inline-comment-actions">
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            type="button"
+            onClick={onCancel}
+          >
+            {labels.cancel}
+          </button>
+          <button
+            className="btn btn-primary btn-sm"
+            type="button"
+            disabled={!draft.trim() || saving}
+            onClick={() => onSubmit(draft.trim())}
+          >
+            {labels.submit}
+          </button>
+        </div>
+      </div>
+      <div className="diff-inline-comment-preview markdown-body">
+        {draft.trim() ? renderMarkdown(draft) : labels.previewEmpty}
+      </div>
+    </div>
+  );
+}
+
 const codeFromDiffLine = (line: string) => {
   if (
     (line.startsWith("+") && !line.startsWith("+++")) ||
@@ -291,7 +349,6 @@ export function ReviewPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [inlineCommentTarget, setInlineCommentTarget] =
     useState<CommentTarget | null>(null);
-  const [inlineCommentDraft, setInlineCommentDraft] = useState("");
   const [savingComment, setSavingComment] = useState(false);
   const [reviewComments, setReviewComments] = useState<ReviewComment[]>([]);
   const [loadingReviewComments, setLoadingReviewComments] = useState(false);
@@ -1244,12 +1301,10 @@ export function ReviewPage() {
   const toggleInlineComment = (target: CommentTarget) => {
     if (inlineCommentTarget && targetKey(inlineCommentTarget) === targetKey(target)) {
       setInlineCommentTarget(null);
-      setInlineCommentDraft("");
       return;
     }
 
     setInlineCommentTarget(target);
-    setInlineCommentDraft("");
   };
 
   const createReviewComment = async (target: CommentTarget, message: string) => {
@@ -1270,8 +1325,7 @@ export function ReviewPage() {
     );
   };
 
-  const addInlineComment = async () => {
-    const message = inlineCommentDraft.trim();
+  const addInlineComment = async (message: string) => {
     if (!inlineCommentTarget || !message) {
       return;
     }
@@ -1282,7 +1336,6 @@ export function ReviewPage() {
       const comment = await createReviewComment(inlineCommentTarget, message);
       if (comment) {
         setReviewComments((current) => [...current, comment]);
-        setInlineCommentDraft("");
         setInlineCommentTarget(null);
         await refreshReviewSnapshot();
       }
@@ -1509,6 +1562,12 @@ export function ReviewPage() {
   };
 
   const highlightedCode = (line: string, language: string | null) => {
+    const cacheKey = `${language ?? ""}\u0000${line}`;
+    const cached = highlightCache.get(cacheKey);
+    if (cached !== undefined) {
+      return { __html: cached };
+    }
+
     const code = codeFromDiffLine(line);
     const trailingMatch = code.match(/[ \t]+$/);
     const trailing = trailingMatch?.[0] ?? "";
@@ -1523,7 +1582,12 @@ export function ReviewPage() {
         ? hljs.highlightAuto(core).value
         : hljs.highlight(core, { language: normalizedLanguage }).value;
 
-    return { __html: coreHtml + trailingHtml || " " };
+    const html = coreHtml + trailingHtml || " ";
+    if (highlightCache.size >= highlightCacheLimit) {
+      highlightCache.clear();
+    }
+    highlightCache.set(cacheKey, html);
+    return { __html: html };
   };
 
   const gitwebParams = (gitwebUrl: string) => {
@@ -1642,42 +1706,18 @@ export function ReviewPage() {
   };
 
   const renderInlineCommentComposer = () => (
-    <div className="diff-inline-comment-panel">
-      <div className="diff-inline-comment-editor">
-        <textarea
-          className="form-control"
-          rows={4}
-          value={inlineCommentDraft}
-          onChange={(event) => setInlineCommentDraft(event.target.value)}
-          placeholder={t("markdownCommentPlaceholder")}
-        />
-        <div className="diff-inline-comment-actions">
-          <button
-            className="btn btn-outline-secondary btn-sm"
-            type="button"
-            onClick={() => {
-              setInlineCommentTarget(null);
-              setInlineCommentDraft("");
-            }}
-          >
-            {t("cancel")}
-          </button>
-          <button
-            className="btn btn-primary btn-sm"
-            type="button"
-            disabled={!inlineCommentDraft.trim() || savingComment}
-            onClick={() => void addInlineComment()}
-          >
-            {t("addComment")}
-          </button>
-        </div>
-      </div>
-      <div className="diff-inline-comment-preview markdown-body">
-        {inlineCommentDraft.trim()
-          ? renderMarkdown(inlineCommentDraft)
-          : t("markdownPreviewEmpty")}
-      </div>
-    </div>
+    <InlineCommentComposer
+      saving={savingComment}
+      labels={{
+        placeholder: t("markdownCommentPlaceholder"),
+        cancel: t("cancel"),
+        submit: t("addComment"),
+        previewEmpty: t("markdownPreviewEmpty"),
+      }}
+      renderMarkdown={renderMarkdown}
+      onCancel={() => setInlineCommentTarget(null)}
+      onSubmit={(message) => void addInlineComment(message)}
+    />
   );
 
   const renderInlineCommentThreads = (threads: ReviewCommentThread[]) =>
