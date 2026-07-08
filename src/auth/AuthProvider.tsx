@@ -1,10 +1,17 @@
 import {
-  onAuthStateChanged,
+  onIdTokenChanged,
   signInWithPopup,
   signOut,
   type User as FirebaseUser,
 } from "firebase/auth";
-import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { apiRequest, ApiClientError } from "../api/client";
 import type { ApiError, CurrentUser } from "../types/api";
 import { firebaseAuth, isFirebaseConfigured, oauthProvider } from "./firebase";
@@ -28,12 +35,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [idToken, setIdToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
+  const loadedUidRef = useRef<string | null>(null);
 
   const loadCurrentUser = async (user: FirebaseUser) => {
     const token = await user.getIdToken();
     setIdToken(token);
     const me = await apiRequest<CurrentUser>("/v1/me", token);
     setCurrentUser(me);
+    loadedUidRef.current = user.uid;
   };
 
   useEffect(() => {
@@ -42,18 +51,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    return onAuthStateChanged(firebaseAuth, (user) => {
+    // onIdTokenChanged also fires when Firebase silently refreshes the
+    // ID token, keeping the token used by API calls always valid.
+    return onIdTokenChanged(firebaseAuth, (user) => {
       setFirebaseUser(user);
       setError(null);
-      setLoading(true);
 
       if (!user) {
         setCurrentUser(null);
         setIdToken(null);
+        loadedUidRef.current = null;
         setLoading(false);
         return;
       }
 
+      if (loadedUidRef.current === user.uid) {
+        // Same user, refreshed token: just propagate the new token.
+        void user.getIdToken().then(setIdToken);
+        return;
+      }
+
+      setLoading(true);
       void loadCurrentUser(user)
         .catch((unknownError: unknown) => {
           if (unknownError instanceof ApiClientError) {
@@ -62,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setError({ code: "UNKNOWN_ERROR", message: unknownError.message });
           }
           setCurrentUser(null);
+          loadedUidRef.current = null;
         })
         .finally(() => setLoading(false));
     });
@@ -83,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setCurrentUser(null);
     setIdToken(null);
+    loadedUidRef.current = null;
   };
 
   const refreshCurrentUser = async () => {

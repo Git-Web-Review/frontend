@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { apiRequest, backendUrl } from "../api/client";
+import { apiRequest, apiRequestBlob } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n/I18nProvider";
 import {
@@ -177,14 +177,8 @@ export function AppShell({ children }: AppShellProps) {
       }
 
       try {
-        const response = await fetch(`${backendUrl}/v1/me/profile-image`, {
-          headers: { authorization: `Bearer ${idToken}` },
-        });
-        if (!response.ok) {
-          throw new Error(response.statusText);
-        }
-
-        const nextObjectUrl = URL.createObjectURL(await response.blob());
+        const blob = await apiRequestBlob("/v1/me/profile-image", idToken);
+        const nextObjectUrl = URL.createObjectURL(blob);
         if (cancelled) {
           URL.revokeObjectURL(nextObjectUrl);
           return;

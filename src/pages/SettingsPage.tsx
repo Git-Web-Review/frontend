@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { apiRequest, backendUrl } from "../api/client";
+import { apiRequest, apiRequestBlob } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n/I18nProvider";
 import type { TranslationKey } from "../i18n/translations";
@@ -124,14 +124,8 @@ export function SettingsPage() {
       }
 
       try {
-        const response = await fetch(`${backendUrl}/v1/me/profile-image`, {
-          headers: { authorization: `Bearer ${idToken}` },
-        });
-        if (!response.ok) {
-          throw new Error(response.statusText);
-        }
-
-        const nextObjectUrl = URL.createObjectURL(await response.blob());
+        const blob = await apiRequestBlob("/v1/me/profile-image", idToken);
+        const nextObjectUrl = URL.createObjectURL(blob);
         if (cancelled) {
           URL.revokeObjectURL(nextObjectUrl);
           return;
