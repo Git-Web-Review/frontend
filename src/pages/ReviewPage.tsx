@@ -2055,6 +2055,13 @@ export function ReviewPage() {
   }
 
   const reviewCommentThreads = commentThreadsFrom(reviewComments);
+  const generalCommentTarget = {
+    commitHash: null,
+    filePath: null,
+    lineNumber: null,
+    side: "AFTER",
+  } satisfies CommentTarget;
+  const generalCommentThreads = commentThreadsForTarget(generalCommentTarget);
   const activeCommit =
     review.commits.find((commit) => commit.id === activeCommitId) ??
     review.commits[0] ??
@@ -2661,6 +2668,33 @@ export function ReviewPage() {
                 </button>
               </div>
             ) : null}
+            <div className="mt-4">
+              <div className="d-flex align-items-center justify-content-between gap-3 mb-2">
+                <h5 className="mb-0">
+                  <i className="bi bi-chat-left-text me-2" aria-hidden="true" />
+                  {t("reviewComments")}
+                </h5>
+                <button
+                  className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+                  type="button"
+                  onClick={() => toggleInlineComment(generalCommentTarget)}
+                >
+                  <i className="bi bi-plus-lg" aria-hidden="true" />
+                  {t("commentReview")}
+                </button>
+              </div>
+              {inlineCommentTarget &&
+              targetKey(inlineCommentTarget) === targetKey(generalCommentTarget)
+                ? renderInlineCommentComposer()
+                : null}
+              {generalCommentThreads.length ? (
+                renderInlineCommentThreads(generalCommentThreads)
+              ) : (
+                <div className="empty-state border rounded">
+                  {t("noComments")}
+                </div>
+              )}
+            </div>
           </div>
         ) : null}
 

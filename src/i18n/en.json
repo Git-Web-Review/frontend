@@ -198,6 +198,8 @@
     "markdownPreviewEmpty": "Preview...",
     "generalReviewComment": "General review comment",
     "addComment": "Add comment",
+    "reviewComments": "Review comments",
+    "commentReview": "Comment the review",
     "editComment": "Edit comment",
     "commentUpdated": "Comment updated.",
     "deleteComment": "Delete comment",
