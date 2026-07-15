@@ -732,6 +732,29 @@ button.diff-line-number-link:hover {
   cursor: pointer;
 }
 
+.diff-meta-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.diff-meta-line .diff-line-code {
+  padding-left: 0.75rem;
+}
+
+.diff-meta-link:hover {
+  text-decoration: underline;
+}
+
+.diff-meta-old,
+.diff-meta-old:hover {
+  color: var(--bs-danger);
+}
+
+.diff-meta-new,
+.diff-meta-new:hover {
+  color: var(--bs-success);
+}
+
 [data-bs-theme="dark"] .diff-line-code.hljs,
 [data-bs-theme="dark"] .hljs {
   color: #d0d7de;

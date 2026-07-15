@@ -202,6 +202,20 @@ type DiffRenderRow =
 
 const diffHunkHeaderPattern = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/;
 
+const diffIndexLinePattern = /^index ([0-9a-f]+)\.\.([0-9a-f]+)/m;
+
+const diffBlobHashes = (patch: string) => {
+  const match = diffIndexLinePattern.exec(patch);
+  const validHash = (hash: string | undefined) =>
+    hash && !/^0+$/.test(hash) ? hash : null;
+  return {
+    oldHash: validHash(match?.[1]),
+    newHash: validHash(match?.[2]),
+  };
+};
+
+type DiffBlobHashes = ReturnType<typeof diffBlobHashes>;
+
 const diffRenderRows = (patch: string): DiffRenderRow[] => {
   let oldLineNumber = 0;
   let newLineNumber = 0;
@@ -1688,6 +1702,116 @@ export function ReviewPage() {
     return params;
   };
 
+  const gitwebBlobUrl = (
+    filePath: string,
+    blobHash: string | null,
+    baseCommitHash?: string,
+  ) => {
+    if (!review || !blobHash) {
+      return null;
+    }
+
+    const project = gitwebParams(review.gitwebUrl).get("p");
+    if (!project) {
+      return null;
+    }
+
+    try {
+      const url = new URL(review.gitwebUrl);
+      const params = [
+        `p=${encodeURIComponent(project)}`,
+        "a=blob",
+        `f=${encodeURIComponent(filePath).replace(/%2F/g, "/")}`,
+        `h=${blobHash}`,
+        ...(baseCommitHash ? [`hb=${baseCommitHash}`] : []),
+      ];
+      return `${url.origin}${url.pathname}?${params.join(";")}`;
+    } catch {
+      return null;
+    }
+  };
+
+  const diffMetaLink = (
+    url: string | null,
+    text: string,
+    className?: string,
+  ) =>
+    url ? (
+      <a
+        className={`diff-meta-link${className ? ` ${className}` : ""}`}
+        href={url}
+        rel="noreferrer"
+        target="_blank"
+      >
+        {text}
+      </a>
+    ) : (
+      <span className={className}>{text}</span>
+    );
+
+  const renderDiffMetaLine = (
+    line: string,
+    file: ReviewItem["gitDiff"]["files"][number],
+    hashes: DiffBlobHashes,
+    commitHash: string,
+  ): ReactNode | null => {
+    const oldUrl = gitwebBlobUrl(file.oldPath ?? file.path, hashes.oldHash);
+    const newUrl = gitwebBlobUrl(file.path, hashes.newHash, commitHash);
+
+    const gitMatch = line.match(/^diff --git a\/(.+) b\/(.+)$/);
+    if (gitMatch) {
+      return (
+        <>
+          {"diff --git "}
+          {diffMetaLink(oldUrl, `a/${gitMatch[1]}`)}{" "}
+          {diffMetaLink(newUrl, `b/${gitMatch[2]}`)}
+        </>
+      );
+    }
+
+    if (line.startsWith("--- ")) {
+      return diffMetaLink(oldUrl, line, "diff-meta-old");
+    }
+
+    if (line.startsWith("+++ ")) {
+      return diffMetaLink(newUrl, line, "diff-meta-new");
+    }
+
+    return null;
+  };
+
+  const renderHunkHeaderContent = (
+    line: string,
+    file: ReviewItem["gitDiff"]["files"][number],
+    hashes: DiffBlobHashes,
+    commitHash: string,
+  ): ReactNode => {
+    const match = line.match(/^@@ -(\d+)((?:,\d+)?) \+(\d+)((?:,\d+)?) @@(.*)$/);
+    if (!match) {
+      return line;
+    }
+
+    const [, oldStart, oldCount, newStart, newCount, rest] = match;
+    const oldUrl = gitwebBlobUrl(file.oldPath ?? file.path, hashes.oldHash);
+    const newUrl = gitwebBlobUrl(file.path, hashes.newHash, commitHash);
+
+    return (
+      <>
+        {"@@ "}
+        {diffMetaLink(
+          oldUrl ? `${oldUrl}#l${oldStart}` : null,
+          `-${oldStart}${oldCount}`,
+        )}{" "}
+        {diffMetaLink(
+          newUrl ? `${newUrl}#l${newStart}` : null,
+          `+${newStart}${newCount}`,
+        )}
+        {" @@"}
+        {rest}
+      </>
+    );
+  };
+
   const gitwebTemplateVariables = (currentReview: ReviewItem) => {
     const params = gitwebParams(currentReview.gitwebUrl);
     const project = params.get("p") ?? "";
@@ -1855,6 +1979,7 @@ export function ReviewPage() {
     return diffFiles.map((file) => {
       const rows = diffRenderRows(file.patch);
       const language = languageForPath(file.path);
+      const blobHashes = diffBlobHashes(file.patch);
       const fileTarget = {
         commitHash: commit.hash,
         filePath: file.path,
@@ -1959,7 +2084,42 @@ export function ReviewPage() {
               if (row.kind === "hunk") {
                 return (
                   <div className="diff-line-block" key={row.key}>
-                    <div className="diff-hunk-header">{row.text}</div>
+                    <div className="diff-hunk-header">
+                      {renderHunkHeaderContent(
+                        row.text,
+                        file,
+                        blobHashes,
+                        commit.hash,
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (row.lineNumber === null) {
+                const metaContent = renderDiffMetaLine(
+                  row.text,
+                  file,
+                  blobHashes,
+                  commit.hash,
+                );
+                return (
+                  <div className="diff-line-block" key={row.key}>
+                    <div className="diff-line diff-line-context diff-meta-line">
+                      <code
+                        className="diff-line-code hljs"
+                        {...(metaContent
+                          ? {}
+                          : {
+                              dangerouslySetInnerHTML: highlightedCode(
+                                row.text,
+                                language,
+                              ),
+                            })}
+                      >
+                        {metaContent}
+                      </code>
+                    </div>
                   </div>
                 );
               }
