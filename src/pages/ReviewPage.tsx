@@ -977,6 +977,56 @@ export function ReviewPage() {
     }
   };
 
+  const unacknowledgeReview = async () => {
+    if (!idToken || !review) {
+      return;
+    }
+
+    setSavingReviewAck(true);
+    setErrorMessage("");
+    try {
+      const nextReview = await apiRequest<ReviewItem>(
+        `/v1/reviews/${review.id}/ack`,
+        idToken,
+        { method: "DELETE" },
+      );
+      setReview(nextReview);
+      showToast(t("reviewAckWithdrawn"));
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : t("backendError"),
+      );
+    } finally {
+      setSavingReviewAck(false);
+    }
+  };
+
+  const unacknowledgeCommit = async (commit: ReviewCommit) => {
+    if (!idToken || !review) {
+      return;
+    }
+
+    setSavingCommitAckIds((current) => [...current, commit.id]);
+    setErrorMessage("");
+    try {
+      const nextReview = await apiRequest<ReviewItem>(
+        `/v1/reviews/${review.id}/commits/${commit.id}/ack`,
+        idToken,
+        { method: "DELETE" },
+      );
+      setReview(nextReview);
+      showToast(t("commitAckWithdrawn"));
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : t("backendError"),
+      );
+    } finally {
+      setSavingCommitAckIds((current) =>
+        current.filter((commitId) => commitId !== commit.id),
+      );
+    }
+  };
+
   const acknowledgeReview = async () => {
     if (!idToken || !review || !canAckReview) {
       return;
@@ -2378,6 +2428,24 @@ export function ReviewPage() {
       ) : null}
       {currentReviewer &&
       review.status !== "CLOSED" &&
+      commitAckedByMe(commit) ? (
+        <button
+          className="btn btn-outline-warning btn-sm d-inline-flex align-items-center gap-1"
+          disabled={savingCommitAckIds.includes(commit.id)}
+          title={t("commitAckWithdrawn")}
+          type="button"
+          onClick={() => void unacknowledgeCommit(commit)}
+        >
+          {savingCommitAckIds.includes(commit.id) ? (
+            <span className="spinner-border spinner-border-sm" />
+          ) : (
+            <i className="bi bi-arrow-counterclockwise" aria-hidden="true" />
+          )}
+          {t("unackCommit")}
+        </button>
+      ) : null}
+      {currentReviewer &&
+      review.status !== "CLOSED" &&
       commit.status !== "ACKED" &&
       !commitAckedByMe(commit)
         ? reviewerActionSplit({
@@ -2430,6 +2498,23 @@ export function ReviewPage() {
                 onReviewDone: () => void markReviewReviewed(),
               })
             : null}
+          {currentReviewer &&
+          review.status !== "CLOSED" &&
+          review.commits.some((commit) => commitAckedByMe(commit)) ? (
+            <button
+              className="btn btn-outline-warning d-inline-flex align-items-center gap-2"
+              type="button"
+              disabled={savingReviewAck}
+              onClick={() => void unacknowledgeReview()}
+            >
+              {savingReviewAck ? (
+                <span className="spinner-border spinner-border-sm" />
+              ) : (
+                <i className="bi bi-arrow-counterclockwise" aria-hidden="true" />
+              )}
+              {t("unackReview")}
+            </button>
+          ) : null}
           {review.ownerId === currentUser?.id && review.status !== "CLOSED" ? (
             <button
               className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
