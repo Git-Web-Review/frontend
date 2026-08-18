@@ -14,6 +14,7 @@ import type {
   ReviewItem,
   ReviewPreview,
 } from "../types/api";
+import { formatDateTime } from "../utils/formatDate";
 import { reviewStatusBadgeClass } from "../utils/reviewStatus";
 import { gitwebFetchErrorLabel } from "../utils/gitwebFetchError";
 
@@ -78,6 +79,7 @@ export function DashboardPage() {
     [],
   );
   const [createCommitHashes, setCreateCommitHashes] = useState<string[]>([]);
+  const [createTitle, setCreateTitle] = useState("");
   const [reviewFieldDefs, setReviewFieldDefs] = useState<ReviewField[]>([]);
   const [createFieldValues, setCreateFieldValues] = useState<
     Record<string, string>
@@ -315,6 +317,14 @@ export function DashboardPage() {
       setCreateCommitHashes(
         nextPreview.commitOptions.map((option) => option.hash),
       );
+      const branch = nextPreview.sourceBranch?.trim();
+      setCreateTitle(
+        nextPreview.linkKind === "SUMMARY" && branch && branch !== "master"
+          ? branch
+          : (nextPreview.commitOptions.at(-1)?.title ??
+              nextPreview.title ??
+              ""),
+      );
       setCreateModalOpen(true);
     } catch (error) {
       setErrorMessage(
@@ -347,6 +357,7 @@ export function DashboardPage() {
         body: JSON.stringify({
           gitwebUrl: preview.gitwebUrl,
           reviewerUserIds: createReviewerUserIds,
+          ...(createTitle.trim() ? { title: createTitle.trim() } : {}),
           ...(preview.linkKind === "SUMMARY"
             ? { commitHashes: createCommitHashes }
             : {}),
@@ -358,6 +369,7 @@ export function DashboardPage() {
       setGitwebUrl("");
       setCreateReviewerUserIds([]);
       setCreateCommitHashes([]);
+      setCreateTitle("");
       setCreateFieldValues({});
       setPreview(null);
       setCreateModalOpen(false);
@@ -849,6 +861,18 @@ export function DashboardPage() {
                       ) : null}
                     </div>
                     <div className="col-lg-7">
+                      <div className="mb-3">
+                        <label className="form-label" htmlFor="create-review-title">
+                          {t("reviewTitle")}
+                        </label>
+                        <input
+                          className="form-control"
+                          id="create-review-title"
+                          type="text"
+                          value={createTitle}
+                          onChange={(event) => setCreateTitle(event.target.value)}
+                        />
+                      </div>
                       <div className="commit-summary-grid mb-3">
                         <div className="commit-summary-item commit-summary-project">
                           <span className="commit-summary-icon">
@@ -892,7 +916,7 @@ export function DashboardPage() {
                           </span>
                           <span className="commit-summary-value">
                             {preview.gitwebFetchedAt
-                              ? new Date(preview.gitwebFetchedAt).toLocaleString()
+                              ? formatDateTime(preview.gitwebFetchedAt)
                               : t("notAvailable")}
                           </span>
                         </div>

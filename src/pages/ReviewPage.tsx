@@ -44,6 +44,7 @@ import {
   reviewCommitStatusBadgeClass,
   reviewStatusBadgeClass,
 } from "../utils/reviewStatus";
+import { formatDateTime } from "../utils/formatDate";
 import { gitwebFetchErrorLabel } from "../utils/gitwebFetchError";
 
 hljs.registerLanguage("bash", bash);
@@ -1505,7 +1506,7 @@ export function ReviewPage() {
                     <span className="fw-semibold">
                       {renderUserLabel(comment.author)}
                     </span>
-                    <span>{new Date(comment.createdAt).toLocaleString()}</span>
+                    <span>{formatDateTime(comment.createdAt)}</span>
                   </>
                 ) : null}
                 {canEdit ? (
@@ -1948,7 +1949,7 @@ export function ReviewPage() {
               <span className="fw-semibold">
                 {renderUserLabel(thread.messages[0].author)}
               </span>
-              <span>{new Date(thread.createdAt).toLocaleString()}</span>
+              <span>{formatDateTime(thread.createdAt)}</span>
               {renderCommentThreadControls(thread)}
             </div>
             {isCommentThreadExpanded(thread) ? (
@@ -1956,7 +1957,7 @@ export function ReviewPage() {
                 {renderCommentMessages(thread)}
                 {thread.done && thread.doneAt ? (
                   <div className="comment-done-meta">
-                    {t("commentDoneBy")} {thread.doneBy ? renderUserLabel(thread.doneBy) : t("notAvailable")} - {new Date(thread.doneAt).toLocaleString()}
+                    {t("commentDoneBy")} {thread.doneBy ? renderUserLabel(thread.doneBy) : t("notAvailable")} - {formatDateTime(thread.doneAt)}
                   </div>
                 ) : null}
                 {renderCommentReplyForm(thread)}
@@ -2499,7 +2500,7 @@ export function ReviewPage() {
               </h3>
               <div className="text-secondary small">
                 {t("openedBy")} {renderUserLabel(review.owner)} -{" "}
-                {new Date(review.updatedAt).toLocaleString()}
+                {formatDateTime(review.updatedAt)}
               </div>
             </div>
             <div className="d-flex align-items-center gap-2">
@@ -2673,7 +2674,7 @@ export function ReviewPage() {
                       </span>
                       <span className="commit-summary-value">
                         {review.gitwebFetchedAt
-                          ? new Date(review.gitwebFetchedAt).toLocaleString()
+                          ? formatDateTime(review.gitwebFetchedAt)
                           : t("notAvailable")}
                       </span>
                     </div>
@@ -2699,7 +2700,7 @@ export function ReviewPage() {
                   ) : null}
                   <dt className="col-4">{t("updatedAt")}</dt>
                   <dd className="col-8">
-                    {new Date(review.updatedAt).toLocaleString()}
+                    {formatDateTime(review.updatedAt)}
                   </dd>
                 </dl>
               </div>
@@ -3038,7 +3039,7 @@ export function ReviewPage() {
                 {reviewCommentThreads.map((thread) => (
                   <div className="time-label" key={thread.commentId}>
                     <span className="review-meta-badge">
-                      {new Date(thread.createdAt).toLocaleString()}
+                      {formatDateTime(thread.createdAt)}
                     </span>
                     <div className={`card mt-2 review-comment-card${thread.done ? " is-done" : ""}`}>
                       <div
@@ -3083,7 +3084,7 @@ export function ReviewPage() {
                             {renderCommentMessages(thread)}
                             {thread.done && thread.doneAt ? (
                               <div className="comment-done-meta mt-2">
-                                {t("commentDoneBy")} {thread.doneBy ? renderUserLabel(thread.doneBy) : t("notAvailable")} - {new Date(thread.doneAt).toLocaleString()}
+                                {t("commentDoneBy")} {thread.doneBy ? renderUserLabel(thread.doneBy) : t("notAvailable")} - {formatDateTime(thread.doneAt)}
                               </div>
                             ) : null}
                             {renderCommentReplyForm(thread)}

@@ -9,6 +9,7 @@ import {
   type RealtimeNotificationEvent,
 } from "../realtime/events";
 import type { NotificationItem, NotificationPage } from "../types/api";
+import { formatDateTime } from "../utils/formatDate";
 import { profileInitialsFromEmail } from "../utils/profileInitials";
 import { useTheme } from "./ThemeProvider";
 
@@ -516,7 +517,7 @@ export function AppShell({ children }: AppShellProps) {
                               {renderNotificationContent(notification)}
                               <div className="text-secondary small">
                                 <i className="bi bi-clock me-1" aria-hidden="true" />
-                                {new Date(notification.createdAt).toLocaleString()}
+                                {formatDateTime(notification.createdAt)}
                               </div>
                             </button>
                           </div>
@@ -538,7 +539,7 @@ export function AppShell({ children }: AppShellProps) {
                             {renderNotificationContent(notification)}
                             <div className="text-secondary small">
                               <i className="bi bi-clock me-1" aria-hidden="true" />
-                              {new Date(notification.createdAt).toLocaleString()}
+                              {formatDateTime(notification.createdAt)}
                             </div>
                           </button>
                         </div>

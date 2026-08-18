@@ -6,6 +6,7 @@ import { RefreshButton } from "../components/RefreshButton";
 import { useI18n } from "../i18n/I18nProvider";
 import type { TranslationKey } from "../i18n/translations";
 import { useToast } from "../layout/ToastProvider";
+import { formatDateTime } from "../utils/formatDate";
 import type {
   AdminGrant,
   AdminRemoval,
@@ -1143,7 +1144,7 @@ export function AdminPage() {
                           </span>
                         </td>
                         <td className="text-secondary">
-                          {new Date(user.createdAt).toLocaleString()}
+                          {formatDateTime(user.createdAt)}
                         </td>
                         <td className="text-end">
                           <button
@@ -1232,7 +1233,7 @@ export function AdminPage() {
                           {admin.email}
                         </td>
                         <td className="text-secondary">
-                          {new Date(admin.createdAt).toLocaleString()}
+                          {formatDateTime(admin.createdAt)}
                         </td>
                         <td className="text-end">
                           <button
