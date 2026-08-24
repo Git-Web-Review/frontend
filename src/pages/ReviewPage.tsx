@@ -2476,12 +2476,12 @@ export function ReviewPage() {
       <div className="d-flex flex-wrap align-items-center justify-content-end gap-3 mb-3">
         <div className="d-flex flex-wrap gap-2">
           <a
-            className="btn btn-outline-primary"
+            className="btn btn-outline-primary d-inline-flex align-items-center"
             href={review.gitwebUrl}
             rel="noreferrer"
             target="_blank"
           >
-            <i className="bi bi-box-arrow-up-right me-1" aria-hidden="true" />
+            <i className="bi bi-box-arrow-up-right" aria-hidden="true" />
           </a>
           {currentReviewer &&
           review.status !== "CLOSED" &&
