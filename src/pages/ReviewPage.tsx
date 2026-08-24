@@ -44,6 +44,7 @@ import {
   reviewCommitStatusBadgeClass,
   reviewStatusBadgeClass,
 } from "../utils/reviewStatus";
+import { projectName } from "../utils/projectName";
 import { formatDateTime } from "../utils/formatDate";
 import { gitwebFetchErrorLabel } from "../utils/gitwebFetchError";
 
@@ -351,6 +352,8 @@ export function ReviewPage() {
     CommitLogLinkRule[]
   >([]);
   const [reviewerUserIds, setReviewerUserIds] = useState<string[]>([]);
+  const [reviewTitleDraft, setReviewTitleDraft] = useState("");
+  const [reviewDescriptionDraft, setReviewDescriptionDraft] = useState("");
   const activeReviewTab = (
     searchParams.get("tab") === "files" ||
     searchParams.get("tab") === "comments"
@@ -429,6 +432,8 @@ export function ReviewPage() {
       setReviewerUserIds(
         nextReview.reviewers.map((reviewer) => reviewer.userId),
       );
+      setReviewTitleDraft(nextReview.title ?? "");
+      setReviewDescriptionDraft(nextReview.description ?? "");
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : t("backendError"),
@@ -875,10 +880,12 @@ export function ReviewPage() {
   const hasReviewChanges =
     !!review &&
     canEditReviewDetails &&
-    sortedReviewerUserIds(reviewerUserIds).join("\n") !==
+    (sortedReviewerUserIds(reviewerUserIds).join("\n") !==
       sortedReviewerUserIds(
         review.reviewers.map((reviewer) => reviewer.userId),
-      ).join("\n");
+      ).join("\n") ||
+      reviewTitleDraft.trim() !== (review.title ?? "").trim() ||
+      reviewDescriptionDraft.trim() !== (review.description ?? "").trim());
 
   const reviewStatusLabel = (reviewStatus: ReviewStatus) =>
     t(`reviewStatus${reviewStatus}`);
@@ -925,6 +932,10 @@ export function ReviewPage() {
       ...(canEditReviewDetails
         ? {
             reviewerUserIds,
+            ...(reviewTitleDraft.trim() !== (review.title ?? "").trim()
+              ? { title: reviewTitleDraft.trim() }
+              : {}),
+            description: reviewDescriptionDraft.trim() || null,
           }
         : {}),
     };
@@ -2667,53 +2678,79 @@ export function ReviewPage() {
               <div className="col-lg-7">
                 <dl className="review-description-summary mb-0 small">
                   <dt>{t("reviewTitle")}</dt>
-                  <dd className="review-readonly-value text-break">
-                    {reviewTitle(review)}
+                  <dd>
+                    {canEditReviewDetails ? (
+                      <input
+                        className="form-control form-control-sm"
+                        type="text"
+                        value={reviewTitleDraft}
+                        onChange={(event) =>
+                          setReviewTitleDraft(event.target.value)
+                        }
+                      />
+                    ) : (
+                      <span className="review-readonly-value text-break">
+                        {reviewTitle(review)}
+                      </span>
+                    )}
                   </dd>
                   <dt>{t("description")}</dt>
-                  <dd className="review-readonly-value">
-                    {(() => {
-                      const collapsedDescription = reviewDescription(review);
-                      const expandedDescription = fullReviewDescription(review);
-                      const canExpand = expandedDescription.length > 220;
-                      const visibleDescription = descriptionExpanded
-                        ? expandedDescription
-                        : canExpand
-                          ? collapsedDescription.slice(0, 220).trimEnd()
-                          : collapsedDescription;
+                  <dd>
+                    {canEditReviewDetails ? (
+                      <textarea
+                        className="form-control form-control-sm"
+                        rows={4}
+                        value={reviewDescriptionDraft}
+                        onChange={(event) =>
+                          setReviewDescriptionDraft(event.target.value)
+                        }
+                      />
+                    ) : (
+                      <span className="review-readonly-value">
+                        {(() => {
+                          const collapsedDescription = reviewDescription(review);
+                          const expandedDescription = fullReviewDescription(review);
+                          const canExpand = expandedDescription.length > 220;
+                          const visibleDescription = descriptionExpanded
+                            ? expandedDescription
+                            : canExpand
+                              ? collapsedDescription.slice(0, 220).trimEnd()
+                              : collapsedDescription;
 
-                      return (
-                        <div
-                          className={
-                            descriptionExpanded
-                              ? "review-description is-expanded"
-                              : "review-description"
-                          }
-                        >
-                          {visibleDescription
-                            ? linkedCommitLog(visibleDescription, review)
-                            : t("notAvailable")}
-                          {canExpand ? (
-                            <button
-                              className="description-ellipsis-button"
-                              type="button"
-                              aria-label={descriptionExpanded ? t("collapseDescription") : t("expandDescription")}
-                              title={descriptionExpanded ? t("collapseDescription") : t("expandDescription")}
-                              onClick={() => setDescriptionExpanded((current) => !current)}
+                          return (
+                            <div
+                              className={
+                                descriptionExpanded
+                                  ? "review-description is-expanded"
+                                  : "review-description"
+                              }
                             >
-                              <i
-                                className={
-                                  descriptionExpanded
-                                    ? "bi bi-chevron-up"
-                                    : "bi bi-chevron-down"
-                                }
-                                aria-hidden="true"
-                              />
-                            </button>
-                          ) : null}
-                        </div>
-                      );
-                    })()}
+                              {visibleDescription
+                                ? linkedCommitLog(visibleDescription, review)
+                                : t("notAvailable")}
+                              {canExpand ? (
+                                <button
+                                  className="description-ellipsis-button"
+                                  type="button"
+                                  aria-label={descriptionExpanded ? t("collapseDescription") : t("expandDescription")}
+                                  title={descriptionExpanded ? t("collapseDescription") : t("expandDescription")}
+                                  onClick={() => setDescriptionExpanded((current) => !current)}
+                                >
+                                  <i
+                                    className={
+                                      descriptionExpanded
+                                        ? "bi bi-chevron-up"
+                                        : "bi bi-chevron-down"
+                                    }
+                                    aria-hidden="true"
+                                  />
+                                </button>
+                              ) : null}
+                            </div>
+                          );
+                        })()}
+                      </span>
+                    )}
                   </dd>
                 </dl>
                 <div className="commit-summary-grid mt-3 mb-3">
@@ -2725,7 +2762,7 @@ export function ReviewPage() {
                         {t("sourceProject")}
                       </span>
                       <span className="commit-summary-value text-break">
-                        {review.sourceProject || t("notAvailable")}
+                        {projectName(review.sourceProject) || t("notAvailable")}
                       </span>
                     </div>
                     <div className="commit-summary-item commit-summary-branch">

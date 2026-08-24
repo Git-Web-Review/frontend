@@ -15,6 +15,7 @@ import type {
   ReviewPreview,
 } from "../types/api";
 import { formatDateTime } from "../utils/formatDate";
+import { projectName } from "../utils/projectName";
 import { reviewStatusBadgeClass } from "../utils/reviewStatus";
 import { gitwebFetchErrorLabel } from "../utils/gitwebFetchError";
 
@@ -80,6 +81,26 @@ export function DashboardPage() {
   );
   const [createCommitHashes, setCreateCommitHashes] = useState<string[]>([]);
   const [createTitle, setCreateTitle] = useState("");
+  const [createTitleTouched, setCreateTitleTouched] = useState(false);
+
+  const defaultCreateTitle = (
+    currentPreview: ReviewPreview,
+    selectedHashes: string[],
+  ) => {
+    const branch = currentPreview.sourceBranch?.trim();
+    if (
+      currentPreview.linkKind === "SUMMARY" &&
+      branch &&
+      branch !== "master"
+    ) {
+      return branch;
+    }
+
+    const oldestSelected = [...currentPreview.commitOptions]
+      .reverse()
+      .find((option) => selectedHashes.includes(option.hash));
+    return oldestSelected?.title ?? currentPreview.title ?? "";
+  };
   const [reviewFieldDefs, setReviewFieldDefs] = useState<ReviewField[]>([]);
   const [createFieldValues, setCreateFieldValues] = useState<
     Record<string, string>
@@ -314,17 +335,12 @@ export function DashboardPage() {
       setCreateReviewerUserIds(
         nextPreview.reviewerUsers.map((reviewer) => reviewer.id),
       );
-      setCreateCommitHashes(
-        nextPreview.commitOptions.map((option) => option.hash),
+      const selectedHashes = nextPreview.commitOptions.map(
+        (option) => option.hash,
       );
-      const branch = nextPreview.sourceBranch?.trim();
-      setCreateTitle(
-        nextPreview.linkKind === "SUMMARY" && branch && branch !== "master"
-          ? branch
-          : (nextPreview.commitOptions.at(-1)?.title ??
-              nextPreview.title ??
-              ""),
-      );
+      setCreateCommitHashes(selectedHashes);
+      setCreateTitleTouched(false);
+      setCreateTitle(defaultCreateTitle(nextPreview, selectedHashes));
       setCreateModalOpen(true);
     } catch (error) {
       setErrorMessage(
@@ -403,11 +419,15 @@ export function DashboardPage() {
   };
 
   const toggleCreateCommitHash = (hash: string) => {
-    setCreateCommitHashes((current) =>
-      current.includes(hash)
+    setCreateCommitHashes((current) => {
+      const nextSelection = current.includes(hash)
         ? current.filter((item) => item !== hash)
-        : [...current, hash],
-    );
+        : [...current, hash];
+      if (preview && !createTitleTouched) {
+        setCreateTitle(defaultCreateTitle(preview, nextSelection));
+      }
+      return nextSelection;
+    });
   };
 
   const canDeleteReview = (review: ReviewItem) =>
@@ -584,9 +604,9 @@ export function DashboardPage() {
         </div>
         <div className="d-flex flex-wrap gap-2 small">
           {review.sourceProject ? (
-            <span className="badge review-meta-badge">
+            <span className="badge text-bg-primary">
               <i className="bi bi-folder2-open me-1" aria-hidden="true" />
-              {review.sourceProject}
+              {projectName(review.sourceProject)}
             </span>
           ) : null}
           <span className="badge review-meta-badge">
@@ -612,6 +632,10 @@ export function DashboardPage() {
               /{review.commits.length} {t("commitsAckedProgress")}
             </span>
           ) : null}
+          <span className="badge review-meta-badge" title={t("updatedAt")}>
+            <i className="bi bi-clock-history me-1" aria-hidden="true" />
+            {formatDateTime(review.updatedAt)}
+          </span>
         </div>
       </button>
       <div className="d-flex flex-wrap align-items-end justify-content-between gap-2 small text-secondary mt-2">
@@ -870,7 +894,10 @@ export function DashboardPage() {
                           id="create-review-title"
                           type="text"
                           value={createTitle}
-                          onChange={(event) => setCreateTitle(event.target.value)}
+                          onChange={(event) => {
+                            setCreateTitleTouched(true);
+                            setCreateTitle(event.target.value);
+                          }}
                         />
                       </div>
                       <div className="commit-summary-grid mb-3">
@@ -882,7 +909,7 @@ export function DashboardPage() {
                             {t("sourceProject")}
                           </span>
                           <span className="commit-summary-value text-break">
-                            {preview.sourceProject || t("notAvailable")}
+                            {projectName(preview.sourceProject) || t("notAvailable")}
                           </span>
                         </div>
                         <div className="commit-summary-item commit-summary-branch">

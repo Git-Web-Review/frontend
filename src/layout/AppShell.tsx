@@ -10,6 +10,7 @@ import {
 } from "../realtime/events";
 import type { NotificationItem, NotificationPage } from "../types/api";
 import { formatDateTime } from "../utils/formatDate";
+import { projectName } from "../utils/projectName";
 import { profileInitialsFromEmail } from "../utils/profileInitials";
 import { useTheme } from "./ThemeProvider";
 
@@ -405,7 +406,7 @@ export function AppShell({ children }: AppShellProps) {
           <div className="small text-body text-wrap">
             {reviewPayload.sourceProject ? (
               <span className="d-block">
-                {t("sourceProject")}: {reviewPayload.sourceProject}
+                {t("sourceProject")}: {projectName(reviewPayload.sourceProject)}
               </span>
             ) : null}
             {actor ? (
