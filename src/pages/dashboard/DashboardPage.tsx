@@ -1,10 +1,10 @@
 import { type RefObject, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { apiRequest } from "../api/client";
-import { useAuth } from "../auth/AuthProvider";
-import { useI18n } from "../i18n/I18nProvider";
-import { useToast } from "../layout/ToastProvider";
-import { realtimeNotificationEvent } from "../realtime/events";
+import { apiRequest } from "../../api/client";
+import { useAuth } from "../../auth/AuthProvider";
+import { useI18n } from "../../i18n/I18nProvider";
+import { useToast } from "../../layout/ToastProvider";
+import { realtimeNotificationEvent } from "../../realtime/events";
 import type {
   CommitLogLinkRule,
   ReviewDashboard,
@@ -12,7 +12,7 @@ import type {
   ReviewField,
   ReviewItem,
   ReviewPreview,
-} from "../types/api";
+} from "../../types/api";
 import {
   commitLogMatches,
   dashboardLinkFromSearch,
@@ -20,9 +20,9 @@ import {
   emptyDashboardPage,
   type CommitLogMatchSource,
   type DashboardSection,
-} from "./dashboard/dashboard-utils";
-import { CreateReviewModal } from "./dashboard/CreateReviewModal";
-import { ReviewSection } from "./dashboard/ReviewSection";
+} from "./dashboard-utils";
+import { CreateReviewModal } from "./CreateReviewModal";
+import { ReviewSection } from "./ReviewSection";
 
 export function DashboardPage() {
   const { currentUser, idToken } = useAuth();

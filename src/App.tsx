@@ -2,10 +2,10 @@ import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./auth/AuthProvider";
 import { useI18n } from "./i18n/I18nProvider";
 import { AppShell } from "./layout/AppShell";
-import { AdminPage } from "./pages/AdminPage";
-import { DashboardPage } from "./pages/DashboardPage";
+import { AdminPage } from "./pages/admin/AdminPage";
+import { DashboardPage } from "./pages/dashboard/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
-import { ReviewPage } from "./pages/ReviewPage";
+import { ReviewPage } from "./pages/review/ReviewPage";
 import { SettingsPage } from "./pages/SettingsPage";
 
 function ReviewIndexPage() {

@@ -118,6 +118,25 @@ export type CommitLogLinkRuleDeletion = {
   deleted: boolean;
 };
 
+export type GitwebUrlRuleKind = "COMMIT" | "SUMMARY" | "AUTO";
+
+export type GitwebUrlRule = {
+  id: string;
+  label: string | null;
+  regex: string;
+  remoteTemplate: string | null;
+  linkKind: GitwebUrlRuleKind;
+  priority: number;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GitwebUrlRuleDeletion = {
+  id: string;
+  deleted: boolean;
+};
+
 export type ReviewFieldType = "LINK" | "IMAGE" | "TEXT" | "NUMBER";
 
 export type ReviewField = {
