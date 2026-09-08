@@ -152,14 +152,14 @@ export const notificationMatchesReview = (
   );
 };
 
+// Sync kinds carry the secondary label hue when the commit moved, neutral
+// when it did not.
 export const changeKindBadgeClass = (kind: ReviewCommitChangeKind) => {
   switch (kind) {
     case "NEW":
-      return "text-bg-info";
     case "MODIFIED":
-      return "text-bg-warning";
     case "REBASED":
-      return "text-bg-secondary";
+      return "text-bg-info";
     default:
       return "review-meta-badge";
   }

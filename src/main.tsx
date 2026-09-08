@@ -8,8 +8,8 @@ import { ToastProvider } from "./layout/ToastProvider";
 import { App } from "./App";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "admin-lte/dist/css/adminlte.min.css";
 import "./styles/main.css";
+import "./styles/workbench.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

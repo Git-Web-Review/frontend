@@ -8,15 +8,16 @@ type DashboardPageData = {
   total: number;
 };
 
+/** Shared by every tab: only the active section is mounted at a time. */
+export const DASHBOARD_PANEL_ID = "dashboard-reviews-panel";
+
 type ReviewSectionProps = {
   section: DashboardSection;
-  title: string;
   emptyMessage: string;
   page: DashboardPageData;
   loadingMore: boolean;
   hasMore: boolean;
   loadMoreRef: RefObject<HTMLDivElement | null>;
-  className?: string;
   currentUserId: string | undefined;
   openReviewActionsId: string | null;
   onToggleActions: (reviewId: string) => void;
@@ -26,13 +27,11 @@ type ReviewSectionProps = {
 
 export function ReviewSection({
   section,
-  title,
   emptyMessage,
   page,
   loadingMore,
   hasMore,
   loadMoreRef,
-  className = "col-xl-6",
   currentUserId,
   openReviewActionsId,
   onToggleActions,
@@ -40,45 +39,41 @@ export function ReviewSection({
   onDelete,
 }: ReviewSectionProps) {
   return (
-    <div className={className}>
-      <div className="card h-100">
-        <div className="card-header dashboard-section-header d-flex align-items-center gap-3">
-          <h3 className="card-title flex-grow-1 mb-0">{title}</h3>
-          <span className="badge review-meta-badge ms-auto flex-shrink-0">
-            {page.total}
-          </span>
+    <div
+      aria-labelledby={`dashboard-tab-${section}`}
+      className="dashboard-panel"
+      id={DASHBOARD_PANEL_ID}
+      role="tabpanel"
+      tabIndex={-1}
+    >
+      {page.items.length ? (
+        <div className="list-group list-group-flush">
+          {page.items.map((review) => (
+            <ReviewListItem
+              key={review.id}
+              review={review}
+              canDelete={review.ownerId === currentUserId}
+              actionsOpen={openReviewActionsId === review.id}
+              onToggleActions={() => onToggleActions(review.id)}
+              deleting={deletingReviewId === review.id}
+              onDelete={() => onDelete(review)}
+            />
+          ))}
         </div>
-        <div className="card-body p-0">
-          {page.items.length ? (
-            <div className="list-group list-group-flush">
-              {page.items.map((review) => (
-                <ReviewListItem
-                  key={review.id}
-                  review={review}
-                  canDelete={review.ownerId === currentUserId}
-                  actionsOpen={openReviewActionsId === review.id}
-                  onToggleActions={() => onToggleActions(review.id)}
-                  deleting={deletingReviewId === review.id}
-                  onDelete={() => onDelete(review)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="empty-state">{emptyMessage}</div>
-          )}
-          {hasMore || loadingMore ? (
-            <div
-              className="d-flex justify-content-center py-3"
-              data-dashboard-section={section}
-              ref={loadMoreRef}
-            >
-              {loadingMore ? (
-                <span className="spinner-border spinner-border-sm text-primary" />
-              ) : null}
-            </div>
+      ) : (
+        <div className="empty-state">{emptyMessage}</div>
+      )}
+      {hasMore || loadingMore ? (
+        <div
+          className="d-flex justify-content-center py-3"
+          data-dashboard-section={section}
+          ref={loadMoreRef}
+        >
+          {loadingMore ? (
+            <span className="spinner-border spinner-border-sm text-primary" />
           ) : null}
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

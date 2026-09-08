@@ -1,3 +1,4 @@
+import { GitBranchIcon } from "../../components/GitBranchIcon";
 import { ReviewerSearchSelect } from "../../components/ReviewerSearchSelect";
 import { useI18n } from "../../i18n/I18nProvider";
 import { formatDateTime } from "../../utils/formatDate";
@@ -163,7 +164,7 @@ export function CreateReviewModal({
                     </div>
                     <div className="commit-summary-item commit-summary-branch">
                       <span className="commit-summary-icon">
-                        <i className="bi bi-diagram-3" aria-hidden="true" />
+                        <GitBranchIcon />
                       </span>
                       <span className="commit-summary-label">
                         {t("sourceBranch")}

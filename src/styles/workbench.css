@@ -1,0 +1,2316 @@
+/* =========================================================================
+   Workbench theme — git-web-review
+   Design source: frontend/handoff/README.md ("Workbench" UI)
+
+   A dev-tool chrome: system sans, hairline dividers, filled panel headers,
+   solid primary buttons, pill labels, a functional blue accent, light + dark.
+
+   This sheet replaces AdminLTE's visual language and re-points Bootstrap's
+   own custom properties at the Workbench tokens, so the components already
+   in the app inherit the palette instead of being rewritten one by one.
+   Loaded last: it wins over bootstrap.css and main.css.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------- tokens */
+
+:root {
+  --font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
+    monospace;
+  --font-heading-weight: 600;
+
+  --color-bg: #ffffff;
+  --color-surface: #f6f7f9;
+  --color-text: #1f2328;
+  /* Hairlines *inside* a panel: table rules, list rows, section splits. */
+  --color-divider: #d9dde2;
+  /* Outline *around* a panel: cards, modals, menus, toasts. In light mode the
+     two match; in dark the outline is lifted clear of the surface, which the
+     divider tone alone sits too close to (1.5:1) to read as an edge. */
+  --color-border: var(--color-divider);
+
+  --color-accent: #2f6fdb;
+  --color-accent-100: #eef4fe;
+  --color-accent-200: #d6e5fb;
+  --color-accent-300: #a9c6f2;
+  --color-accent-400: #6b9ce8;
+  --color-accent-500: #2f6fdb;
+  --color-accent-600: #2a60c0;
+  --color-accent-700: #1e4b98;
+  --color-accent-800: #173b78;
+  --color-accent-900: #112b57;
+
+  --color-accent-2: #5b45c9;
+  --color-accent-2-100: #efecfd;
+  --color-accent-2-200: #ded8fb;
+  --color-accent-2-700: #4433a0;
+  --color-accent-2-800: #33257e;
+
+  --color-neutral-100: #f0f2f5;
+  --color-neutral-200: #e3e7ec;
+  --color-neutral-300: #c9cfd6;
+  --color-neutral-600: #5b636c;
+  --color-neutral-800: #3b4148;
+  --color-neutral-900: #22262b;
+
+  --color-add: #1a7f37;
+  --color-del: #c9302c;
+  --color-warn: #9a6700;
+
+  /* Ink for the green / amber status pills. Darker than the base hue, which
+     alone only reaches ~4:1 on its own 16% tint — too thin for 10px caps. */
+  --color-add-ink: #106b28;
+  --color-warn-ink: #7a5200;
+
+  /* Contrast floor for secondary text — do not go lighter than these. */
+  --ink-2: color-mix(in srgb, var(--color-text) 72%, transparent);
+  --ink-3: color-mix(in srgb, var(--color-text) 68%, transparent);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 22px;
+  --space-8: 30px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+
+  --shadow-sm: 0 1px 2px rgba(27, 31, 36, 0.1);
+  --shadow-md: 0 3px 8px rgba(27, 31, 36, 0.12);
+  --shadow-lg: 0 10px 26px rgba(27, 31, 36, 0.16);
+
+  /* rgb triplets, for the rgba() call sites Bootstrap and main.css use */
+  --rgb-bg: 255, 255, 255;
+  --rgb-surface: 246, 247, 249;
+  --rgb-text: 31, 35, 40;
+  --rgb-accent: 47, 111, 219;
+  --rgb-accent-2: 91, 69, 201;
+  --rgb-neutral: 91, 99, 108;
+  --rgb-add: 26, 127, 55;
+  --rgb-del: 201, 48, 44;
+  --rgb-warn: 154, 103, 0;
+
+  /* Sidebar width, shared by the shell grid and the collapsed rail. */
+  --shell-sidebar: 236px;
+  --primary-btn-ink: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #1b1f24;
+  --color-surface: #242a31;
+  --color-text: #e6edf3;
+  --color-divider: #343b43;
+  --color-border: #525d6a;
+
+  --color-accent: #7aa7ec;
+  --color-accent-100: #1c2941;
+  --color-accent-200: #24375a;
+  --color-accent-300: #4d76b8;
+  --color-accent-400: #9dc0f4;
+  --color-accent-500: #7aa7ec;
+  --color-accent-600: #6b98de;
+  --color-accent-700: #cfe0fb;
+  --color-accent-800: #dce9fd;
+  --color-accent-900: #eaf2fe;
+
+  --color-accent-2: #a596ef;
+  --color-accent-2-100: #241f45;
+  --color-accent-2-200: #332c60;
+  --color-accent-2-700: #cfc6f8;
+  --color-accent-2-800: #ded7fb;
+
+  --color-neutral-100: #242a31;
+  --color-neutral-200: #2d343c;
+  --color-neutral-300: #454d56;
+  --color-neutral-600: #9aa4af;
+  --color-neutral-800: #e6edf3;
+  --color-neutral-900: #f2f6fa;
+
+  --color-add: #57ab5a;
+  --color-del: #e5837c;
+  --color-warn: #d29922;
+
+  --color-add-ink: #6fc275;
+  --color-warn-ink: #e3b341;
+
+  --rgb-bg: 27, 31, 36;
+  --rgb-surface: 36, 42, 49;
+  --rgb-text: 230, 237, 243;
+  --rgb-accent: 122, 167, 236;
+  --rgb-accent-2: 165, 150, 239;
+  --rgb-neutral: 154, 164, 175;
+  --rgb-add: 87, 171, 90;
+  --rgb-del: 229, 131, 124;
+  --rgb-warn: 210, 153, 34;
+
+  /* White would fail contrast on the lighter blue. */
+  --primary-btn-ink: #10161c;
+}
+
+/* --------------------------------------------------- bootstrap var bridge
+
+   `[data-bs-theme]` is matched as well as `:root` because the sidebar carries
+   its own `data-bs-theme`, which re-opens Bootstrap's theme scope for its
+   subtree. Same specificity as Bootstrap's own block, and this sheet loads
+   later, so these win.                                                    */
+
+:root,
+[data-bs-theme] {
+  --bs-body-font-family: var(--font-body);
+  --bs-font-sans-serif: var(--font-body);
+  --bs-font-monospace: var(--font-mono);
+  --bs-body-font-size: 15px;
+  --bs-body-line-height: 1.5;
+
+  --bs-body-bg: var(--color-bg);
+  --bs-body-bg-rgb: var(--rgb-bg);
+  --bs-body-color: var(--color-text);
+  --bs-body-color-rgb: var(--rgb-text);
+  --bs-emphasis-color: var(--color-text);
+  --bs-secondary-color: var(--ink-2);
+  --bs-tertiary-color: var(--ink-3);
+  --bs-secondary-bg: var(--color-surface);
+  --bs-secondary-bg-rgb: var(--rgb-surface);
+  --bs-tertiary-bg: var(--color-surface);
+  --bs-tertiary-bg-rgb: var(--rgb-surface);
+
+  --bs-border-color: var(--color-border);
+  --bs-border-color-translucent: var(--color-divider);
+  --bs-border-width: 1px;
+  --bs-border-radius: var(--radius-md);
+  --bs-border-radius-sm: var(--radius-sm);
+  --bs-border-radius-lg: var(--radius-lg);
+  --bs-border-radius-xl: var(--radius-lg);
+  --bs-border-radius-2xl: var(--radius-lg);
+
+  --bs-primary: var(--color-accent);
+  --bs-primary-rgb: var(--rgb-accent);
+  --bs-primary-text-emphasis: var(--color-accent-700);
+  --bs-primary-bg-subtle: color-mix(in srgb, var(--color-accent) 5%, transparent);
+  --bs-primary-border-subtle: var(--color-accent-300);
+
+  --bs-secondary: var(--color-neutral-600);
+  --bs-secondary-rgb: var(--rgb-neutral);
+  --bs-success: var(--color-add);
+  --bs-success-rgb: var(--rgb-add);
+  --bs-danger: var(--color-del);
+  --bs-danger-rgb: var(--rgb-del);
+  --bs-warning: var(--color-warn);
+  --bs-warning-rgb: var(--rgb-warn);
+  --bs-info: var(--color-accent-2);
+  --bs-info-rgb: var(--rgb-accent-2);
+  --bs-orange: var(--color-warn);
+
+  --bs-link-color: var(--color-accent);
+  --bs-link-color-rgb: var(--rgb-accent);
+  --bs-link-hover-color: var(--color-accent-600);
+  --bs-code-color: var(--color-accent-700);
+
+  --bs-box-shadow: var(--shadow-md);
+  --bs-box-shadow-sm: var(--shadow-sm);
+  --bs-box-shadow-lg: var(--shadow-lg);
+}
+
+:root[data-theme="dark"],
+[data-theme="dark"] [data-bs-theme] {
+  --bs-link-hover-color: var(--color-accent-400);
+}
+
+/* ------------------------------------------------------ base & typography */
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  letter-spacing: -0.01em;
+}
+
+/* The hierarchy is size and weight, not typeface — and it caps at 600. */
+.fw-bold,
+.fw-bolder,
+strong,
+b,
+th {
+  font-weight: 600;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--bs-link-hover-color);
+  text-decoration: underline;
+}
+
+code,
+pre,
+.font-monospace {
+  font-family: var(--font-mono);
+}
+
+hr {
+  border-top: 1px solid var(--color-divider);
+  opacity: 1;
+}
+
+/* Figures, counts, dates and line numbers get tabular figures; prose does not. */
+.gwr-tabnum,
+.review-status-badge,
+.review-meta-badge,
+.diff-line-number,
+.commit-summary-value,
+.comment-done-meta,
+td .text-secondary,
+table td,
+table th {
+  font-feature-settings: "tnum";
+}
+
+.text-secondary,
+.text-body-secondary {
+  color: var(--ink-2) !important;
+}
+
+.small {
+  font-size: 13px;
+}
+
+/* Themed focus ring — never the browser default. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.btn:focus,
+.btn:focus-visible,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  box-shadow: none;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--color-accent);
+}
+
+.form-check-input {
+  accent-color: var(--color-accent);
+}
+
+/* ------------------------------------------------------------ animations */
+
+@keyframes gwr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gwr-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.gwr-spin {
+  animation: gwr-spin 900ms linear infinite;
+}
+
+.gwr-skel {
+  animation: gwr-pulse 1.4s ease-in-out infinite;
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+}
+
+.spinner-border {
+  --bs-spinner-border-width: 2px;
+  --bs-spinner-animation-speed: 900ms;
+  --bs-spinner-animation-name: gwr-spin;
+  color: var(--color-accent);
+}
+
+.spinner-border-sm {
+  --bs-spinner-border-width: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gwr-spin,
+  .gwr-skel,
+  .spinner-border {
+    animation: none;
+  }
+}
+
+/* ----------------------------------------------------------- app shell */
+
+.app-wrapper {
+  display: grid;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar main";
+  grid-template-columns: var(--shell-sidebar) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* -- sidebar -- */
+
+.app-sidebar {
+  display: flex;
+  flex-direction: column;
+  grid-area: sidebar;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: var(--space-4) 0;
+  overflow: hidden;
+  border-right: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  box-shadow: none;
+}
+
+.sidebar-brand {
+  margin: 0 var(--space-3);
+  padding: 0 0 var(--space-4);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.brand-link:hover {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.brand-image {
+  display: grid;
+  inline-size: 34px;
+  block-size: 34px;
+  min-inline-size: 34px;
+  min-block-size: 34px;
+  max-inline-size: 34px;
+  max-block-size: 34px;
+  place-items: center;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  background: var(--color-bg);
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.brand-text {
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-sidebar-wrapper {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-3) var(--space-2);
+  overflow-y: auto;
+}
+
+.app-sidebar-wrapper > nav:last-child {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+}
+
+.sidebar-menu {
+  gap: 2px;
+}
+
+.sidebar-menu .nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.78;
+}
+
+.sidebar-menu .nav-link:hover {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  opacity: 1;
+}
+
+/* A left rail mark, not a filled pill. */
+.sidebar-menu .nav-link.active {
+  background: transparent;
+  box-shadow: inset 2px 0 0 var(--color-accent);
+  color: var(--color-text);
+  opacity: 1;
+}
+
+.sidebar-menu .nav-link p {
+  margin: 0;
+}
+
+.sidebar-menu .nav-icon {
+  flex: none;
+  width: auto;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* -- top bar -- */
+
+.app-header {
+  grid-area: header;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 0;
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  box-shadow: none;
+}
+
+.app-header > .container-fluid {
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+}
+
+.app-header .navbar-nav {
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.app-header .navbar-nav .nav-link {
+  padding: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.app-header .navbar-nav .nav-link.text-secondary {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* Icon buttons: 34px square in the top bar. */
+.app-header .nav-link.btn-link {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 17px;
+  text-decoration: none;
+}
+
+.app-header .nav-link.btn-link:hover,
+.app-header .nav-link.btn-link[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-text);
+}
+
+.navbar-badge {
+  position: absolute;
+  top: 2px;
+  right: 1px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  background: var(--color-bg);
+  color: var(--color-accent-700);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 13px;
+  font-feature-settings: "tnum";
+}
+
+/* -- main -- */
+
+.app-main {
+  grid-area: main;
+  min-width: 0;
+  background: var(--color-bg);
+}
+
+.app-content-header {
+  padding: var(--space-6) var(--space-6) 0;
+}
+
+.app-content-header .row {
+  --bs-gutter-x: 0;
+}
+
+.app-content-header h3 {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.app-kicker {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--color-accent);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.app-content {
+  padding: var(--space-6);
+}
+
+.app-content > .container-fluid,
+.app-content-header > .container-fluid {
+  padding: 0;
+  margin: 0;
+}
+
+/* Layout maxima, per screen. */
+.app-main[data-view="dashboard"] .app-content > .container-fluid,
+.app-main[data-view="dashboard"] .app-content-header > .container-fluid {
+  max-width: 1180px;
+}
+
+.app-main[data-view="review"] .app-content > .container-fluid,
+.app-main[data-view="review"] .app-content-header > .container-fluid,
+.app-main[data-view="admin"] .app-content > .container-fluid,
+.app-main[data-view="admin"] .app-content-header > .container-fluid {
+  max-width: 1280px;
+}
+
+.app-main[data-view="settings"] .app-content > .container-fluid,
+.app-main[data-view="settings"] .app-content-header > .container-fluid {
+  max-width: 780px;
+}
+
+/* ------------------------------------------------- notifications panel */
+
+.notification-dropdown {
+  display: flex;
+  flex-direction: column;
+  top: calc(100% - 4px);
+  right: 0;
+  left: auto;
+  width: 390px;
+  max-width: calc(100vw - 32px);
+  max-height: 440px;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 50;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+}
+
+.notification-dropdown-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  flex: none;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.notification-dropdown-header:hover,
+.notification-dropdown-header:focus {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.notification-dropdown-header .notification-mark-all-button {
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* The header stays put; only the rows scroll. */
+.notification-dropdown > .dropdown-divider {
+  display: none;
+}
+
+.notification-dropdown .notification-entry,
+.notification-dropdown > .dropdown-item {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+  color: var(--color-text);
+  font-size: 13.5px;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.notification-entry:last-child {
+  border-bottom: 0;
+}
+
+.notification-entry:hover,
+.notification-entry:focus-within {
+  background: var(--color-surface);
+}
+
+/* Unread rows read as accent-tinted and bolder; `bg-primary-subtle`
+   resolves to the accent 5% mix through the bridge above. */
+.notification-entry .fw-semibold {
+  font-weight: 600;
+}
+
+.notification-entry .small {
+  margin-top: 2px;
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.notification-entry .text-secondary.small {
+  margin-top: 3px;
+  color: var(--ink-3) !important;
+  font-size: 11px;
+  font-feature-settings: "tnum";
+}
+
+.notification-seen-button {
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.notification-seen-button:hover {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent);
+}
+
+/* --------------------------------------------------- panels (.card) */
+
+.card {
+  --bs-card-border-color: var(--color-border);
+  --bs-card-border-radius: var(--radius-md);
+  --bs-card-inner-border-radius: var(--radius-md);
+  --bs-card-bg: var(--color-bg);
+  --bs-card-spacer-x: var(--space-4);
+  --bs-card-spacer-y: var(--space-4);
+  --bs-card-cap-padding-x: var(--space-3);
+  --bs-card-cap-padding-y: var(--space-2);
+  --bs-card-cap-bg: var(--color-surface);
+  --bs-card-cap-color: var(--color-text);
+  --bs-card-color: var(--color-text);
+  box-shadow: none;
+}
+
+.card-header {
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.card-header h3,
+.card-header h4,
+.card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.card-footer {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--space-3) var(--space-4);
+}
+
+/* AdminLTE's accent-card variants are gone; the only accent top border in
+   the design is on the login card. */
+.card.card-outline,
+.card.card-primary {
+  border-top-width: 1px;
+}
+
+/* ReviewHeader reuses `.card-header` as a bare layout box outside a card. */
+.card-header.border-bottom-0 {
+  padding: 0 0 var(--space-4);
+  border: 0;
+  background: transparent;
+}
+
+.card-header.p-0 {
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+}
+
+/* --------------------------------------------------------------- buttons */
+
+.btn {
+  --bs-btn-padding-x: 12px;
+  --bs-btn-padding-y: 6px;
+  --bs-btn-font-size: 13px;
+  --bs-btn-font-weight: 600;
+  --bs-btn-line-height: 1.35;
+  --bs-btn-border-radius: var(--radius-md);
+  --bs-btn-focus-shadow-rgb: var(--rgb-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.45;
+}
+
+.btn-sm {
+  --bs-btn-padding-x: 8px;
+  --bs-btn-padding-y: 4px;
+  --bs-btn-font-size: 12.5px;
+  --bs-btn-border-radius: var(--radius-md);
+}
+
+/* Solid primary. `.btn-success` is the app's save/confirm button — the
+   design gives those the same solid accent treatment. */
+.btn-primary,
+.btn-success {
+  --bs-btn-bg: var(--color-accent);
+  --bs-btn-border-color: var(--color-accent);
+  --bs-btn-color: var(--primary-btn-ink);
+  --bs-btn-hover-bg: var(--color-accent-600);
+  --bs-btn-hover-border-color: var(--color-accent-600);
+  --bs-btn-hover-color: var(--primary-btn-ink);
+  --bs-btn-active-bg: var(--color-accent-600);
+  --bs-btn-active-border-color: var(--color-accent-600);
+  --bs-btn-active-color: var(--primary-btn-ink);
+  --bs-btn-disabled-bg: var(--color-accent);
+  --bs-btn-disabled-border-color: var(--color-accent);
+  --bs-btn-disabled-color: var(--primary-btn-ink);
+}
+
+/* Secondary: page-coloured with a hairline border. */
+.btn-secondary,
+.btn-outline-secondary,
+.btn-outline-primary,
+.btn-outline-warning,
+.btn-outline-success,
+.btn-light {
+  --bs-btn-bg: var(--color-bg);
+  --bs-btn-border-color: var(--color-divider);
+  --bs-btn-color: var(--color-text);
+  --bs-btn-hover-bg: var(--color-surface);
+  --bs-btn-hover-border-color: var(--color-divider);
+  --bs-btn-hover-color: var(--color-text);
+  --bs-btn-active-bg: var(--color-surface);
+  --bs-btn-active-border-color: var(--color-divider);
+  --bs-btn-active-color: var(--color-text);
+  --bs-btn-disabled-bg: var(--color-bg);
+  --bs-btn-disabled-border-color: var(--color-divider);
+  --bs-btn-disabled-color: var(--color-text);
+}
+
+/* Destructive: never a red fill. */
+.btn-danger,
+.btn-outline-danger {
+  --bs-btn-bg: var(--color-bg);
+  --bs-btn-border-color: color-mix(in srgb, var(--color-del) 45%, transparent);
+  --bs-btn-color: var(--color-del);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--color-del) 8%, transparent);
+  --bs-btn-hover-border-color: color-mix(
+    in srgb,
+    var(--color-del) 45%,
+    transparent
+  );
+  --bs-btn-hover-color: var(--color-del);
+  --bs-btn-active-bg: color-mix(in srgb, var(--color-del) 14%, transparent);
+  --bs-btn-active-border-color: color-mix(
+    in srgb,
+    var(--color-del) 45%,
+    transparent
+  );
+  --bs-btn-active-color: var(--color-del);
+  --bs-btn-disabled-bg: var(--color-bg);
+  --bs-btn-disabled-border-color: color-mix(
+    in srgb,
+    var(--color-del) 45%,
+    transparent
+  );
+  --bs-btn-disabled-color: var(--color-del);
+}
+
+/* Ghost. */
+.btn-link {
+  --bs-btn-color: var(--color-accent);
+  --bs-btn-hover-color: var(--bs-link-hover-color);
+  --bs-btn-border-color: transparent;
+  --bs-btn-bg: transparent;
+  text-decoration: none;
+}
+
+.btn-link:hover {
+  text-decoration: none;
+}
+
+/* Inline icon buttons in panel headers: 26px, no chrome. */
+.btn.border-0.p-1 {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  padding: 0 !important;
+  place-items: center;
+  background: transparent;
+  color: var(--color-text);
+  opacity: 0.6;
+}
+
+.btn.border-0.p-1:hover {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  opacity: 1;
+}
+
+/* ----------------------------------------------------------------- forms */
+
+.form-label {
+  margin-bottom: 5px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.form-control,
+.form-select {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: 13px;
+  caret-color: var(--color-accent);
+}
+
+.form-control:hover,
+.form-select:hover {
+  border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
+}
+
+.form-control::placeholder {
+  color: var(--ink-3);
+  opacity: 0.75;
+}
+
+.form-control-sm,
+.form-select-sm {
+  min-height: 32px;
+  padding: 5px 8px;
+  font-size: 12.5px;
+}
+
+textarea.form-control {
+  min-height: 76px;
+  resize: vertical;
+}
+
+.font-monospace.form-control,
+.form-control.font-monospace {
+  font-size: 12.5px;
+}
+
+.input-group > .form-control,
+.input-group > .form-select {
+  min-height: 36px;
+}
+
+.input-group-text {
+  padding: 0 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--ink-2);
+  font-size: 15px;
+}
+
+.form-check-input {
+  border-color: var(--color-neutral-300);
+  background-color: var(--color-bg);
+}
+
+.form-check-input:checked {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+}
+
+.form-check-label {
+  font-size: 13.5px;
+}
+
+.invalid-feedback {
+  color: var(--color-del);
+  font-size: 12.5px;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: var(--color-del);
+  background-image: none;
+}
+
+.notification-preference-toggles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.notification-preference-toggles .form-check-label {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* -------------------------------------------------------- tags & pills */
+
+.badge {
+  --bs-badge-padding-x: 9px;
+  --bs-badge-padding-y: 2px;
+  --bs-badge-font-size: 11px;
+  --bs-badge-font-weight: 600;
+  --bs-badge-border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.02em;
+}
+
+/* The app's semantic `text-bg-*` badges become Workbench tints — the design
+   has no filled labels. */
+.badge.text-bg-primary {
+  background-color: var(--color-accent-200) !important;
+  color: var(--color-accent-800) !important;
+}
+
+.badge.text-bg-info {
+  background-color: var(--color-accent-2-200) !important;
+  color: var(--color-accent-2-800) !important;
+}
+
+.badge.text-bg-secondary,
+.badge.text-bg-light,
+.badge.text-bg-dark,
+.review-meta-badge {
+  border: 0;
+  background-color: var(--color-neutral-100) !important;
+  color: var(--color-neutral-800) !important;
+}
+
+.badge.text-bg-success {
+  background-color: color-mix(in srgb, var(--color-add) 14%, transparent) !important;
+  color: var(--color-add) !important;
+}
+
+.badge.text-bg-danger {
+  background-color: color-mix(in srgb, var(--color-del) 14%, transparent) !important;
+  color: var(--color-del) !important;
+}
+
+.badge.text-bg-warning {
+  background-color: color-mix(in srgb, var(--color-warn) 16%, transparent) !important;
+  color: var(--color-warn) !important;
+}
+
+/* Status pills — one hue per state, so a list of reviews is scannable at a
+   glance and the same colour means the same thing in the review view:
+   amber waiting, blue in review, violet read, green acked, grey closed.
+   Each carries a hairline of its own hue; at 10px the tint alone is too
+   faint to tell apart. */
+.review-status-badge {
+  --pill-bg: transparent;
+  --pill-ink: var(--color-text);
+  --pill-border: transparent;
+  border: 1px solid var(--pill-border);
+  background-color: var(--pill-bg) !important;
+  color: var(--pill-ink) !important;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.review-status-badge.is-pending {
+  --pill-bg: color-mix(in srgb, var(--color-warn) 18%, transparent);
+  --pill-ink: var(--color-warn-ink);
+  --pill-border: color-mix(in srgb, var(--color-warn) 38%, transparent);
+}
+
+.review-status-badge.is-in-review {
+  --pill-bg: var(--color-accent-200);
+  --pill-ink: var(--color-accent-800);
+  --pill-border: color-mix(in srgb, var(--color-accent) 38%, transparent);
+}
+
+.review-status-badge.is-reviewed {
+  --pill-bg: var(--color-accent-2-200);
+  --pill-ink: var(--color-accent-2-800);
+  --pill-border: color-mix(in srgb, var(--color-accent-2) 38%, transparent);
+}
+
+.review-status-badge.is-acked {
+  --pill-bg: color-mix(in srgb, var(--color-add) 16%, transparent);
+  --pill-ink: var(--color-add-ink);
+  --pill-border: color-mix(in srgb, var(--color-add) 38%, transparent);
+}
+
+.review-status-badge.is-closed {
+  --pill-bg: var(--color-neutral-100);
+  --pill-ink: var(--color-neutral-800);
+  --pill-border: var(--color-divider);
+}
+
+/* ------------------------------------------------------------------ tabs */
+
+.nav-tabs {
+  --bs-nav-tabs-border-width: 0;
+  --bs-nav-tabs-border-color: transparent;
+  --bs-nav-link-padding-x: 2px;
+  --bs-nav-link-padding-y: 0;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.nav-tabs .nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 2px var(--space-2);
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.nav-tabs .nav-link:hover {
+  border: 0;
+  color: var(--color-accent-700);
+  isolation: auto;
+}
+
+.nav-tabs .nav-link.active {
+  border: 0;
+  background: transparent;
+  box-shadow: inset 0 -2px 0 var(--color-accent);
+  color: var(--color-accent-700);
+}
+
+.nav-tabs .nav-link .badge {
+  --bs-badge-padding-x: 0;
+  --bs-badge-padding-y: 0;
+  background: transparent !important;
+  color: inherit !important;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.card-header-tabs {
+  margin: 0;
+  border-bottom: 0;
+}
+
+/* Admin tabs wrap rather than scroll. */
+.admin-tabs {
+  flex-wrap: wrap;
+  overflow: visible;
+  row-gap: var(--space-2);
+}
+
+.admin-tabs .nav-link {
+  gap: 7px;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- tables */
+
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--color-text);
+  --bs-table-border-color: var(--color-divider);
+  --bs-table-hover-bg: var(--color-surface);
+  --bs-table-hover-color: var(--color-text);
+  --bs-table-striped-bg: var(--color-surface);
+  --bs-table-cell-padding-y: var(--space-2);
+  --bs-table-cell-padding-x: var(--space-3);
+  font-size: 13px;
+}
+
+.table > thead {
+  background: var(--color-surface);
+}
+
+.table > thead > tr > th {
+  border-bottom: 1px solid var(--color-divider);
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table > tbody > tr > td {
+  border-bottom: 1px solid var(--color-divider);
+  vertical-align: middle;
+}
+
+.table > tbody > tr:last-child > td {
+  border-bottom: 0;
+}
+
+/* The section keeps `overflow: hidden` for its rounded corners, so the
+   scroller has to live inside it or the Actions column gets clipped. */
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* ---------------------------------------------------------------- modals */
+
+.modal-backdrop {
+  --bs-backdrop-bg: rgba(27, 31, 36, 0.5);
+  --bs-backdrop-opacity: 1;
+}
+
+.modal-content {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.modal-header,
+.modal-footer {
+  padding: var(--space-3) var(--space-4);
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+.modal-header {
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.modal-header .font-monospace,
+.modal-header .small {
+  color: var(--ink-2);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.modal-body {
+  padding: var(--space-4);
+}
+
+.modal-footer {
+  gap: var(--space-2);
+}
+
+.modal-footer > * {
+  margin: 0;
+}
+
+.btn-close {
+  --bs-btn-close-focus-shadow: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: var(--radius-md);
+  opacity: 0.6;
+}
+
+.btn-close:hover {
+  background-color: color-mix(in srgb, var(--color-text) 8%, transparent);
+  opacity: 1;
+}
+
+
+.modal-xxl {
+  max-width: min(1040px, calc(100vw - 44px));
+}
+
+/* --------------------------------------------- alerts, lists, dropdowns */
+
+.alert {
+  --bs-alert-border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  border-width: 1px;
+  font-size: 13px;
+}
+
+.alert-danger {
+  --bs-alert-color: var(--color-del);
+  --bs-alert-bg: color-mix(in srgb, var(--color-del) 8%, transparent);
+  --bs-alert-border-color: color-mix(in srgb, var(--color-del) 45%, transparent);
+}
+
+.alert-warning {
+  --bs-alert-color: var(--color-warn);
+  --bs-alert-bg: color-mix(in srgb, var(--color-warn) 10%, transparent);
+  --bs-alert-border-color: color-mix(
+    in srgb,
+    var(--color-warn) 45%,
+    transparent
+  );
+}
+
+.alert-info,
+.alert-primary {
+  --bs-alert-color: var(--color-accent-700);
+  --bs-alert-bg: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  --bs-alert-border-color: color-mix(
+    in srgb,
+    var(--color-accent) 40%,
+    transparent
+  );
+}
+
+.list-group {
+  --bs-list-group-border-color: var(--color-border);
+  --bs-list-group-bg: transparent;
+  --bs-list-group-color: var(--color-text);
+  --bs-list-group-border-radius: var(--radius-md);
+  --bs-list-group-action-hover-bg: var(--color-surface);
+  --bs-list-group-item-padding-x: var(--space-3);
+  --bs-list-group-item-padding-y: var(--space-2);
+}
+
+.dropdown-menu {
+  --bs-dropdown-border-color: var(--color-border);
+  --bs-dropdown-border-radius: var(--radius-md);
+  --bs-dropdown-bg: var(--color-bg);
+  --bs-dropdown-color: var(--color-text);
+  --bs-dropdown-link-color: var(--color-text);
+  --bs-dropdown-link-hover-bg: var(--color-surface);
+  --bs-dropdown-link-hover-color: var(--color-text);
+  --bs-dropdown-link-active-bg: var(--color-surface);
+  --bs-dropdown-link-active-color: var(--color-text);
+  --bs-dropdown-font-size: 13.5px;
+  --bs-dropdown-padding-y: 0;
+  --bs-dropdown-item-padding-x: var(--space-3);
+  --bs-dropdown-item-padding-y: var(--space-2);
+  --bs-dropdown-divider-bg: var(--color-divider);
+  z-index: 40;
+  box-shadow: var(--shadow-lg);
+}
+
+.dropdown-menu-lg {
+  min-width: 390px;
+}
+
+.app-toast {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.toast.text-bg-success {
+  background-color: var(--color-bg) !important;
+  border-left: 3px solid var(--color-add);
+  color: var(--color-text) !important;
+}
+
+.toast.text-bg-danger {
+  background-color: var(--color-bg) !important;
+  border-left: 3px solid var(--color-del);
+  color: var(--color-text) !important;
+}
+
+.empty-state {
+  min-height: 120px;
+  padding: var(--space-8) var(--space-4);
+  color: var(--ink-2);
+  font-size: 13.5px;
+  text-align: center;
+}
+
+/* ======================================================================
+   Screens
+   ====================================================================== */
+
+/* ----------------------------------------------------------------- login */
+
+.login-page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: var(--space-6);
+  background: var(--color-surface);
+}
+
+.login-box {
+  width: min(420px, 100%);
+}
+
+.login-box .card {
+  border: 1px solid var(--color-border);
+  border-top: 3px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.login-box .card-header {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  text-align: center;
+}
+
+.login-box .card-header .h1 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.login-box .card-body {
+  padding: var(--space-6) var(--space-4) var(--space-4);
+}
+
+.login-box-msg {
+  margin-bottom: var(--space-3);
+  color: var(--ink-2);
+  font-size: 13px;
+  text-align: center;
+}
+
+.login-box .h4 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.login-box .btn {
+  --bs-btn-font-size: 14px;
+  --bs-btn-padding-y: 9px;
+  --bs-btn-padding-x: 14px;
+}
+
+.login-box .alert {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------------- dashboard */
+
+/* The dashboard is the one screen made of separate boxes, so it gets a
+   recessed backdrop: the create panel and the review list sit on
+   `--color-bg` and lift off it, instead of floating on the same flat page. */
+.app-main[data-view="dashboard"] {
+  background: var(--color-surface);
+}
+
+/* The create panel is the one boxed thing above the lists — a hairline box
+   with a filled header, lifted just enough to separate it from the tabs. */
+.dashboard-create-card {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-create-card > .card-header {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+}
+
+.dashboard-create-card > .card-header .card-title {
+  font-size: 15px;
+}
+
+/* --- tabs over the three review lists --- */
+
+/* Folder tabs: the active one merges into the panel below it, so the three
+   lists read as three separate places rather than one long scroll. */
+.nav-tabs.dashboard-tabs {
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Every tab hangs 1px past the strip's rule, so the active tab's opaque
+   background can cover that rule and merge into the panel below. */
+.nav-tabs.dashboard-tabs .nav-link {
+  margin-bottom: -1px;
+  padding: var(--space-2) var(--space-4) calc(var(--space-2) + 1px);
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+.nav-tabs.dashboard-tabs .nav-link:not(.active):hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.nav-tabs.dashboard-tabs .nav-link.active {
+  border-color: var(--color-border);
+  background: var(--color-bg);
+  box-shadow: inset 0 2px 0 var(--color-accent);
+  color: var(--color-accent-700);
+}
+
+/* The count is a real pill here — it is the section's headline number. */
+.nav-tabs.dashboard-tabs .nav-link .badge {
+  --bs-badge-padding-x: 7px;
+  --bs-badge-padding-y: 1px;
+  border-radius: 999px;
+  background: var(--color-neutral-100) !important;
+  color: var(--ink-2) !important;
+  font-size: 11px;
+  opacity: 1;
+}
+
+.nav-tabs.dashboard-tabs .nav-link.active .badge {
+  background: var(--color-accent-200) !important;
+  color: var(--color-accent-800) !important;
+}
+
+/* --- the list panel the active tab opens onto --- */
+
+.dashboard-panel {
+  border: 1px solid var(--color-border);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-panel > .list-group {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.dashboard-panel .list-group-item:last-child .review-row {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.review-list-item {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-divider);
+  border-radius: 0 !important;
+  background: transparent;
+}
+
+.review-list-item:last-child {
+  border-bottom: 0;
+}
+
+/* The whole row navigates; the row grid lives inside the button. */
+.review-row {
+  display: grid;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  gap: var(--space-2) var(--space-4);
+  grid-template-columns: minmax(0, 1fr) 148px;
+  text-align: start;
+}
+
+.review-list-item:hover .review-row,
+.review-row:focus-visible {
+  background: var(--color-surface);
+}
+
+.review-row-main {
+  min-width: 0;
+}
+
+.review-row-title {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.review-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+
+/* Metadata reads as icon + value, not as a row of chips… */
+.review-row-meta .badge.review-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  background: transparent !important;
+  color: var(--ink-2) !important;
+  font-size: 11.5px;
+  font-weight: 400;
+}
+
+.review-row-meta .badge i,
+.review-row-meta .badge svg {
+  flex: none;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* …except the repository, which is how you tell two reviews apart at a
+   glance. It keeps a real chip so the name stays readable in the row. */
+/* `flex: none` + `nowrap` matter here: left to shrink, the chip collapses to
+   one character per line. Overlong names ellipsize, the full path is in the
+   title attribute. */
+.review-repo-badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 1px 8px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.review-repo-badge i {
+  flex: none;
+  color: var(--color-accent);
+  font-size: 12px;
+  opacity: 1;
+}
+
+.review-repo-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-row-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 7px;
+  color: var(--ink-3);
+  font-size: 12px;
+  gap: 0 6px;
+}
+
+.review-row-footer .reviewers-count-tooltip {
+  cursor: help;
+  text-decoration: 1px dotted underline;
+  text-underline-offset: 3px;
+}
+
+/* The status column: fixed width and left-aligned, so the pills stack in one
+   straight line down the list instead of sitting ragged against the edge. */
+.review-row-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+.review-row-side .badge.review-status-badge {
+  padding: 3px 9px;
+}
+
+.review-row-updated {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-2);
+  cursor: help;
+  font-feature-settings: "tnum";
+  font-size: 11.5px;
+  gap: 5px;
+}
+
+.review-row-updated i {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Owner-only row menu, parked clear of the status column. */
+.review-actions {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+}
+
+.review-actions-toggle {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-md);
+  color: var(--ink-2);
+}
+
+.review-actions-toggle:hover {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.review-actions-menu {
+  min-width: 11rem;
+  z-index: 40;
+}
+
+/* Below this the status column costs more than it buys: stack it instead. */
+@media (max-width: 700px) {
+  .review-row {
+    padding-right: 42px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .review-row-side {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .nav-tabs.dashboard-tabs .nav-link {
+    padding-inline: var(--space-3);
+    font-size: 13px;
+  }
+}
+
+/* --------------------------------------------------------- review detail */
+
+.review-header-title {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.review-workbench > .card,
+.review-workbench {
+  border: 0;
+  background: transparent;
+}
+
+.review-workbench .nav-link {
+  color: var(--color-text);
+}
+
+/* Overview: description panel and summary grid. */
+.review-readonly-value {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.review-description,
+.review-list-description {
+  text-wrap: pretty;
+}
+
+.review-description-summary dt {
+  margin-bottom: var(--space-1);
+  color: var(--ink-3);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.review-description-summary dd {
+  margin-bottom: var(--space-4);
+  font-size: 13.5px;
+}
+
+/* Summary cells: a hairline row of icon + label + value, not tinted boxes. */
+.commit-summary-grid {
+  gap: 0;
+  border-top: 1px solid var(--color-divider);
+}
+
+.commit-summary-item {
+  min-height: 0;
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-divider);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.commit-summary-icon {
+  width: auto;
+  height: auto;
+  margin-top: 3px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: 16px;
+}
+
+.commit-summary-label {
+  color: var(--ink-3);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.commit-summary-value {
+  font-size: 13.5px;
+}
+
+/* Commit-log rule matches: pill anchors. */
+.commit-log-match-panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.commit-log-match-title {
+  margin-bottom: var(--space-2);
+  color: var(--color-accent-700);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.commit-log-match-chip {
+  gap: var(--space-1);
+  padding: 5px 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: var(--color-bg);
+  font-size: 12px;
+  box-shadow: none;
+}
+
+.commit-log-match-chip:hover {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.commit-log-match-label {
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.commit-log-match-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* Reviewer list and search. */
+.review-user-list .list-group-item,
+.reviewer-selected-chip {
+  padding: 6px var(--space-2);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: 13.5px;
+}
+
+.reviewer-selected-chip {
+  border-radius: 999px;
+}
+
+.reviewer-selected-email {
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.reviewer-search-menu {
+  z-index: 40;
+}
+
+.reviewer-add-button {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+}
+
+/* Commit picker (Files tab toolbar). */
+.review-commit-nav-toggle {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.review-commit-nav-toggle:hover,
+.review-commit-nav-toggle[aria-expanded="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-bg);
+}
+
+.review-commit-nav-toggle .text-truncate {
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.review-commit-nav-item {
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.review-commit-nav-item:last-child {
+  border-bottom: 0;
+}
+
+.review-commit-nav .review-commit-nav-item.active {
+  background: color-mix(in srgb, var(--color-accent) 7%, transparent);
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.review-commit-nav .review-commit-nav-item.active .review-meta-badge {
+  background: var(--color-neutral-100) !important;
+  border-color: var(--color-divider);
+  color: var(--color-neutral-800) !important;
+}
+
+.review-commit-nav .review-commit-nav-item.active .text-success {
+  color: var(--color-add) !important;
+}
+
+.review-commit-nav-menu {
+  z-index: 40;
+  box-shadow: var(--shadow-lg);
+}
+
+.review-action-group .review-action-menu {
+  z-index: 40;
+  min-width: 250px;
+  margin-top: var(--space-1);
+}
+
+.review-action-menu .dropdown-item {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--color-divider);
+  white-space: normal;
+}
+
+.review-action-menu .dropdown-item:last-child {
+  border-bottom: 0;
+}
+
+.review-action-menu .dropdown-item i {
+  margin-top: 3px;
+  color: var(--color-accent);
+  font-size: 15px;
+}
+
+.review-action-menu .dropdown-item .small {
+  color: var(--ink-2);
+  font-size: 11.5px;
+}
+
+/* Commit log <details>. */
+.review-log-card > summary {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.review-log-body {
+  padding: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.commit-log-link {
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ diff */
+
+/* Nothing above a diff card may scroll or clip, or its sticky header stops
+   sticking. Only the diff bodies and the tables scroll sideways. */
+.review-files-pane {
+  overflow: visible;
+}
+
+.review-files-pane .card,
+.card:has(> .diff-file-header) {
+  overflow: visible;
+}
+
+.diff-file-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: var(--space-2) var(--space-3) !important;
+  border-bottom: 1px solid var(--color-divider);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--color-surface);
+}
+
+.diff-file-header .fw-semibold {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.diff-file-header .badge.text-bg-success,
+.diff-file-header .badge.text-bg-danger {
+  padding: 0 4px;
+  background: transparent !important;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.diff-file-header .badge.text-bg-success {
+  color: var(--color-add) !important;
+}
+
+.diff-file-header .badge.text-bg-danger {
+  color: var(--color-del) !important;
+}
+
+.diff-file-header .form-check-label {
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.diff-viewer {
+  border-top: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.diff-line {
+  grid-template-columns: 26px 56px minmax(0, 1fr);
+  min-height: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.diff-line-block {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.diff-line-context {
+  background: transparent;
+}
+
+.diff-line-added {
+  background: color-mix(in srgb, var(--color-add) 12%, transparent);
+}
+
+.diff-line-removed {
+  background: color-mix(in srgb, var(--color-del) 12%, transparent);
+}
+
+.diff-hunk-header {
+  padding: 1px 10px;
+  border: 0;
+  background: color-mix(in srgb, var(--color-accent) 9%, transparent);
+  color: var(--color-accent-700);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+:root[data-theme="dark"] .diff-hunk-header {
+  border: 0;
+  background: color-mix(in srgb, var(--color-accent) 9%, transparent);
+  color: var(--color-accent-700);
+}
+
+/* The `+` stays hidden until the row is hovered — but reachable by keyboard. */
+.diff-comment-button {
+  padding: 0;
+  color: var(--color-accent);
+  font-size: 12px;
+  opacity: 0;
+}
+
+.diff-line:hover .diff-comment-button,
+.diff-comment-button:focus-visible {
+  opacity: 1;
+}
+
+.diff-comment-button:hover {
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-accent);
+}
+
+.diff-comment-button-placeholder {
+  background: transparent;
+}
+
+.diff-line-number {
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+  color: var(--ink-2);
+  font-feature-settings: "tnum";
+}
+
+.diff-line-code {
+  padding: 1px 10px;
+  overflow-x: auto;
+}
+
+.diff-anchor-highlight {
+  outline: 2px solid var(--color-accent);
+}
+
+.diff-trailing-whitespace {
+  background: color-mix(in srgb, var(--color-del) 45%, transparent);
+}
+
+/* ------------------------------------------------------------- comments */
+
+.diff-inline-comment-panel,
+.diff-inline-comments {
+  padding: var(--space-3);
+  border-left: 2px solid var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 6%, transparent);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+}
+
+.diff-inline-comment,
+.diff-inline-comment-preview {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.diff-inline-comment.is-done,
+.review-comment-card.is-done {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+}
+
+.diff-inline-comment-meta,
+.review-comment-message-meta {
+  color: var(--ink-2);
+  font-size: 11.5px;
+  font-feature-settings: "tnum";
+}
+
+.review-comment-message-meta .fw-semibold {
+  color: var(--color-text);
+  font-size: 12.5px;
+}
+
+.review-comment-message {
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.review-comment-body,
+.markdown-body {
+  font-size: 14px;
+  text-wrap: pretty;
+}
+
+.markdown-body pre,
+.markdown-body code {
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.comment-done-meta {
+  color: var(--ink-2);
+  font-size: 11.5px;
+}
+
+.next-comment-button {
+  /* Below the modal layer, above the page. */
+  z-index: 30;
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* -------------------------------------------------------------- settings */
+
+.profile-avatar-panel {
+  justify-items: start;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) var(--space-4);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-surface);
+}
+
+.profile-avatar-panel h3 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.profile-avatar-button {
+  width: 72px;
+  height: 72px;
+  overflow: visible;
+  border: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  color: var(--color-accent);
+  box-shadow: none;
+}
+
+.profile-avatar-button img {
+  border-radius: 50%;
+}
+
+.profile-avatar-button > span:not(.profile-avatar-overlay) {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.profile-avatar-overlay {
+  right: -2px;
+  bottom: -2px;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--color-bg);
+  background: var(--color-accent);
+  color: var(--primary-btn-ink);
+  font-size: 13px;
+}
+
+/* ----------------------------------------------------------------- admin */
+
+.admin-add-input {
+  width: min(34rem, 100%);
+}
+
+.link-rule-cell {
+  min-width: 12rem;
+}
+
+.review-field-image {
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+}
+
+/* ------------------------------------------------------------ responsive
+
+   The only breakpoint is 900px.                                          */
+
+@media (max-width: 900px) {
+  .app-wrapper {
+    --shell-sidebar: 60px;
+  }
+
+  .brand-text,
+  .sidebar-menu .nav-link p,
+  .app-header .navbar-nav .nav-link.text-secondary {
+    display: none;
+  }
+
+  .sidebar-brand {
+    margin-inline: var(--space-2);
+  }
+
+  .brand-link,
+  .sidebar-menu .nav-link {
+    justify-content: center;
+  }
+
+  .app-content,
+  .app-content-header {
+    padding: var(--space-4);
+  }
+
+  .app-content-header {
+    padding-bottom: 0;
+  }
+
+  .app-header > .container-fluid {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .notification-dropdown {
+    width: calc(100vw - 32px);
+  }
+
+  .commit-summary-grid,
+  .notification-preference-toggles,
+  .diff-inline-comment-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-avatar-panel {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+}

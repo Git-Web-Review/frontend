@@ -40,22 +40,6 @@ export function AppShell({ children }: AppShellProps) {
         ? "admin"
         : "dashboard";
 
-  useEffect(() => {
-    document.body.classList.add(
-      "layout-fixed",
-      "sidebar-expand-lg",
-      "bg-body-tertiary",
-    );
-
-    return () => {
-      document.body.classList.remove(
-        "layout-fixed",
-        "sidebar-expand-lg",
-        "bg-body-tertiary",
-      );
-    };
-  }, []);
-
   const loadNotifications = async () => {
     if (!idToken) {
       return;
@@ -264,6 +248,15 @@ export function AppShell({ children }: AppShellProps) {
     (notification) => !notification.seen,
   ).length;
 
+  const viewKicker =
+    activeView === "dashboard"
+      ? t("kickerReviews")
+      : activeView === "review"
+        ? t("kickerReviewDetails")
+        : activeView === "settings"
+          ? t("kickerAccount")
+          : t("kickerAdministration");
+
   const textNotificationPayload = (notification: NotificationItem) => {
     if (
       notification.type !== "TEXT" ||
@@ -468,7 +461,7 @@ export function AppShell({ children }: AppShellProps) {
               >
                 <i className="bi bi-bell" aria-hidden="true" />
                 {unreadCount ? (
-                  <span className="navbar-badge badge text-bg-danger">
+                  <span className="navbar-badge badge gwr-tabnum">
                     {unreadCount}
                   </span>
                 ) : null}
@@ -591,7 +584,7 @@ export function AppShell({ children }: AppShellProps) {
         </div>
       </nav>
       <aside
-        className="app-sidebar bg-body-secondary shadow"
+        className="app-sidebar"
         data-bs-theme={theme}
       >
         <div className="sidebar-brand">
@@ -609,7 +602,7 @@ export function AppShell({ children }: AppShellProps) {
                 profileInitials
               )}
             </span>
-            <span className="brand-text fw-light ms-2">{t("appName")}</span>
+            <span className="brand-text">{t("appName")}</span>
           </NavLink>
         </div>
         <div className="sidebar-wrapper app-sidebar-wrapper">
@@ -666,11 +659,12 @@ export function AppShell({ children }: AppShellProps) {
           </nav>
         </div>
       </aside>
-      <main className="app-main">
+      <main className="app-main" data-view={activeView}>
         <div className="app-content-header">
           <div className="container-fluid">
             <div className="row">
               <div className="col-sm-6">
+                <span className="app-kicker">{viewKicker}</span>
                 <h3 className="mb-0">
                   {activeView === "dashboard" ? t("dashboard") : null}
                   {activeView === "settings" ? t("settings") : null}

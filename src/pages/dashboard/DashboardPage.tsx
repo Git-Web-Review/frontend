@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/AuthProvider";
 import { useI18n } from "../../i18n/I18nProvider";
+import type { TranslationKey } from "../../i18n/translations";
 import { useToast } from "../../layout/ToastProvider";
 import { realtimeNotificationEvent } from "../../realtime/events";
 import type {
@@ -22,7 +23,37 @@ import {
   type DashboardSection,
 } from "./dashboard-utils";
 import { CreateReviewModal } from "./CreateReviewModal";
-import { ReviewSection } from "./ReviewSection";
+import { DASHBOARD_PANEL_ID, ReviewSection } from "./ReviewSection";
+
+/**
+ * The three review lists, as tabs. Order matches the sections the dashboard
+ * has always shown: reviews you opened, reviews waiting on you, closed ones.
+ */
+const DASHBOARD_TABS: Array<{
+  section: DashboardSection;
+  icon: string;
+  labelKey: TranslationKey;
+  emptyKey: TranslationKey;
+}> = [
+  {
+    section: "owned",
+    icon: "bi-pencil-square",
+    labelKey: "ownedReviews",
+    emptyKey: "emptyOwned",
+  },
+  {
+    section: "assigned",
+    icon: "bi-inbox",
+    labelKey: "assignedReviews",
+    emptyKey: "emptyAssigned",
+  },
+  {
+    section: "done",
+    icon: "bi-check2-all",
+    labelKey: "doneReviews",
+    emptyKey: "emptyDone",
+  },
+];
 
 export function DashboardPage() {
   const { currentUser, idToken } = useAuth();
@@ -78,6 +109,7 @@ export function DashboardPage() {
     assigned: emptyDashboardPage(),
     done: emptyDashboardPage(),
   });
+  const [activeSection, setActiveSection] = useState<DashboardSection>("owned");
   const [loadingDashboardSections, setLoadingDashboardSections] = useState<
     Record<DashboardSection, boolean>
   >({
@@ -267,7 +299,7 @@ export function DashboardPage() {
     }
 
     return () => observer.disconnect();
-  }, [idToken, dashboard, loadingDashboardSections]);
+  }, [idToken, dashboard, loadingDashboardSections, activeSection]);
 
   const previewReview = async (nextGitwebUrl = gitwebUrl) => {
     const normalizedGitwebUrl = nextGitwebUrl.trim();
@@ -416,33 +448,17 @@ export function DashboardPage() {
     }
   };
 
-  const renderReviewSection = (
-    section: DashboardSection,
-    title: string,
-    emptyMessage: string,
-    loadMoreRef: RefObject<HTMLDivElement | null>,
-    className = "col-xl-6",
-  ) => (
-    <ReviewSection
-      section={section}
-      title={title}
-      emptyMessage={emptyMessage}
-      page={dashboard[section]}
-      loadingMore={loadingDashboardSections[section]}
-      hasMore={hasMoreReviews(section)}
-      loadMoreRef={loadMoreRef}
-      className={className}
-      currentUserId={currentUser?.id}
-      openReviewActionsId={openReviewActionsId}
-      onToggleActions={(reviewId) =>
-        setOpenReviewActionsId((currentId) =>
-          currentId === reviewId ? null : reviewId,
-        )
-      }
-      deletingReviewId={deletingReviewId}
-      onDelete={(review) => void deleteReview(review)}
-    />
-  );
+  const sectionLoadMoreRefs: Record<
+    DashboardSection,
+    RefObject<HTMLDivElement | null>
+  > = {
+    owned: ownedLoadMoreRef,
+    assigned: assignedLoadMoreRef,
+    done: doneLoadMoreRef,
+  };
+  const activeTab =
+    DASHBOARD_TABS.find((tab) => tab.section === activeSection) ??
+    DASHBOARD_TABS[0];
 
   const previewCommitLogMatches = preview
     ? commitLogMatches(preview, commitLogLinkRules, t("commitLogMatch"))
@@ -451,7 +467,7 @@ export function DashboardPage() {
   return (
     <div className="row g-4">
       <div className="col-12">
-        <div className="card card-primary card-outline">
+        <div className="card dashboard-create-card">
           <div className="card-header">
             <h3 className="card-title">{t("pasteGitweb")}</h3>
           </div>
@@ -492,25 +508,47 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {renderReviewSection(
-        "owned",
-        t("ownedReviews"),
-        t("emptyOwned"),
-        ownedLoadMoreRef,
-      )}
-      {renderReviewSection(
-        "assigned",
-        t("assignedReviews"),
-        t("emptyAssigned"),
-        assignedLoadMoreRef,
-      )}
-      {renderReviewSection(
-        "done",
-        t("doneReviews"),
-        t("emptyDone"),
-        doneLoadMoreRef,
-        "col-12",
-      )}
+      <div className="col-12">
+        <ul className="nav nav-tabs dashboard-tabs" role="tablist">
+          {DASHBOARD_TABS.map((tab) => (
+            <li className="nav-item" key={tab.section} role="presentation">
+              <button
+                aria-controls={DASHBOARD_PANEL_ID}
+                aria-selected={activeSection === tab.section}
+                className={
+                  activeSection === tab.section ? "nav-link active" : "nav-link"
+                }
+                id={`dashboard-tab-${tab.section}`}
+                role="tab"
+                type="button"
+                onClick={() => setActiveSection(tab.section)}
+              >
+                <i className={`bi ${tab.icon}`} aria-hidden="true" />
+                {t(tab.labelKey)}
+                <span className="badge">{dashboard[tab.section].total}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <ReviewSection
+          key={activeTab.section}
+          section={activeTab.section}
+          emptyMessage={t(activeTab.emptyKey)}
+          page={dashboard[activeTab.section]}
+          loadingMore={loadingDashboardSections[activeTab.section]}
+          hasMore={hasMoreReviews(activeTab.section)}
+          loadMoreRef={sectionLoadMoreRefs[activeTab.section]}
+          currentUserId={currentUser?.id}
+          openReviewActionsId={openReviewActionsId}
+          onToggleActions={(reviewId) =>
+            setOpenReviewActionsId((currentId) =>
+              currentId === reviewId ? null : reviewId,
+            )
+          }
+          deletingReviewId={deletingReviewId}
+          onDelete={(review) => void deleteReview(review)}
+        />
+      </div>
 
       {createModalOpen && preview ? (
         <CreateReviewModal
