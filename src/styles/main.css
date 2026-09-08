@@ -369,6 +369,29 @@ button {
   gap: 0.5rem;
 }
 
+.user-avatar {
+  display: grid;
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reviewer-selected-identity {
+  min-width: 0;
+}
+
 .reviewer-selected-chip {
   align-items: center;
   background: var(--bs-tertiary-bg);

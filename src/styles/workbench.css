@@ -27,9 +27,11 @@
   --color-text: #1f2328;
   /* Hairlines *inside* a panel: table rules, list rows, section splits. */
   --color-divider: #d9dde2;
-  /* Outline *around* a panel: cards, modals, menus, toasts. In light mode the
-     two match; in dark the outline is lifted clear of the surface, which the
-     divider tone alone sits too close to (1.5:1) to read as an edge. */
+  /* Outline *around* a box: cards, modals, menus, toasts, form controls. In
+     light mode it matches the divider; in dark it is lifted clear of the
+     surface, which the divider tone alone sits too close to (1.5:1) to read
+     as an edge. Inputs share it so a field never looks fainter than the card
+     it sits in. */
   --color-border: var(--color-divider);
 
   --color-accent: #2f6fdb;
@@ -929,7 +931,7 @@ table th {
 .form-select {
   min-height: 36px;
   padding: 7px 10px;
-  border: 1px solid var(--color-divider);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background-color: var(--color-bg);
   color: var(--color-text);
@@ -971,7 +973,7 @@ textarea.form-control {
 
 .input-group-text {
   padding: 0 10px;
-  border: 1px solid var(--color-divider);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg);
   color: var(--ink-2);
@@ -979,7 +981,7 @@ textarea.form-control {
 }
 
 .form-check-input {
-  border-color: var(--color-neutral-300);
+  border-color: var(--color-border);
   background-color: var(--color-bg);
 }
 
@@ -1880,6 +1882,16 @@ textarea.form-control {
 
 .reviewer-selected-chip {
   border-radius: 999px;
+}
+
+/* Initials sit on the panel surface so the ring reads even without a photo. */
+.user-avatar {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-accent);
+  font-size: 10px;
 }
 
 .reviewer-selected-email {

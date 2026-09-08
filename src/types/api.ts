@@ -191,6 +191,7 @@ export type ReviewUserSummary = {
   mailNotificationsEnabled: boolean;
   ircNotificationsEnabled: boolean;
   hasProfileImage: boolean;
+  profileImageUrl: string | null;
 };
 
 export type ReviewerCandidatePage = {

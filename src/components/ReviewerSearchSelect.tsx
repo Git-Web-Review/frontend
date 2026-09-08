@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { apiRequest } from "../api/client";
 import { useI18n } from "../i18n/I18nProvider";
 import type { ReviewerCandidatePage, ReviewUserSummary } from "../types/api";
+import { UserAvatar } from "./UserAvatar";
 
 type ReviewerSearchSelectProps = {
   idToken: string | null;
@@ -172,7 +173,8 @@ export function ReviewerSearchSelect({
         <div className="reviewer-selected-list mb-2">
           {knownSelectedUsers.map((user) => (
             <span className="reviewer-selected-chip" key={user.id}>
-              <span>
+              <UserAvatar idToken={idToken} user={user} />
+              <span className="reviewer-selected-identity">
                 <span className="fw-semibold">{renderUserLabel(user)}</span>
                 <span className="reviewer-selected-email">{user.email}</span>
               </span>
