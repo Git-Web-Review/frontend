@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
+import { DateTimeText } from "../../components/DateTimeText";
 import { useI18n } from "../../i18n/I18nProvider";
-import { formatDateTime } from "../../utils/formatDate";
 import type {
   ReviewComment,
   ReviewUserSummary,
@@ -57,7 +57,10 @@ export function CommentMessages({
                     <span className="fw-semibold">
                       {actions.renderUserLabel(comment.author)}
                     </span>
-                    <span>{formatDateTime(comment.createdAt)}</span>
+                    <DateTimeText
+                      label={t("createdAt")}
+                      value={comment.createdAt}
+                    />
                   </>
                 ) : null}
                 {canEdit ? (
@@ -236,7 +239,7 @@ export function CommentDoneMeta({
     <div className="comment-done-meta">
       {t("commentDoneBy")}{" "}
       {thread.doneBy ? renderUserLabel(thread.doneBy) : t("notAvailable")} -{" "}
-      {formatDateTime(thread.doneAt)}
+      <DateTimeText value={thread.doneAt} />
     </div>
   );
 }

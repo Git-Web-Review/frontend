@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/AuthProvider";
 import { ReviewerSearchSelect } from "../../components/ReviewerSearchSelect";
+import { DateTimeText } from "../../components/DateTimeText";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useToast } from "../../layout/ToastProvider";
 import {
@@ -25,7 +26,6 @@ import {
   reviewStatusBadgeClass,
 } from "../../utils/reviewStatus";
 import { projectName } from "../../utils/projectName";
-import { formatDateTime } from "../../utils/formatDate";
 import { gitwebFetchErrorLabel } from "../../utils/gitwebFetchError";
 import { InlineCommentComposer } from "./InlineCommentComposer";
 import { FilesTabPanel } from "./FilesTabPanel";
@@ -1247,7 +1247,10 @@ export function ReviewPage() {
               <span className="fw-semibold">
                 {renderUserLabel(thread.messages[0].author)}
               </span>
-              <span>{formatDateTime(thread.createdAt)}</span>
+              <DateTimeText
+                label={t("createdAt")}
+                value={thread.createdAt}
+              />
               <CommentThreadControls
                 thread={thread}
                 targetLabel={commentTargetLabel(thread)}

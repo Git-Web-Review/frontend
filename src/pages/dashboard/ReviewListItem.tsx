@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
+import { DateTimeText } from "../../components/DateTimeText";
 import { GitBranchIcon } from "../../components/GitBranchIcon";
 import { useI18n } from "../../i18n/I18nProvider";
 import type { TranslationKey } from "../../i18n/translations";
-import { formatDateTime, formatDateTimeLong } from "../../utils/formatDate";
 import { projectName } from "../../utils/projectName";
 import { reviewStatusBadgeClass } from "../../utils/reviewStatus";
 import type { ReviewItem } from "../../types/api";
@@ -42,16 +42,12 @@ export function ReviewListItem({
   deleting,
   onDelete,
 }: ReviewListItemProps) {
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const navigate = useNavigate();
 
   const reviewersTooltip = review.reviewers.length
     ? review.reviewers.map(reviewerLabel).join("\n")
     : t("noReviewerOptions");
-  const updatedTooltip = `${t("updatedAt")} — ${formatDateTimeLong(
-    review.updatedAt,
-    language,
-  )}`;
 
   return (
     <div className="list-group-item review-list-item">
@@ -126,10 +122,12 @@ export function ReviewListItem({
           <span className={`badge ${reviewStatusBadgeClass(review.status)}`}>
             {t(`reviewStatus${review.status}` as TranslationKey)}
           </span>
-          <span className="review-row-updated" title={updatedTooltip}>
-            <i className="bi bi-clock-history" aria-hidden="true" />
-            {formatDateTime(review.updatedAt)}
-          </span>
+          <DateTimeText
+            className="review-row-updated"
+            icon="bi-clock-history"
+            label={t("updatedAt")}
+            value={review.updatedAt}
+          />
         </div>
       </button>
       {canDelete ? (

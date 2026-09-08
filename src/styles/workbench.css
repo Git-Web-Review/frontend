@@ -277,6 +277,7 @@ hr {
 
 /* Figures, counts, dates and line numbers get tabular figures; prose does not. */
 .gwr-tabnum,
+.datetime-text,
 .review-status-badge,
 .review-meta-badge,
 .diff-line-number,

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
+import { DateTimeText } from "../../components/DateTimeText";
 import { useI18n } from "../../i18n/I18nProvider";
-import { formatDateTime } from "../../utils/formatDate";
 import type { ReviewUserSummary } from "../../types/api";
 import {
   CommentDoneMeta,
@@ -56,7 +56,10 @@ export function CommentsTabPanel({
           {threads.map((thread) => (
             <div className="time-label" key={thread.commentId}>
               <span className="review-meta-badge">
-                {formatDateTime(thread.createdAt)}
+                <DateTimeText
+                  label={t("createdAt")}
+                  value={thread.createdAt}
+                />
               </span>
               <div
                 className={`card mt-2 review-comment-card${thread.done ? " is-done" : ""}`}

@@ -181,6 +181,11 @@ button {
   text-transform: uppercase;
 }
 
+/* Short date stamp: the full instant, spelled out, lives in its title. */
+.datetime-text {
+  cursor: help;
+}
+
 .review-meta-badge {
   color: var(--bs-body-color);
   background-color: var(--bs-secondary-bg);
@@ -760,7 +765,12 @@ button.diff-line-number-link:hover {
   text-decoration: none;
 }
 
+/* A meta line ("diff --git", "index", "---", "+++") carries no comment gutter
+   and no line number, so its code cell is the row's only child and has to span
+   every column: left in the first one it collapses to the gutter width and
+   clips to about three characters. */
 .diff-meta-line .diff-line-code {
+  grid-column: 1 / -1;
   padding-left: 0.75rem;
 }
 

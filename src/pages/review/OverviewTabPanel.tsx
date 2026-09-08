@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { GitBranchIcon } from "../../components/GitBranchIcon";
 import { ReviewerSearchSelect } from "../../components/ReviewerSearchSelect";
+import { DateTimeText } from "../../components/DateTimeText";
 import { useI18n } from "../../i18n/I18nProvider";
-import { formatDateTime } from "../../utils/formatDate";
 import { gitwebFetchErrorLabel } from "../../utils/gitwebFetchError";
 import { projectName } from "../../utils/projectName";
 import type {
@@ -222,9 +222,11 @@ export function OverviewTabPanel({
                 {t("gitwebFetchedAt")}
               </span>
               <span className="commit-summary-value">
-                {review.gitwebFetchedAt
-                  ? formatDateTime(review.gitwebFetchedAt)
-                  : t("notAvailable")}
+                <DateTimeText
+                  fallback={t("notAvailable")}
+                  label={t("gitwebFetchedAt")}
+                  value={review.gitwebFetchedAt}
+                />
               </span>
             </div>
           </div>
@@ -244,7 +246,9 @@ export function OverviewTabPanel({
               </>
             ) : null}
             <dt className="col-4">{t("updatedAt")}</dt>
-            <dd className="col-8">{formatDateTime(review.updatedAt)}</dd>
+            <dd className="col-8">
+              <DateTimeText label={t("updatedAt")} value={review.updatedAt} />
+            </dd>
           </dl>
         </div>
         <div className="col-lg-5">

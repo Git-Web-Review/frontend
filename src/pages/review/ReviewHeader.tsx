@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
+import { DateTimeText } from "../../components/DateTimeText";
 import { useI18n } from "../../i18n/I18nProvider";
-import { formatDateTime } from "../../utils/formatDate";
 import { reviewStatusBadgeClass } from "../../utils/reviewStatus";
 import type { ReviewCommit, ReviewItem } from "../../types/api";
 import { ReviewerActionSplit } from "./ReviewerActionSplit";
@@ -186,7 +186,11 @@ export function ReviewHeader({
           <div>
             <h3 className="card-title review-header-title">{title}</h3>
             <div className="text-secondary small">
-              {t("openedBy")} {ownerLabel} - {formatDateTime(review.updatedAt)}
+              {t("openedBy")} {ownerLabel} -{" "}
+              <DateTimeText
+                label={t("updatedAt")}
+                value={review.updatedAt}
+              />
             </div>
           </div>
           <div className="d-flex align-items-center gap-2">
