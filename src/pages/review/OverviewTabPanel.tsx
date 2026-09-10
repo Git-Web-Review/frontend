@@ -156,9 +156,9 @@ export function OverviewTabPanel({
                   onChange={(event) => onTitleDraftChange(event.target.value)}
                 />
               ) : (
-                <span className="review-readonly-value text-break">
+                <div className="review-readonly-value text-break">
                   {reviewTitleText}
-                </span>
+                </div>
               )}
             </dd>
             <dt>{t("description")}</dt>
@@ -173,7 +173,7 @@ export function OverviewTabPanel({
                   }
                 />
               ) : (
-                <span className="review-readonly-value">
+                <div className="review-readonly-value">
                   <CollapsibleDescription
                     review={review}
                     collapsedDescription={collapsedDescription}
@@ -182,7 +182,7 @@ export function OverviewTabPanel({
                     onToggle={onToggleDescriptionExpanded}
                     commitLogLinkRules={commitLogLinkRules}
                   />
-                </span>
+                </div>
               )}
             </dd>
           </dl>
