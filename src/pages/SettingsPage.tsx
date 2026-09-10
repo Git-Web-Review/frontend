@@ -242,8 +242,8 @@ export function SettingsPage() {
   );
 
   return (
-    <div className="row justify-content-center">
-      <div className="col-xl-8 col-xxl-7">
+    <div className="row g-4">
+      <div className="col-12">
         <div className="card card-primary card-outline">
           <div className="card-body">
             <div className="profile-avatar-panel">

@@ -613,22 +613,11 @@ table th {
   margin: 0;
 }
 
-/* Layout maxima, per screen. */
-.app-main[data-view="dashboard"] .app-content > .container-fluid,
-.app-main[data-view="dashboard"] .app-content-header > .container-fluid {
-  max-width: 1180px;
-}
-
-.app-main[data-view="review"] .app-content > .container-fluid,
-.app-main[data-view="review"] .app-content-header > .container-fluid,
-.app-main[data-view="admin"] .app-content > .container-fluid,
-.app-main[data-view="admin"] .app-content-header > .container-fluid {
-  max-width: 1280px;
-}
-
-.app-main[data-view="settings"] .app-content > .container-fluid,
-.app-main[data-view="settings"] .app-content-header > .container-fluid {
-  max-width: 780px;
+/* Every screen spans the full width left of the sidebar. */
+.app-main .app-content > .container-fluid,
+.app-main .app-content-header > .container-fluid {
+  width: 100%;
+  max-width: none;
 }
 
 /* ------------------------------------------------- notifications panel */
