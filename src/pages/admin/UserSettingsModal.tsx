@@ -7,6 +7,7 @@ import { useToast } from "../../layout/ToastProvider";
 import type {
   CurrentUser,
   NotificationCategory,
+  NotificationMedium,
   NotificationPreferences,
   UserLocale,
   UserSettings,
@@ -40,7 +41,20 @@ type UserSettingsDraft = {
   mailNotificationsEnabled: boolean;
   ircNotificationsEnabled: boolean;
   ircNickname: string;
+  webhookNotificationsEnabled: boolean;
+  webhookUrl: string;
   notificationPreferences: NotificationPreferences;
+};
+
+// The relay only ever posts over HTTP, so anything else is rejected here
+// rather than by the backend with a generic validation message.
+const isHttpUrl = (value: string) => {
+  try {
+    const { protocol } = new URL(value.trim());
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
 };
 
 const draftFromUser = (user: CurrentUser): UserSettingsDraft => ({
@@ -50,6 +64,9 @@ const draftFromUser = (user: CurrentUser): UserSettingsDraft => ({
   mailNotificationsEnabled: user.settings?.mailNotificationsEnabled ?? false,
   ircNotificationsEnabled: user.settings?.ircNotificationsEnabled ?? false,
   ircNickname: user.settings?.ircNickname ?? "",
+  webhookNotificationsEnabled:
+    user.settings?.webhookNotificationsEnabled ?? false,
+  webhookUrl: user.settings?.webhookUrl ?? "",
   notificationPreferences: user.settings?.notificationPreferences ?? {},
 });
 
@@ -84,13 +101,17 @@ export function UserSettingsModal({
     userSettingsDraft.ircNotificationsEnabled &&
     !userSettingsDraft.ircNickname.trim();
 
+  const draftWebhookUrlInvalid =
+    userSettingsDraft.webhookNotificationsEnabled &&
+    !isHttpUrl(userSettingsDraft.webhookUrl);
+
   const draftCategoryEnabled = (
-    medium: "mail" | "irc",
+    medium: NotificationMedium,
     category: NotificationCategory,
   ) => userSettingsDraft.notificationPreferences[medium]?.[category] ?? true;
 
   const toggleDraftCategory = (
-    medium: "mail" | "irc",
+    medium: NotificationMedium,
     category: NotificationCategory,
   ) =>
     setUserSettingsDraft((draft) => ({
@@ -105,7 +126,7 @@ export function UserSettingsModal({
     }));
 
   const saveUserSettings = async () => {
-    if (!idToken || draftIrcNicknameRequired) {
+    if (!idToken || draftIrcNicknameRequired || draftWebhookUrlInvalid) {
       return;
     }
 
@@ -126,6 +147,9 @@ export function UserSettingsModal({
             ircNotificationsEnabled:
               userSettingsDraft.ircNotificationsEnabled,
             ircNickname: userSettingsDraft.ircNickname.trim() || null,
+            webhookNotificationsEnabled:
+              userSettingsDraft.webhookNotificationsEnabled,
+            webhookUrl: userSettingsDraft.webhookUrl.trim() || null,
             notificationPreferences: userSettingsDraft.notificationPreferences,
           }),
         },
@@ -334,6 +358,87 @@ export function UserSettingsModal({
                   </div>
                 </>
               ) : null}
+              <div className="form-check form-switch mb-2 mt-2">
+                <input
+                  checked={userSettingsDraft.webhookNotificationsEnabled}
+                  className="form-check-input"
+                  id="user-settings-webhook-notifications"
+                  role="switch"
+                  type="checkbox"
+                  onChange={(event) =>
+                    setUserSettingsDraft((draft) => ({
+                      ...draft,
+                      webhookNotificationsEnabled: event.target.checked,
+                    }))
+                  }
+                />
+                <label
+                  className="form-check-label"
+                  htmlFor="user-settings-webhook-notifications"
+                >
+                  {t("webhookNotifications")}
+                </label>
+              </div>
+              {userSettingsDraft.webhookNotificationsEnabled ? (
+                <>
+                  <div className="mb-2">
+                    <label
+                      className="form-label"
+                      htmlFor="user-settings-webhook-url"
+                    >
+                      {t("webhookUrl")}
+                    </label>
+                    <input
+                      className={
+                        draftWebhookUrlInvalid
+                          ? "form-control is-invalid"
+                          : "form-control"
+                      }
+                      id="user-settings-webhook-url"
+                      type="url"
+                      placeholder="https://chat.company.tld/hooks/..."
+                      value={userSettingsDraft.webhookUrl}
+                      onChange={(event) =>
+                        setUserSettingsDraft((draft) => ({
+                          ...draft,
+                          webhookUrl: event.target.value,
+                        }))
+                      }
+                    />
+                    {draftWebhookUrlInvalid ? (
+                      <div className="invalid-feedback">
+                        {t("webhookUrlInvalid")}
+                      </div>
+                    ) : (
+                      <div className="form-text">{t("webhookUrlHelp")}</div>
+                    )}
+                  </div>
+                  <div className="notification-preference-toggles ms-4 mb-0">
+                    {NOTIFICATION_CATEGORIES.map((category) => (
+                      <div
+                        className="form-check form-switch"
+                        key={`user-settings-webhook-${category}`}
+                      >
+                        <input
+                          checked={draftCategoryEnabled("webhook", category)}
+                          className="form-check-input"
+                          id={`user-settings-webhook-${category}`}
+                          type="checkbox"
+                          onChange={() =>
+                            toggleDraftCategory("webhook", category)
+                          }
+                        />
+                        <label
+                          className="form-check-label"
+                          htmlFor={`user-settings-webhook-${category}`}
+                        >
+                          {t(NOTIFICATION_CATEGORY_LABELS[category])}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : null}
             </div>
             <div className="modal-footer">
               <button
@@ -346,7 +451,11 @@ export function UserSettingsModal({
               <button
                 className="btn btn-primary d-inline-flex align-items-center gap-2"
                 type="button"
-                disabled={savingUserSettings || draftIrcNicknameRequired}
+                disabled={
+                  savingUserSettings ||
+                  draftIrcNicknameRequired ||
+                  draftWebhookUrlInvalid
+                }
                 onClick={() => void saveUserSettings()}
               >
                 {savingUserSettings ? (

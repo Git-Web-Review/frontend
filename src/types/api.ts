@@ -49,10 +49,11 @@ export type NotificationMediumPreferences = Partial<
   Record<NotificationCategory, boolean>
 >;
 
-export type NotificationPreferences = {
-  mail?: NotificationMediumPreferences;
-  irc?: NotificationMediumPreferences;
-};
+export type NotificationMedium = "mail" | "irc" | "webhook";
+
+export type NotificationPreferences = Partial<
+  Record<NotificationMedium, NotificationMediumPreferences>
+>;
 
 export type UserSettings = {
   userId: string;
@@ -62,6 +63,8 @@ export type UserSettings = {
   mailNotificationsEnabled: boolean;
   ircNotificationsEnabled: boolean;
   ircNickname: string | null;
+  webhookNotificationsEnabled: boolean;
+  webhookUrl: string | null;
   notificationPreferences: NotificationPreferences | null;
 };
 
@@ -258,6 +261,7 @@ export type ReviewUserSummary = {
   nickname: string | null;
   mailNotificationsEnabled: boolean;
   ircNotificationsEnabled: boolean;
+  webhookNotificationsEnabled: boolean;
   hasProfileImage: boolean;
   profileImageUrl: string | null;
 };

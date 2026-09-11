@@ -61,7 +61,9 @@ export function ReviewerSearchSelect({
     user.nickname || user.hostname || user.email;
 
   const reviewerNeedsManualNotice = (user: ReviewUserSummary) =>
-    !user.mailNotificationsEnabled && !user.ircNotificationsEnabled;
+    !user.mailNotificationsEnabled &&
+    !user.ircNotificationsEnabled &&
+    !user.webhookNotificationsEnabled;
 
   const searchReviewers = async (nextPage: number, append = false) => {
     const search = query.trim();

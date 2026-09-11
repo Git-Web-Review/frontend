@@ -7,6 +7,7 @@ import { useToast } from "../layout/ToastProvider";
 import type {
   CurrentUser,
   NotificationCategory,
+  NotificationMedium,
   NotificationPreferences,
   UserLocale,
   UserProfileImage,
@@ -16,6 +17,17 @@ import { profileInitialsFromEmail } from "../utils/profileInitials";
 const nullableText = (value: string) => {
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
+};
+
+// The relay only ever posts over HTTP, so anything else is rejected here
+// rather than by the backend with a generic validation message.
+const isHttpUrl = (value: string) => {
+  try {
+    const { protocol } = new URL(value.trim());
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
 };
 
 const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
@@ -60,6 +72,11 @@ export function SettingsPage() {
   const [ircNickname, setIrcNickname] = useState(
     currentUser?.settings?.ircNickname ?? "",
   );
+  const [webhookNotificationsEnabled, setWebhookNotificationsEnabled] =
+    useState(currentUser?.settings?.webhookNotificationsEnabled ?? false);
+  const [webhookUrl, setWebhookUrl] = useState(
+    currentUser?.settings?.webhookUrl ?? "",
+  );
   const [notificationPreferences, setNotificationPreferences] =
     useState<NotificationPreferences>(
       currentUser?.settings?.notificationPreferences ?? {},
@@ -78,9 +95,14 @@ export function SettingsPage() {
   const currentIrcNotificationsEnabled =
     currentUser?.settings?.ircNotificationsEnabled ?? false;
   const currentIrcNickname = currentUser?.settings?.ircNickname ?? "";
+  const currentWebhookNotificationsEnabled =
+    currentUser?.settings?.webhookNotificationsEnabled ?? false;
+  const currentWebhookUrl = currentUser?.settings?.webhookUrl ?? "";
   const currentNotificationPreferences =
     currentUser?.settings?.notificationPreferences ?? {};
   const ircNicknameRequired = ircNotificationsEnabled && !ircNickname.trim();
+  const webhookUrlInvalid =
+    webhookNotificationsEnabled && !isHttpUrl(webhookUrl);
   const hasSettingsChanges =
     nickname !== currentNickname ||
     hostname !== currentHostname ||
@@ -88,16 +110,18 @@ export function SettingsPage() {
     mailNotificationsEnabled !== currentMailNotificationsEnabled ||
     ircNotificationsEnabled !== currentIrcNotificationsEnabled ||
     ircNickname !== currentIrcNickname ||
+    webhookNotificationsEnabled !== currentWebhookNotificationsEnabled ||
+    webhookUrl !== currentWebhookUrl ||
     JSON.stringify(notificationPreferences) !==
       JSON.stringify(currentNotificationPreferences);
 
   const categoryEnabled = (
-    medium: "mail" | "irc",
+    medium: NotificationMedium,
     category: NotificationCategory,
   ) => notificationPreferences[medium]?.[category] ?? true;
 
   const toggleCategory = (
-    medium: "mail" | "irc",
+    medium: NotificationMedium,
     category: NotificationCategory,
   ) =>
     setNotificationPreferences((current) => ({
@@ -162,7 +186,12 @@ export function SettingsPage() {
   }, [hasSettingsChanges]);
 
   const save = async () => {
-    if (!idToken || !hasSettingsChanges || ircNicknameRequired) {
+    if (
+      !idToken ||
+      !hasSettingsChanges ||
+      ircNicknameRequired ||
+      webhookUrlInvalid
+    ) {
       return;
     }
 
@@ -179,6 +208,8 @@ export function SettingsPage() {
           mailNotificationsEnabled,
           ircNotificationsEnabled,
           ircNickname: nullableText(ircNickname),
+          webhookNotificationsEnabled,
+          webhookUrl: nullableText(webhookUrl),
           notificationPreferences,
         }),
       });
@@ -219,7 +250,7 @@ export function SettingsPage() {
     }
   };
 
-  const renderNotificationCategoryToggles = (medium: "mail" | "irc") => (
+  const renderNotificationCategoryToggles = (medium: NotificationMedium) => (
     <div className="notification-preference-toggles ms-4 mb-3">
       {NOTIFICATION_CATEGORIES.map((category) => (
         <div className="form-check form-switch" key={`${medium}-${category}`}>
@@ -373,11 +404,68 @@ export function SettingsPage() {
             {ircNotificationsEnabled
               ? renderNotificationCategoryToggles("irc")
               : null}
+            <div className="row g-3 mb-3">
+              <div className="col-md-5">
+                <div
+                  className={`form-check form-switch mb-0${
+                    webhookNotificationsEnabled ? " irc-toggle-align" : ""
+                  }`}
+                >
+                  <input
+                    className="form-check-input"
+                    id="webhook-notifications"
+                    type="checkbox"
+                    checked={webhookNotificationsEnabled}
+                    onChange={(event) =>
+                      setWebhookNotificationsEnabled(event.target.checked)
+                    }
+                  />
+                  <label
+                    className="form-check-label"
+                    htmlFor="webhook-notifications"
+                  >
+                    {t("webhookNotifications")}
+                  </label>
+                </div>
+              </div>
+              {webhookNotificationsEnabled ? (
+                <div className="col-md-7">
+                  <label className="form-label" htmlFor="webhook-url">
+                    {t("webhookUrl")}
+                  </label>
+                  <input
+                    className={
+                      webhookUrlInvalid
+                        ? "form-control is-invalid"
+                        : "form-control"
+                    }
+                    id="webhook-url"
+                    type="url"
+                    placeholder="https://chat.company.tld/hooks/..."
+                    value={webhookUrl}
+                    onChange={(event) => setWebhookUrl(event.target.value)}
+                  />
+                  {webhookUrlInvalid ? (
+                    <div className="invalid-feedback">
+                      {t("webhookUrlInvalid")}
+                    </div>
+                  ) : (
+                    <div className="form-text">{t("webhookUrlHelp")}</div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+            {webhookNotificationsEnabled
+              ? renderNotificationCategoryToggles("webhook")
+              : null}
             {settingsError ? (
               <div className="alert alert-danger mb-0">{settingsError}</div>
             ) : null}
           </div>
-          {hasSettingsChanges && idToken && !ircNicknameRequired ? (
+          {hasSettingsChanges &&
+          idToken &&
+          !ircNicknameRequired &&
+          !webhookUrlInvalid ? (
             <div className="card-footer d-flex align-items-center gap-3">
               <button
                 className="btn btn-success"

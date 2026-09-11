@@ -146,6 +146,7 @@ export function UsersTab({ reloadKey, onEditUser }: UsersTabProps) {
                     <th>{t("role")}</th>
                     <th>{t("mailNotifications")}</th>
                     <th>{t("ircNotifications")}</th>
+                    <th>{t("webhookNotifications")}</th>
                     <th>{t("createdAt")}</th>
                     <th className="text-end">{t("actions")}</th>
                   </tr>
@@ -177,6 +178,15 @@ export function UsersTab({ reloadKey, onEditUser }: UsersTabProps) {
                           className={`badge ${user.settings?.ircNotificationsEnabled ? "text-bg-success" : "text-bg-secondary"}`}
                         >
                           {user.settings?.ircNotificationsEnabled
+                            ? t("yes")
+                            : t("no")}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`badge ${user.settings?.webhookNotificationsEnabled ? "text-bg-success" : "text-bg-secondary"}`}
+                        >
+                          {user.settings?.webhookNotificationsEnabled
                             ? t("yes")
                             : t("no")}
                         </span>
