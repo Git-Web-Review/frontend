@@ -17,9 +17,15 @@ export type ApiErrorCode =
   | "ROLE_FORBIDDEN"
   | "INVALID_CREDENTIALS"
   | "INTERNAL_AUTH_DISABLED"
+  | "SERVICE_ACCOUNT_NOT_FOUND"
+  | "SERVICE_ACCOUNT_DISABLED"
+  | "SERVICE_ACCOUNT_EMAIL_TAKEN"
+  | "SERVICE_ACCOUNT_CLIENT_ID_TAKEN"
   | "USER_NOT_FOUND"
   | "ADMIN_GRANT_NOT_FOUND"
   | "LAST_ADMIN_REMOVAL_FORBIDDEN"
+  | "FIREBASE_USER_DELETION_FORBIDDEN"
+  | "SELF_DELETION_FORBIDDEN"
   | "PROFILE_IMAGE_NOT_FOUND"
   | "INVALID_PROFILE_IMAGE"
   | "UNKNOWN_ERROR"
@@ -87,6 +93,53 @@ export type AdminGrant = {
 export type AdminRemoval = {
   email: string;
   removed: boolean;
+};
+
+export type ServiceAccount = {
+  id: string;
+  clientId: string;
+  name: string;
+  description: string | null;
+  active: boolean;
+  lastUsedAt: string | null;
+  userId: string;
+  email: string;
+  role: UserRole;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** The plaintext secret is only ever returned on creation and rotation. */
+export type ServiceAccountWithSecret = ServiceAccount & {
+  clientSecret: string;
+};
+
+export type ServiceAccountRemoval = {
+  id: string;
+  removed: boolean;
+};
+
+export type UserDeletionPreview = {
+  userId: string;
+  email: string;
+  deletable: boolean;
+  blockedBy: ApiErrorCode | null;
+  isServiceAccount: boolean;
+  ownedReviews: number;
+  commentsOnOwnedReviews: number;
+  foreignMessagesOnOwnedReviews: number;
+  authoredMessages: number;
+  reviewerAssignments: number;
+  commitAcks: number;
+  fileViews: number;
+  notifications: number;
+};
+
+export type UserRemoval = {
+  id: string;
+  email: string;
+  removed: boolean;
+  deletedReviews: number;
 };
 
 export type AdminTextNotificationResponse = {

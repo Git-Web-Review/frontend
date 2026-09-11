@@ -11,6 +11,7 @@ import { GitwebUrlRulesTab } from "./tabs/GitwebUrlRulesTab";
 import { LinkRulesTab } from "./tabs/LinkRulesTab";
 import { NotificationsTab } from "./tabs/NotificationsTab";
 import { ReviewFieldsTab } from "./tabs/ReviewFieldsTab";
+import { ServiceAccountsTab } from "./tabs/ServiceAccountsTab";
 import { UsersTab } from "./tabs/UsersTab";
 import { UserSettingsModal } from "./UserSettingsModal";
 
@@ -22,6 +23,7 @@ const adminTabIds = [
   "linkRules",
   "gitwebUrlRules",
   "reviewFields",
+  "serviceAccounts",
   "crons",
 ] as const;
 
@@ -86,6 +88,11 @@ export function AdminPage() {
       label: t("reviewFields"),
       icon: "bi-input-cursor-text",
     },
+    {
+      id: "serviceAccounts",
+      label: t("serviceAccounts"),
+      icon: "bi-robot",
+    },
     { id: "crons", label: t("cronJobs"), icon: "bi-clock-history" },
   ];
 
@@ -118,6 +125,8 @@ export function AdminPage() {
         return <GitwebUrlRulesTab />;
       case "reviewFields":
         return <ReviewFieldsTab />;
+      case "serviceAccounts":
+        return <ServiceAccountsTab />;
       case "crons":
         return globalSettings ? (
           <CronsTab
