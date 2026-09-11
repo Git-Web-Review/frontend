@@ -75,7 +75,7 @@ export function AdminPage() {
   }, [loadGlobalSettings]);
 
   const adminTabs: { id: AdminTab; label: string; icon: string }[] = [
-    { id: "domains", label: t("allowedDomains"), icon: "bi-shield-check" },
+    { id: "domains", label: t("domain"), icon: "bi-shield-check" },
     { id: "notifications", label: t("sendTextNotification"), icon: "bi-send" },
     { id: "users", label: t("users"), icon: "bi-person-lines-fill" },
     { id: "admins", label: t("admins"), icon: "bi-people" },
@@ -96,6 +96,7 @@ export function AdminPage() {
           <DomainsTab
             key={globalSettings.updatedAt}
             allowedDomains={globalSettings.allowedOAuthDomains}
+            appName={globalSettings.appName}
             loadingSettings={loadingSettings}
             onReload={loadGlobalSettings}
           />

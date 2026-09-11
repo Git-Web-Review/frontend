@@ -94,6 +94,7 @@ export type AdminTextNotificationResponse = {
 export type GlobalSettings = {
   id: string;
   allowedOAuthDomains: string[];
+  appName: string | null;
   notificationPurgeEnabled: boolean;
   notificationPurgeIntervalMinutes: number;
   notificationPurgeAfterDays: number;
@@ -101,6 +102,18 @@ export type GlobalSettings = {
   reviewAutoCloseIntervalMinutes: number;
   createdAt: string;
   updatedAt: string;
+};
+
+export type AppLogo = {
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Branding = {
+  appName: string | null;
+  logo: AppLogo | null;
 };
 
 export type CommitLogLinkRule = {
