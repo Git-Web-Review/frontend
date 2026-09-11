@@ -85,6 +85,7 @@ type DiffFileCardProps = {
   file: DiffFile;
   expanded: boolean;
   onToggleExpanded: () => void;
+  commentCount: number;
   viewed: boolean;
   canMarkViewed: boolean;
   savingViewed: boolean;
@@ -104,6 +105,7 @@ export function DiffFileCard({
   file,
   expanded,
   onToggleExpanded,
+  commentCount,
   viewed,
   canMarkViewed,
   savingViewed,
@@ -153,6 +155,15 @@ export function DiffFileCard({
           <span className="badge text-bg-secondary ms-2">{file.status}</span>
           <span className="badge text-bg-success ms-2">+{file.additions}</span>
           <span className="badge text-bg-danger ms-1">-{file.deletions}</span>
+          {!expanded && commentCount ? (
+            <span
+              className="badge review-meta-badge ms-2"
+              title={t("fileComments")}
+            >
+              <i className="bi bi-chat-left-text me-1" aria-hidden="true" />
+              {commentCount}
+            </span>
+          ) : null}
           {file.oldPath ? (
             <span className="d-block small text-secondary">{file.oldPath}</span>
           ) : null}
@@ -192,7 +203,7 @@ export function DiffFileCard({
         </div>
       </div>
       {fileComposerOpen ? renderComposer() : null}
-      {renderThreads(fileCommentThreads)}
+      {expanded ? renderThreads(fileCommentThreads) : null}
       {expanded ? (
         <div className="diff-viewer">
           {rows.map((row) => {

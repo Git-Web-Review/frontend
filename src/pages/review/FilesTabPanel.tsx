@@ -35,6 +35,7 @@ type FilesTabPanelProps = {
   inlineCommentTarget: CommentTarget | null;
   targetKey: (target: CommentTarget) => string;
   commentThreadsForTarget: (target: CommentTarget) => ReviewCommentThread[];
+  fileCommentCount: (commitHash: string, filePath: string) => number;
   toggleInlineComment: (target: CommentTarget) => void;
   renderInlineCommentComposer: () => ReactNode;
   renderInlineCommentThreads: (threads: ReviewCommentThread[]) => ReactNode;
@@ -76,6 +77,7 @@ export function FilesTabPanel({
   inlineCommentTarget,
   targetKey,
   commentThreadsForTarget,
+  fileCommentCount,
   toggleInlineComment,
   renderInlineCommentComposer,
   renderInlineCommentThreads,
@@ -365,6 +367,7 @@ export function FilesTabPanel({
               [viewKey]: !fileExpanded,
             }))
           }
+          commentCount={fileCommentCount(commit.hash, file.path)}
           viewed={viewed}
           canMarkViewed={review.ownerId === currentUserId || isReviewer}
           savingViewed={savingFileViewKeys.includes(viewKey)}

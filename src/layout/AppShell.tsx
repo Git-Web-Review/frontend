@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { apiRequest, apiRequestBlob } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
+import { useBranding } from "../branding/BrandingProvider";
 import { useI18n } from "../i18n/I18nProvider";
 import {
   realtimeNotificationEvent,
@@ -22,15 +23,19 @@ const websocketUrl = import.meta.env.VITE_WEBSOCKET_URL || "ws://localhost:3001"
 
 export function AppShell({ children }: AppShellProps) {
   const { currentUser, idToken, signOutUser } = useAuth();
+  const { appName, logoSrc } = useBranding();
   const { language, setLanguage, t } = useI18n();
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const notificationsRef = useRef<HTMLLIElement | null>(null);
+  const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [brandProfileImageSrc, setBrandProfileImageSrc] = useState("");
+  const [accountProfileImageSrc, setAccountProfileImageSrc] = useState("");
   const profileInitials = profileInitialsFromEmail(currentUser?.email);
+  const accountLabel = currentUser?.settings?.nickname || currentUser?.email || "";
 
   const activeView = location.pathname.startsWith("/review")
     ? "review"
@@ -57,33 +62,38 @@ export function AppShell({ children }: AppShellProps) {
   }, [idToken]);
 
   useEffect(() => {
-    if (!notificationsOpen) {
+    if (!notificationsOpen && !accountMenuOpen) {
       return;
     }
 
-    const closeNotificationsOnOutsidePointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (
-        target instanceof Node &&
-        notificationsRef.current?.contains(target)
-      ) {
+    const closeMenusOnOutsidePointerDown = (event: PointerEvent) => {
+      const target = event.target instanceof Node ? event.target : null;
+
+      if (!target || !notificationsRef.current?.contains(target)) {
+        setNotificationsOpen(false);
+      }
+
+      if (!target || !accountMenuRef.current?.contains(target)) {
+        setAccountMenuOpen(false);
+      }
+    };
+
+    const closeMenusOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") {
         return;
       }
 
       setNotificationsOpen(false);
+      setAccountMenuOpen(false);
     };
 
-    document.addEventListener(
-      "pointerdown",
-      closeNotificationsOnOutsidePointerDown,
-    );
+    document.addEventListener("pointerdown", closeMenusOnOutsidePointerDown);
+    document.addEventListener("keydown", closeMenusOnEscape);
     return () => {
-      document.removeEventListener(
-        "pointerdown",
-        closeNotificationsOnOutsidePointerDown,
-      );
+      document.removeEventListener("pointerdown", closeMenusOnOutsidePointerDown);
+      document.removeEventListener("keydown", closeMenusOnEscape);
     };
-  }, [notificationsOpen]);
+  }, [accountMenuOpen, notificationsOpen]);
 
   useEffect(() => {
     if (!idToken || !currentUser?.id) {
@@ -151,14 +161,14 @@ export function AppShell({ children }: AppShellProps) {
     let objectUrl = "";
     let cancelled = false;
 
-    const loadBrandProfileImage = async () => {
+    const loadAccountProfileImage = async () => {
       if (!currentUser) {
-        setBrandProfileImageSrc("");
+        setAccountProfileImageSrc("");
         return;
       }
 
       if (!currentUser.profileImage || !idToken) {
-        setBrandProfileImageSrc(currentUser.settings?.profileImageUrl ?? "");
+        setAccountProfileImageSrc(currentUser.settings?.profileImageUrl ?? "");
         return;
       }
 
@@ -171,15 +181,15 @@ export function AppShell({ children }: AppShellProps) {
         }
 
         objectUrl = nextObjectUrl;
-        setBrandProfileImageSrc(objectUrl);
+        setAccountProfileImageSrc(objectUrl);
       } catch {
         if (!cancelled) {
-          setBrandProfileImageSrc(currentUser.settings?.profileImageUrl ?? "");
+          setAccountProfileImageSrc(currentUser.settings?.profileImageUrl ?? "");
         }
       }
     };
 
-    void loadBrandProfileImage();
+    void loadAccountProfileImage();
 
     return () => {
       cancelled = true;
@@ -436,77 +446,103 @@ export function AppShell({ children }: AppShellProps) {
     <div className="app-wrapper">
       <nav className="app-header navbar navbar-expand bg-body">
         <div className="container-fluid">
-          <ul className="navbar-nav">
-            <li className="nav-item d-none d-md-block">
-              <span className="nav-link fw-semibold">
-                {currentUser?.settings?.nickname || currentUser?.email}
-              </span>
-            </li>
-            <li className="nav-item d-none d-lg-block">
-              <span className="nav-link text-secondary">
-                {currentUser?.hostname}
-              </span>
-            </li>
-          </ul>
-          <ul className="navbar-nav ms-auto align-items-center">
-            <li
-              className="nav-item dropdown position-relative"
-              ref={notificationsRef}
-            >
-              <button
-                className="nav-link btn btn-link position-relative px-2"
-                type="button"
-                title={t("notifications")}
-                onClick={() => setNotificationsOpen((open) => !open)}
+          <NavLink className="app-brand" to="/dashboard">
+            {logoSrc ? (
+              <img alt="" className="app-brand-logo" src={logoSrc} />
+            ) : null}
+            <span className="app-brand-name">{appName || t("appName")}</span>
+          </NavLink>
+          <div className="app-header-end">
+            <ul className="navbar-nav align-items-center">
+              <li
+                className="nav-item dropdown position-relative"
+                ref={notificationsRef}
               >
-                <i className="bi bi-bell" aria-hidden="true" />
-                {unreadCount ? (
-                  <span className="navbar-badge badge gwr-tabnum">
-                    {unreadCount}
-                  </span>
-                ) : null}
-              </button>
-              {notificationsOpen ? (
-                <div className="dropdown-menu dropdown-menu-lg dropdown-menu-end show notification-dropdown">
-                  <div className="dropdown-item notification-dropdown-header">
-                    <span className="fw-semibold">{t("notifications")}</span>
-                    <button
-                      className="btn btn-link btn-sm p-0 text-decoration-none notification-mark-all-button"
-                      type="button"
-                      onClick={() => void markAllSeen()}
-                    >
-                      {t("markAllSeen")}
-                    </button>
-                  </div>
-                  <div className="dropdown-divider" />
-                  {notifications.length ? (
-                    notifications.map((notification) => {
-                      const reviewPayload = reviewNotificationPayload(notification);
-                      const entryClassName = notification.seen
-                        ? "dropdown-item notification-entry"
-                        : "dropdown-item notification-entry bg-primary-subtle";
-                      const seenButton = !notification.seen ? (
-                        <button
-                          className="btn btn-light btn-sm notification-seen-button"
-                          type="button"
-                          title={t("markAsSeen")}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void markNotificationSeen(notification.id);
-                          }}
-                        >
-                          <i className="bi bi-check2" aria-hidden="true" />
-                        </button>
-                      ) : null;
+                <button
+                  className="nav-link btn btn-link position-relative px-2"
+                  type="button"
+                  title={
+                    unreadCount
+                      ? `${t("notifications")} (${unreadCount})`
+                      : t("notifications")
+                  }
+                  aria-label={
+                    unreadCount
+                      ? `${t("notifications")} (${unreadCount})`
+                      : t("notifications")
+                  }
+                  onClick={() => setNotificationsOpen((open) => !open)}
+                >
+                  <i className="bi bi-bell" aria-hidden="true" />
+                  {unreadCount ? (
+                    <span className="navbar-badge gwr-tabnum" aria-hidden="true">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  ) : null}
+                </button>
+                {notificationsOpen ? (
+                  <div className="dropdown-menu dropdown-menu-lg dropdown-menu-end show notification-dropdown">
+                    <div className="dropdown-item notification-dropdown-header">
+                      <span className="fw-semibold">{t("notifications")}</span>
+                      <button
+                        className="btn btn-link btn-sm p-0 text-decoration-none notification-mark-all-button"
+                        type="button"
+                        onClick={() => void markAllSeen()}
+                      >
+                        {t("markAllSeen")}
+                      </button>
+                    </div>
+                    <div className="dropdown-divider" />
+                    {notifications.length ? (
+                      notifications.map((notification) => {
+                        const reviewPayload = reviewNotificationPayload(notification);
+                        const entryClassName = notification.seen
+                          ? "dropdown-item notification-entry"
+                          : "dropdown-item notification-entry bg-primary-subtle";
+                        const seenButton = !notification.seen ? (
+                          <button
+                            className="btn btn-light btn-sm notification-seen-button"
+                            type="button"
+                            title={t("markAsSeen")}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void markNotificationSeen(notification.id);
+                            }}
+                          >
+                            <i className="bi bi-check2" aria-hidden="true" />
+                          </button>
+                        ) : null;
 
-                      if (reviewPayload) {
+                        if (reviewPayload) {
+                          return (
+                            <div className={entryClassName} key={notification.id}>
+                              {seenButton}
+                              <button
+                                className="notification-entry-link text-start"
+                                type="button"
+                                onClick={() => void openNotification(notification)}
+                              >
+                                {renderNotificationContent(notification)}
+                                <div className="text-secondary small">
+                                  <i className="bi bi-clock me-1" aria-hidden="true" />
+                                  {formatDateTime(notification.createdAt)}
+                                </div>
+                              </button>
+                            </div>
+                          );
+                        }
+
                         return (
                           <div className={entryClassName} key={notification.id}>
                             {seenButton}
                             <button
                               className="notification-entry-link text-start"
                               type="button"
-                              onClick={() => void openNotification(notification)}
+                              onClick={() => {
+                                if (!notification.seen) {
+                                  void markNotificationSeen(notification.id);
+                                }
+                              }}
                             >
                               {renderNotificationContent(notification)}
                               <div className="text-secondary small">
@@ -516,149 +552,102 @@ export function AppShell({ children }: AppShellProps) {
                             </button>
                           </div>
                         );
-                      }
-
-                      return (
-                        <div className={entryClassName} key={notification.id}>
-                          {seenButton}
-                          <button
-                            className="notification-entry-link text-start"
-                            type="button"
-                            onClick={() => {
-                              if (!notification.seen) {
-                                void markNotificationSeen(notification.id);
-                              }
-                            }}
-                          >
-                            {renderNotificationContent(notification)}
-                            <div className="text-secondary small">
-                              <i className="bi bi-clock me-1" aria-hidden="true" />
-                              {formatDateTime(notification.createdAt)}
-                            </div>
-                          </button>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="dropdown-item text-center text-secondary py-4">
-                      {t("noNotifications")}
-                    </div>
-                  )}
-                </div>
-              ) : null}
-            </li>
-            <li className="nav-item">
+                      })
+                    ) : (
+                      <div className="dropdown-item text-center text-secondary py-4">
+                        {t("noNotifications")}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </li>
+            </ul>
+            <div className="account-menu" ref={accountMenuRef}>
               <button
-                className="nav-link btn btn-link px-2"
+                className="account-menu-toggle"
                 type="button"
-                title={theme === "dark" ? t("light") : t("dark")}
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                aria-expanded={accountMenuOpen}
+                aria-haspopup="true"
+                title={accountLabel}
+                onClick={() => {
+                  setNotificationsOpen(false);
+                  setAccountMenuOpen((open) => !open);
+                }}
               >
+                <span className="account-avatar">
+                  {accountProfileImageSrc ? (
+                    <img alt="" src={accountProfileImageSrc} />
+                  ) : (
+                    profileInitials
+                  )}
+                </span>
                 <i
-                  className={theme === "dark" ? "bi bi-sun" : "bi bi-moon"}
+                  className="bi bi-chevron-down account-menu-caret"
                   aria-hidden="true"
                 />
               </button>
-            </li>
-            <li className="nav-item">
-              <button
-                className="nav-link btn btn-link px-2"
-                type="button"
-                title="Language"
-                onClick={() => setLanguage(language === "fr" ? "en" : "fr")}
-              >
-                <i className="bi bi-translate" aria-hidden="true" />
-              </button>
-            </li>
-            <li className="nav-item">
-              <button
-                className="nav-link btn btn-link px-2"
-                type="button"
-                title={t("logout")}
-                onClick={() => void signOutUser()}
-              >
-                <i className="bi bi-box-arrow-right" aria-hidden="true" />
-              </button>
-            </li>
-          </ul>
-        </div>
-      </nav>
-      <aside
-        className="app-sidebar"
-        data-bs-theme={theme}
-      >
-        <div className="sidebar-brand">
-          <NavLink className="brand-link text-decoration-none" to="/dashboard">
-            <span
-              className={
-                brandProfileImageSrc
-                  ? "brand-image overflow-hidden d-inline-grid place-items-center"
-                  : "brand-image bg-primary text-white fw-bold d-inline-grid place-items-center"
-              }
-            >
-              {brandProfileImageSrc ? (
-                <img alt="" src={brandProfileImageSrc} />
-              ) : (
-                profileInitials
-              )}
-            </span>
-            <span className="brand-text">{t("appName")}</span>
-          </NavLink>
-        </div>
-        <div className="sidebar-wrapper app-sidebar-wrapper">
-          <nav className="mt-2" aria-label="Main navigation">
-            <ul className="nav sidebar-menu flex-column" role="menu">
-              <li className="nav-item">
-                <NavLink
-                  className={({ isActive }) =>
-                    isActive || activeView === "dashboard"
-                      ? "nav-link active"
-                      : "nav-link"
-                  }
-                  to="/dashboard"
-                >
-                  <i
-                    className="nav-icon bi bi-speedometer2"
-                    aria-hidden="true"
-                  />
-                  <p>{t("dashboard")}</p>
-                </NavLink>
-              </li>
-              {currentUser?.role === "ADMIN" ? (
-                <li className="nav-item">
-                  <NavLink
-                    className={({ isActive }) =>
-                      isActive ? "nav-link active" : "nav-link"
-                    }
-                    to="/admin"
+              {accountMenuOpen ? (
+                <div className="dropdown-menu show account-dropdown">
+                  <div className="account-dropdown-header">
+                    <span className="account-dropdown-name">{accountLabel}</span>
+                    {currentUser?.hostname ? (
+                      <span className="account-dropdown-host">
+                        {currentUser.hostname}
+                      </span>
+                    ) : null}
+                  </div>
+                  <button
+                    className="dropdown-item account-dropdown-item"
+                    type="button"
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                   >
                     <i
-                      className="nav-icon bi bi-shield-lock"
+                      className={theme === "dark" ? "bi bi-sun" : "bi bi-moon"}
                       aria-hidden="true"
                     />
-                    <p>{t("admin")}</p>
+                    <span>{theme === "dark" ? t("light") : t("dark")}</span>
+                  </button>
+                  <button
+                    className="dropdown-item account-dropdown-item"
+                    type="button"
+                    onClick={() => setLanguage(language === "fr" ? "en" : "fr")}
+                  >
+                    <i className="bi bi-translate" aria-hidden="true" />
+                    <span>{language === "fr" ? "English" : "Français"}</span>
+                  </button>
+                  <NavLink
+                    className="dropdown-item account-dropdown-item"
+                    to="/settings"
+                    onClick={() => setAccountMenuOpen(false)}
+                  >
+                    <i className="bi bi-gear" aria-hidden="true" />
+                    <span>{t("settings")}</span>
                   </NavLink>
-                </li>
+                  {currentUser?.role === "ADMIN" ? (
+                    <NavLink
+                      className="dropdown-item account-dropdown-item"
+                      to="/admin"
+                      onClick={() => setAccountMenuOpen(false)}
+                    >
+                      <i className="bi bi-shield-lock" aria-hidden="true" />
+                      <span>{t("admin")}</span>
+                    </NavLink>
+                  ) : null}
+                  <div className="dropdown-divider" />
+                  <button
+                    className="dropdown-item account-dropdown-item"
+                    type="button"
+                    onClick={() => void signOutUser()}
+                  >
+                    <i className="bi bi-box-arrow-right" aria-hidden="true" />
+                    <span>{t("logout")}</span>
+                  </button>
+                </div>
               ) : null}
-            </ul>
-          </nav>
-          <nav className="mt-auto mb-2" aria-label="Settings navigation">
-            <ul className="nav sidebar-menu flex-column" role="menu">
-              <li className="nav-item">
-                <NavLink
-                  className={({ isActive }) =>
-                    isActive ? "nav-link active" : "nav-link"
-                  }
-                  to="/settings"
-                >
-                  <i className="nav-icon bi bi-gear" aria-hidden="true" />
-                  <p>{t("settings")}</p>
-                </NavLink>
-              </li>
-            </ul>
-          </nav>
+            </div>
+          </div>
         </div>
-      </aside>
+      </nav>
       <main className="app-main" data-view={activeView}>
         <div className="app-content-header">
           <div className="container-fluid">

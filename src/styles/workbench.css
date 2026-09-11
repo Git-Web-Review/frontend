@@ -97,8 +97,6 @@
   --rgb-del: 201, 48, 44;
   --rgb-warn: 154, 103, 0;
 
-  /* Sidebar width, shared by the shell grid and the collapsed rail. */
-  --shell-sidebar: 236px;
   --primary-btn-ink: #ffffff;
 }
 
@@ -156,10 +154,9 @@
 
 /* --------------------------------------------------- bootstrap var bridge
 
-   `[data-bs-theme]` is matched as well as `:root` because the sidebar carries
-   its own `data-bs-theme`, which re-opens Bootstrap's theme scope for its
-   subtree. Same specificity as Bootstrap's own block, and this sheet loads
-   later, so these win.                                                    */
+   `[data-bs-theme]` is matched as well as `:root` so that any subtree which
+   re-opens Bootstrap's theme scope gets these too. Same specificity as
+   Bootstrap's own block, and this sheet loads later, so these win.        */
 
 :root,
 [data-bs-theme] {
@@ -372,134 +369,13 @@ table th {
 
 .app-wrapper {
   display: grid;
-  grid-template-areas:
-    "sidebar header"
-    "sidebar main";
-  grid-template-columns: var(--shell-sidebar) minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 100vh;
-}
-
-/* -- sidebar -- */
-
-.app-sidebar {
-  display: flex;
-  flex-direction: column;
-  grid-area: sidebar;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  padding: var(--space-4) 0;
-  overflow: hidden;
-  border-right: 1px solid var(--color-divider);
-  background: var(--color-bg);
-  box-shadow: none;
-}
-
-.sidebar-brand {
-  margin: 0 var(--space-3);
-  padding: 0 0 var(--space-4);
-  border-bottom: 1px solid var(--color-divider);
-}
-
-.brand-link {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-  color: var(--color-text);
-  text-decoration: none;
-}
-
-.brand-link:hover {
-  color: var(--color-text);
-  text-decoration: none;
-}
-
-.brand-image {
-  display: grid;
-  inline-size: 34px;
-  block-size: 34px;
-  min-inline-size: 34px;
-  min-block-size: 34px;
-  max-inline-size: 34px;
-  max-block-size: 34px;
-  place-items: center;
-  border: 1px solid var(--color-accent);
-  border-radius: 999px;
-  background: var(--color-bg);
-  color: var(--color-accent);
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: none;
-}
-
-.brand-text {
-  overflow: hidden;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.app-sidebar-wrapper {
-  flex: 1;
-  min-height: 0;
-  padding: var(--space-3) var(--space-2);
-  overflow-y: auto;
-}
-
-.app-sidebar-wrapper > nav:last-child {
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-divider);
-}
-
-.sidebar-menu {
-  gap: 2px;
-}
-
-.sidebar-menu .nav-link {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  color: var(--color-text);
-  font-size: 14px;
-  font-weight: 600;
-  opacity: 0.78;
-}
-
-.sidebar-menu .nav-link:hover {
-  background: color-mix(in srgb, var(--color-text) 6%, transparent);
-  opacity: 1;
-}
-
-/* A left rail mark, not a filled pill. */
-.sidebar-menu .nav-link.active {
-  background: transparent;
-  box-shadow: inset 2px 0 0 var(--color-accent);
-  color: var(--color-text);
-  opacity: 1;
-}
-
-.sidebar-menu .nav-link p {
-  margin: 0;
-}
-
-.sidebar-menu .nav-icon {
-  flex: none;
-  width: auto;
-  margin: 0;
-  font-size: 16px;
-  line-height: 1;
 }
 
 /* -- top bar -- */
 
 .app-header {
-  grid-area: header;
   position: sticky;
   top: 0;
   z-index: 30;
@@ -510,9 +386,205 @@ table th {
 }
 
 .app-header > .container-fluid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-6);
+}
+
+.app-header-end {
+  display: flex;
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+/* -- brand, flush with the page title below -- */
+
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: var(--space-2);
+  margin-left: calc(var(--space-2) * -1);
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/*
+ * Customer logo: never taller than the top bar and never wider than half the
+ * viewport, whatever the uploaded file measures.
+ */
+.app-brand-logo {
+  flex: 0 0 auto;
+  max-width: 50vw;
+  height: auto;
+  max-height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
+.app-brand-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-brand:hover,
+.app-brand:focus-visible {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* -- account menu -- */
+
+.account-menu {
+  position: relative;
+}
+
+.account-menu-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px 3px 3px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.account-menu-toggle:hover,
+.account-menu-toggle[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.account-avatar {
+  display: grid;
+  inline-size: 30px;
+  block-size: 30px;
+  min-inline-size: 30px;
+  min-block-size: 30px;
+  max-inline-size: 30px;
+  max-block-size: 30px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  background: var(--color-bg);
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.account-avatar img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+  object-position: center;
+}
+
+.account-menu-caret {
+  color: var(--ink-2);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.account-menu-toggle[aria-expanded="true"] .account-menu-caret {
+  transform: rotate(180deg);
+}
+
+.account-dropdown {
+  display: flex;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: auto;
+  z-index: 50;
+  min-width: 232px;
+  max-width: calc(100vw - 32px);
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+}
+
+.account-dropdown-header {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--space-3);
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-surface);
+}
+
+.account-dropdown-name {
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-dropdown-host {
+  overflow: hidden;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-dropdown-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: start;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.account-dropdown-item:hover,
+.account-dropdown-item:focus-visible {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.account-dropdown-item i {
+  flex: none;
+  width: 16px;
+  font-size: 15px;
+  line-height: 1;
+  text-align: center;
+}
+
+.account-dropdown > .dropdown-divider {
+  margin: 0;
 }
 
 .app-header .navbar-nav {
@@ -554,27 +626,35 @@ table th {
   color: var(--color-text);
 }
 
+/* Unread notification count: a filled pill pinned to the bell's top-right
+   corner. The ring is painted in the header ground so the badge stays legible
+   where it overlaps the glyph. */
 .navbar-badge {
   position: absolute;
-  top: 2px;
+  top: 1px;
   right: 1px;
-  min-width: 15px;
-  height: 15px;
-  padding: 0 3px;
-  border: 1px solid var(--color-accent);
+  display: inline-flex;
+  min-width: 17px;
+  height: 17px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 0;
   border-radius: 999px;
-  background: var(--color-bg);
-  color: var(--color-accent-700);
-  font-size: 9px;
-  font-weight: 600;
-  line-height: 13px;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-bg);
+  color: var(--primary-btn-ink);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
   font-feature-settings: "tnum";
+  pointer-events: none;
 }
 
 /* -- main -- */
 
 .app-main {
-  grid-area: main;
   min-width: 0;
   background: var(--color-bg);
 }
@@ -613,7 +693,7 @@ table th {
   margin: 0;
 }
 
-/* Every screen spans the full width left of the sidebar. */
+/* Every screen spans the full width of the shell. */
 .app-main .app-content > .container-fluid,
 .app-main .app-content-header > .container-fluid {
   width: 100%;
@@ -2252,6 +2332,34 @@ textarea.form-control {
 
 /* ----------------------------------------------------------------- admin */
 
+.app-logo-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Same height cap as the top bar, so the preview shows the rendered size. */
+.app-logo-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  min-height: 48px;
+  padding: var(--space-2);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.app-logo-preview img {
+  max-width: 220px;
+  height: auto;
+  max-height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
 .admin-add-input {
   width: min(34rem, 100%);
 }
@@ -2270,25 +2378,6 @@ textarea.form-control {
    The only breakpoint is 900px.                                          */
 
 @media (max-width: 900px) {
-  .app-wrapper {
-    --shell-sidebar: 60px;
-  }
-
-  .brand-text,
-  .sidebar-menu .nav-link p,
-  .app-header .navbar-nav .nav-link.text-secondary {
-    display: none;
-  }
-
-  .sidebar-brand {
-    margin-inline: var(--space-2);
-  }
-
-  .brand-link,
-  .sidebar-menu .nav-link {
-    justify-content: center;
-  }
-
   .app-content,
   .app-content-header {
     padding: var(--space-4);

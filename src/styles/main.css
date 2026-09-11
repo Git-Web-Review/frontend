@@ -30,43 +30,6 @@ button {
   cursor: pointer;
 }
 
-.brand-image {
-  inline-size: 2.65rem;
-  block-size: 2.65rem;
-  min-inline-size: 2.65rem;
-  min-block-size: 2.65rem;
-  max-inline-size: 2.65rem;
-  max-block-size: 2.65rem;
-  aspect-ratio: 1 / 1;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 2px solid rgba(255, 255, 255, 0.82);
-  border-radius: 9999px;
-  background: var(--bs-body-bg);
-  box-shadow: 0 0.25rem 0.85rem rgba(0, 0, 0, 0.22);
-  box-sizing: border-box;
-  font-size: 0.85rem;
-  line-height: 1;
-  overflow: hidden;
-}
-
-.brand-image img {
-  display: block;
-  inline-size: 100%;
-  block-size: 100%;
-  min-inline-size: 100%;
-  min-block-size: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: inherit;
-  object-fit: cover;
-  object-position: center;
-}
-
-.app-sidebar-wrapper {
-  display: flex;
-  flex-direction: column;
-}
-
 .notification-dropdown {
   display: block;
   top: 100%;

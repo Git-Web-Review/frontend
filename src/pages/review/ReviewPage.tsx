@@ -949,6 +949,18 @@ export function ReviewPage() {
       reviewComments.filter((comment) => targetKey(comment) === targetKey(target)),
     );
 
+  // Comment threads hidden while a file card is collapsed, file-level and
+  // line-level alike, so the header badge keeps them visible.
+  const fileCommentCount = (commitHash: string, filePath: string) =>
+    new Set(
+      reviewComments
+        .filter(
+          (comment) =>
+            comment.commitHash === commitHash && comment.filePath === filePath,
+        )
+        .map((comment) => comment.commentId),
+    ).size;
+
   const canDeleteComment = (comment: ReviewComment) =>
     comment.author.id === currentUser?.id;
 
@@ -1475,6 +1487,7 @@ export function ReviewPage() {
             inlineCommentTarget={inlineCommentTarget}
             targetKey={targetKey}
             commentThreadsForTarget={commentThreadsForTarget}
+            fileCommentCount={fileCommentCount}
             toggleInlineComment={toggleInlineComment}
             renderInlineCommentComposer={renderInlineCommentComposer}
             renderInlineCommentThreads={renderInlineCommentThreads}

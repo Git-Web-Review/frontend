@@ -42,26 +42,28 @@ export function CommentMessages({
         const savingEdit = actions.savingEditCommentIds.includes(comment.id);
         const canEdit = actions.canEditComment(comment) && !editing;
         const canDelete = actions.canDeleteComment(comment);
-        const showMeta = !repeatedAuthor || canEdit || canDelete;
+        const showAuthor = index > 0 && !repeatedAuthor;
+        const showCreatedAt = !repeatedAuthor;
+        const showMeta = showCreatedAt || canEdit || canDelete;
 
         return (
           <div className="review-comment-message" key={comment.id}>
             {showMeta ? (
               <div
                 className={`review-comment-message-meta${
-                  repeatedAuthor ? " is-compact" : ""
+                  showCreatedAt ? "" : " is-compact"
                 }`}
               >
-                {!repeatedAuthor ? (
-                  <>
-                    <span className="fw-semibold">
-                      {actions.renderUserLabel(comment.author)}
-                    </span>
-                    <DateTimeText
-                      label={t("createdAt")}
-                      value={comment.createdAt}
-                    />
-                  </>
+                {showAuthor ? (
+                  <span className="fw-semibold">
+                    {actions.renderUserLabel(comment.author)}
+                  </span>
+                ) : null}
+                {showCreatedAt ? (
+                  <DateTimeText
+                    label={t("createdAt")}
+                    value={comment.createdAt}
+                  />
                 ) : null}
                 {canEdit ? (
                   <button
