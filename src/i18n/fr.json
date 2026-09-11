@@ -280,5 +280,7 @@
     "UNKNOWN_ERROR": "Une erreur inconnue est survenue.",
     "INVALID_GITWEB_URL": "Cette URL n'est reconnue par aucune règle de parsing git-web.",
     "INTERNAL_ERROR": "Erreur interne du backend.",
-    "PAYLOAD_TOO_LARGE": "L'image est trop lourde."
+    "PAYLOAD_TOO_LARGE": "L'image est trop lourde.",
+    "INVALID_CREDENTIALS": "Identifiants client invalides.",
+    "INTERNAL_AUTH_DISABLED": "L'authentification par token interne n'est pas configurée sur le backend."
 }

@@ -15,6 +15,8 @@ export type ApiErrorCode =
   | "EMAIL_DOMAIN_NOT_ALLOWED"
   | "ADMIN_REQUIRED"
   | "ROLE_FORBIDDEN"
+  | "INVALID_CREDENTIALS"
+  | "INTERNAL_AUTH_DISABLED"
   | "USER_NOT_FOUND"
   | "ADMIN_GRANT_NOT_FOUND"
   | "LAST_ADMIN_REMOVAL_FORBIDDEN"
@@ -67,7 +69,7 @@ export type UserProfileImage = {
 
 export type CurrentUser = {
   id: string;
-  firebaseUid: string;
+  firebaseUid: string | null;
   email: string;
   hostname: string;
   role: UserRole;
