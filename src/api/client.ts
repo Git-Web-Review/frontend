@@ -5,8 +5,7 @@ import axios, {
 } from "axios";
 import type { ApiError } from "../types/api";
 import { firebaseAuth } from "../auth/firebase";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3005";
+import { backendUrl } from "../config";
 
 export class ApiClientError extends Error {
   constructor(

@@ -4,6 +4,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { apiRequest, apiRequestBlob } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
 import { useBranding } from "../branding/BrandingProvider";
+import { websocketUrl } from "../config";
 import { useI18n } from "../i18n/I18nProvider";
 import {
   realtimeNotificationEvent,
@@ -19,7 +20,6 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-const websocketUrl = import.meta.env.VITE_WEBSOCKET_URL || "ws://localhost:3001";
 
 export function AppShell({ children }: AppShellProps) {
   const { currentUser, idToken, signOutUser } = useAuth();
@@ -106,10 +106,12 @@ export function AppShell({ children }: AppShellProps) {
     let reconnectAttempt = 0;
     let closedByEffect = false;
 
-    const websocketEndpoint = `${websocketUrl.replace(/\/$/, "")}/ws?token=${encodeURIComponent(idToken)}`;
+    const websocketEndpoint = `${websocketUrl.replace(/\/$/, "")}/ws`;
 
     const connect = () => {
-      websocket = new WebSocket(websocketEndpoint);
+      // The token travels as a subprotocol rather than in the query string: a
+      // URL ends up in proxy logs and browser history, a header does not.
+      websocket = new WebSocket(websocketEndpoint, ["bearer", idToken]);
 
       websocket.addEventListener("open", () => {
         reconnectAttempt = 0;
