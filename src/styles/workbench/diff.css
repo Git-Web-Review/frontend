@@ -1,0 +1,133 @@
+/* ------------------------------------------------------------------ diff */
+
+/* Nothing above a diff card may scroll or clip, or its sticky header stops
+   sticking. Only the diff bodies and the tables scroll sideways. */
+.review-files-pane {
+  overflow: visible;
+}
+
+.review-files-pane .card,
+.card:has(> .diff-file-header) {
+  overflow: visible;
+}
+
+.diff-file-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: var(--space-2) var(--space-3) !important;
+  border-bottom: 1px solid var(--color-divider);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--color-surface);
+}
+
+.diff-file-header .fw-semibold {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.diff-file-header .badge.text-bg-success,
+.diff-file-header .badge.text-bg-danger {
+  padding: 0 4px;
+  background: transparent !important;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.diff-file-header .badge.text-bg-success {
+  color: var(--color-add) !important;
+}
+
+.diff-file-header .badge.text-bg-danger {
+  color: var(--color-del) !important;
+}
+
+.diff-file-header .form-check-label {
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.diff-viewer {
+  border-top: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.diff-line {
+  grid-template-columns: 26px 56px minmax(0, 1fr);
+  min-height: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.diff-line-block {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.diff-line-context {
+  background: transparent;
+}
+
+.diff-line-added {
+  background: color-mix(in srgb, var(--color-add) 12%, transparent);
+}
+
+.diff-line-removed {
+  background: color-mix(in srgb, var(--color-del) 12%, transparent);
+}
+
+.diff-hunk-header {
+  padding: 1px 10px;
+  border: 0;
+  background: color-mix(in srgb, var(--color-accent) 9%, transparent);
+  color: var(--color-accent-700);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+:root[data-theme="dark"] .diff-hunk-header {
+  border: 0;
+  background: color-mix(in srgb, var(--color-accent) 9%, transparent);
+  color: var(--color-accent-700);
+}
+
+/* The `+` stays hidden until the row is hovered — but reachable by keyboard. */
+.diff-comment-button {
+  padding: 0;
+  color: var(--color-accent);
+  font-size: 12px;
+  opacity: 0;
+}
+
+.diff-line:hover .diff-comment-button,
+.diff-comment-button:focus-visible {
+  opacity: 1;
+}
+
+.diff-comment-button:hover {
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-accent);
+}
+
+.diff-line-number {
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+  color: var(--ink-2);
+  font-feature-settings: "tnum";
+}
+
+.diff-line-code {
+  padding: 1px 10px;
+  overflow-x: auto;
+}
+
+.diff-anchor-highlight {
+  outline: 2px solid var(--color-accent);
+}
+
+.diff-trailing-whitespace {
+  background: color-mix(in srgb, var(--color-del) 45%, transparent);
+}

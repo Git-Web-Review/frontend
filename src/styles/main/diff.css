@@ -1,0 +1,178 @@
+.review-files-pane {
+  overflow-x: auto;
+}
+
+.diff-viewer {
+  overflow: auto;
+  border-top: 1px solid var(--bs-border-color);
+  font-size: 0.8125rem;
+  line-height: 1.2;
+}
+
+.diff-line {
+  display: grid;
+  grid-template-columns: 1.75rem 4.5rem minmax(24rem, 1fr);
+  min-height: 1.25rem;
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+
+.diff-line-block {
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+
+.diff-line-block .diff-line {
+  border-bottom: 0;
+}
+
+.diff-anchor-highlight {
+  outline: 2px solid rgba(var(--bs-primary-rgb), 0.8);
+  outline-offset: -1px;
+  transition: outline-color 0.3s ease;
+}
+
+.card-header.d-flex::after {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .irc-toggle-align {
+    display: flex;
+    align-items: center;
+    column-gap: 0.5rem;
+    padding-left: 0;
+    margin-top: 2rem;
+    min-height: calc(1.5em + 0.75rem + 2px);
+  }
+
+  .irc-toggle-align .form-check-input {
+    float: none;
+    margin-left: 0;
+    margin-top: 0;
+  }
+}
+
+.diff-line-context {
+  background: var(--bs-body-bg);
+}
+
+.diff-line-added {
+  background: rgba(var(--bs-success-rgb), 0.12);
+}
+
+.diff-line-removed {
+  background: rgba(var(--bs-danger-rgb), 0.12);
+}
+
+.diff-hunk-header {
+  padding: 0.45rem 0.75rem;
+  border-top: 1px solid rgba(var(--bs-primary-rgb), 0.28);
+  border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.28);
+  color: var(--bs-primary);
+  background: rgba(var(--bs-primary-rgb), 0.1);
+  font-family: var(--bs-font-monospace);
+  font-weight: 700;
+}
+
+[data-bs-theme="dark"] .diff-hunk-header {
+  color: #f778ba;
+  border-top-color: rgba(247, 120, 186, 0.35);
+  border-bottom-color: rgba(247, 120, 186, 0.35);
+  background: rgba(247, 120, 186, 0.1);
+}
+
+.diff-comment-button {
+  width: 100%;
+  border: 0;
+  color: var(--bs-secondary-color);
+  background: transparent;
+  line-height: 1;
+}
+
+.diff-comment-button:hover {
+  color: var(--bs-primary);
+  background: rgba(var(--bs-primary-rgb), 0.12);
+}
+
+.diff-line-number {
+  padding: 0.125rem 0.5rem;
+  color: var(--bs-secondary-color);
+  text-align: right;
+  user-select: none;
+  background: rgba(var(--bs-secondary-rgb), 0.08);
+}
+
+button.diff-line-number-link {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.diff-line-number-link:hover {
+  color: var(--bs-primary);
+  text-decoration: underline;
+}
+
+.diff-line-code {
+  padding: 0.125rem 0.5rem;
+  color: var(--bs-body-color);
+  white-space: pre;
+  background: transparent;
+}
+
+.diff-trailing-whitespace {
+  background: rgba(var(--bs-danger-rgb), 0.55);
+  border-radius: 2px;
+}
+
+.review-field-image {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 0.375rem;
+  border: 1px solid var(--bs-border-color);
+}
+
+.next-comment-button {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 1030;
+  border-radius: 50rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.25);
+}
+
+.diff-file-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.diff-file-header .form-check-label {
+  cursor: pointer;
+}
+
+.diff-meta-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* A meta line ("diff --git", "index", "---", "+++") carries no comment gutter
+   and no line number, so its code cell is the row's only child and has to span
+   every column: left in the first one it collapses to the gutter width and
+   clips to about three characters. */
+.diff-meta-line .diff-line-code {
+  grid-column: 1 / -1;
+  padding-left: 0.75rem;
+}
+
+.diff-meta-link:hover {
+  text-decoration: underline;
+}
+
+.diff-meta-old,
+.diff-meta-old:hover {
+  color: var(--bs-danger);
+}
+
+.diff-meta-new,
+.diff-meta-new:hover {
+  color: var(--bs-success);
+}

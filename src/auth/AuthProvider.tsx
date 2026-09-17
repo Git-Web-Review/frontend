@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadCurrentUser = async (user: FirebaseUser) => {
     const token = await user.getIdToken();
     setIdToken(token);
-    const me = await apiRequest<CurrentUser>("/v1/me", token);
+    const me = await apiRequest<CurrentUser>("/me", token);
     setCurrentUser(me);
     loadedUidRef.current = user.uid;
   };

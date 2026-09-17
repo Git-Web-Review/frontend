@@ -96,7 +96,7 @@ export function MentionTextarea({
         limit: suggestionLimit.toString(),
       });
       apiRequest<ReviewerCandidatePage>(
-        `/v1/me/reviewer-candidates?${params.toString()}`,
+        `/me/reviewer-candidates?${params.toString()}`,
         idToken,
       )
         .then((page) => {

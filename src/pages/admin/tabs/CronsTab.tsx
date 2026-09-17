@@ -77,7 +77,7 @@ export function CronsTab({ settings, loadingSettings, onReload }: CronsTabProps)
     setErrorMessage("");
     try {
       const nextSettings = await apiRequest<GlobalSettings>(
-        "/v1/admin/settings",
+        "/admin/settings",
         idToken,
         {
           method: "PATCH",

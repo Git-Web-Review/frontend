@@ -19,7 +19,7 @@ export function loadUserAvatar(
   }
 
   const pending = apiRequestBlob(
-    `/v1/users/${userId}/profile-image`,
+    `/users/${userId}/profile-image`,
     token,
   ).then((blob) => URL.createObjectURL(blob));
 

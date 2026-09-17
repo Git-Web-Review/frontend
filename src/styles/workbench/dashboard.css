@@ -1,0 +1,286 @@
+/* ------------------------------------------------------------- dashboard */
+
+/* The dashboard is the one screen made of separate boxes, so it gets a
+   recessed backdrop: the create panel and the review list sit on
+   `--color-bg` and lift off it, instead of floating on the same flat page. */
+.app-main[data-view="dashboard"] {
+  background: var(--color-surface);
+}
+
+/* The create panel is the one boxed thing above the lists — a hairline box
+   with a filled header, lifted just enough to separate it from the tabs. */
+.dashboard-create-card {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-create-card > .card-header {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+}
+
+.dashboard-create-card > .card-header .card-title {
+  font-size: 15px;
+}
+
+/* --- tabs over the three review lists --- */
+
+/* Folder tabs: the active one merges into the panel below it, so the three
+   lists read as three separate places rather than one long scroll. */
+.nav-tabs.dashboard-tabs {
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Every tab hangs 1px past the strip's rule, so the active tab's opaque
+   background can cover that rule and merge into the panel below. */
+.nav-tabs.dashboard-tabs .nav-link {
+  margin-bottom: -1px;
+  padding: var(--space-2) var(--space-4) calc(var(--space-2) + 1px);
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+.nav-tabs.dashboard-tabs .nav-link:not(.active):hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.nav-tabs.dashboard-tabs .nav-link.active {
+  border-color: var(--color-border);
+  background: var(--color-bg);
+  box-shadow: inset 0 2px 0 var(--color-accent);
+  color: var(--color-accent-700);
+}
+
+/* The count is a real pill here — it is the section's headline number. */
+.nav-tabs.dashboard-tabs .nav-link .badge {
+  --bs-badge-padding-x: 7px;
+  --bs-badge-padding-y: 1px;
+  border-radius: 999px;
+  background: var(--color-neutral-100) !important;
+  color: var(--ink-2) !important;
+  font-size: 11px;
+  opacity: 1;
+}
+
+.nav-tabs.dashboard-tabs .nav-link.active .badge {
+  background: var(--color-accent-200) !important;
+  color: var(--color-accent-800) !important;
+}
+
+/* --- the list panel the active tab opens onto --- */
+
+.dashboard-panel {
+  border: 1px solid var(--color-border);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-panel > .list-group {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.dashboard-panel .list-group-item:last-child .review-row {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.review-list-item {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-divider);
+  border-radius: 0 !important;
+  background: transparent;
+}
+
+.review-list-item:last-child {
+  border-bottom: 0;
+}
+
+/* The whole row navigates; the row grid lives inside the button. */
+.review-row {
+  display: grid;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  gap: var(--space-2) var(--space-4);
+  grid-template-columns: minmax(0, 1fr) 148px;
+  text-align: start;
+}
+
+.review-list-item:hover .review-row,
+.review-row:focus-visible {
+  background: var(--color-surface);
+}
+
+.review-row-main {
+  min-width: 0;
+}
+
+.review-row-title {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.review-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+
+/* Metadata reads as icon + value, not as a row of chips… */
+.review-row-meta .badge.review-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  background: transparent !important;
+  color: var(--ink-2) !important;
+  font-size: 11.5px;
+  font-weight: 400;
+}
+
+.review-row-meta .badge i,
+.review-row-meta .badge svg {
+  flex: none;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* …except the repository, which is how you tell two reviews apart at a
+   glance. It keeps a real chip so the name stays readable in the row. */
+/* `flex: none` + `nowrap` matter here: left to shrink, the chip collapses to
+   one character per line. Overlong names ellipsize, the full path is in the
+   title attribute. */
+.review-repo-badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 1px 8px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.review-repo-badge i {
+  flex: none;
+  color: var(--color-accent);
+  font-size: 12px;
+  opacity: 1;
+}
+
+.review-repo-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-row-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 7px;
+  color: var(--ink-3);
+  font-size: 12px;
+  gap: 0 6px;
+}
+
+.review-row-footer .reviewers-count-tooltip {
+  cursor: help;
+  text-decoration: 1px dotted underline;
+  text-underline-offset: 3px;
+}
+
+/* The status column: fixed width and left-aligned, so the pills stack in one
+   straight line down the list instead of sitting ragged against the edge. */
+.review-row-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+.review-row-side .badge.review-status-badge {
+  padding: 3px 9px;
+}
+
+.review-row-updated {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-2);
+  cursor: help;
+  font-feature-settings: "tnum";
+  font-size: 11.5px;
+  gap: 5px;
+}
+
+.review-row-updated i {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Owner-only row menu, parked clear of the status column. */
+.review-actions {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+}
+
+.review-actions-toggle {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-md);
+  color: var(--ink-2);
+}
+
+.review-actions-toggle:hover {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.review-actions-menu {
+  min-width: 11rem;
+  z-index: 40;
+}
+
+/* Below this the status column costs more than it buys: stack it instead. */
+@media (max-width: 700px) {
+  .review-row {
+    padding-right: 42px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .review-row-side {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .nav-tabs.dashboard-tabs .nav-link {
+    padding-inline: var(--space-3);
+    font-size: 13px;
+  }
+}

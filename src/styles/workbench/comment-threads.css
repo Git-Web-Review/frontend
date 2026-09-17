@@ -1,0 +1,260 @@
+/* ------------------------------------------------------------- comments
+
+   A conversation reads as root message -> replies: the root is boxed, the
+   replies hang off a vertical rail, and the header carries the reply count
+   so a collapsed thread still says how much debate it holds.            */
+
+/* Discussion tab toolbar. */
+
+.discussion-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.discussion-filter {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+}
+
+.discussion-filter-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 0;
+  border-left: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.discussion-filter-option:first-child {
+  border-left: 0;
+}
+
+.discussion-filter-option:hover {
+  color: var(--color-text);
+}
+
+.discussion-filter-option.is-active {
+  background: var(--color-accent-200);
+  color: var(--color-accent-800);
+}
+
+.discussion-filter-count {
+  opacity: 0.75;
+  font-feature-settings: "tnum";
+}
+
+.discussion-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.discussion-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.discussion-toolbar-button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.discussion-toolbar-button i {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.discussion-sort {
+  color: var(--ink-2);
+}
+
+.discussion-sort i {
+  font-size: 11px;
+}
+
+/* One group per target: file path on the left, thread count on the right. */
+
+.discussion-group {
+  margin-bottom: var(--space-6);
+}
+
+.discussion-group:last-child {
+  margin-bottom: 0;
+}
+
+.discussion-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.discussion-group-header > i {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--color-accent);
+}
+
+.discussion-group-label {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discussion-group-rule {
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--color-divider);
+}
+
+.discussion-group-count {
+  color: var(--ink-3);
+  font-size: 11.5px;
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+
+/* The spacing fix: threads no longer touch each other. */
+.discussion-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Conversation card, Discussion tab and diff alike. */
+
+.review-comment-card,
+.diff-inline-comment {
+  border: 1px solid var(--color-border);
+  border-left: 2px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.review-comment-card.is-done,
+.diff-inline-comment.is-done {
+  border: 1px solid var(--color-divider);
+  border-left: 2px solid color-mix(in srgb, var(--color-add) 55%, transparent);
+  background: var(--color-surface);
+}
+
+.diff-inline-comment-preview {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.comment-thread-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+}
+
+.diff-inline-comment .comment-thread-header {
+  gap: 10px;
+  padding: 10px var(--space-3);
+}
+
+/* Done and collapsed: the whole thread folds into one line. */
+.comment-thread-header.is-resolved-row {
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+}
+
+.comment-thread-header .user-avatar {
+  flex: none;
+}
+
+.review-comment-card.is-done .comment-thread-header > .user-avatar,
+.diff-inline-comment.is-done .comment-thread-header > .user-avatar {
+  border-color: var(--color-divider);
+  background: var(--color-bg);
+  color: var(--ink-2);
+}
+
+.comment-thread-identity {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.comment-thread-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.comment-thread-line + .comment-thread-line {
+  margin-top: 6px;
+}
+
+.comment-thread-author {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.diff-inline-comment .comment-thread-author {
+  font-size: 13px;
+}
+
+.comment-thread-header.is-resolved-row .comment-thread-author {
+  flex: none;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.comment-thread-time {
+  color: var(--ink-3);
+  font-size: 11.5px;
+  font-feature-settings: "tnum";
+}
+
+.comment-thread-resolved-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-add-ink);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.comment-thread-resolved-label i {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.comment-thread-header.is-resolved-row > i {
+  flex: none;
+  color: var(--color-add-ink);
+  font-size: 15px;
+  line-height: 1;
+}

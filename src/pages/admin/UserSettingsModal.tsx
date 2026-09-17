@@ -1,82 +1,100 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ApiClientError, apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/AuthProvider";
+import { NotificationCategoryToggles } from "../../components/user-settings/NotificationCategoryToggles";
+import {
+  draftFromUser,
+  ircNicknameRequired,
+  webhookUrlInvalid,
+  withCategoryToggled,
+  type UserSettingsDraft,
+} from "../../components/user-settings/user-settings-draft";
 import { useI18n } from "../../i18n/I18nProvider";
-import type { TranslationKey } from "../../i18n/translations";
 import { useToast } from "../../layout/ToastProvider";
 import type {
   CurrentUser,
   NotificationCategory,
   NotificationMedium,
-  NotificationPreferences,
   UserLocale,
   UserSettings,
 } from "../../types/api";
 
-const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
-  "reviewStarted",
-  "reviewPending",
-  "reviewDone",
-  "reviewAcked",
-  "reviewClosed",
-  "commentReceived",
-  "commentMention",
-];
-
-const NOTIFICATION_CATEGORY_LABELS: Record<
-  NotificationCategory,
-  TranslationKey
-> = {
-  reviewStarted: "notifCategoryReviewStarted",
-  reviewPending: "notifCategoryReviewPending",
-  reviewDone: "notifCategoryReviewDone",
-  reviewAcked: "notifCategoryReviewAcked",
-  reviewClosed: "notifCategoryReviewClosed",
-  commentReceived: "notifCategoryCommentReceived",
-  commentMention: "notifCategoryCommentMention",
-};
-
-type UserSettingsDraft = {
-  nickname: string;
-  hostname: string;
-  locale: UserLocale;
-  mailNotificationsEnabled: boolean;
-  ircNotificationsEnabled: boolean;
-  ircNickname: string;
-  webhookNotificationsEnabled: boolean;
-  webhookUrl: string;
-  notificationPreferences: NotificationPreferences;
-};
-
-// The relay only ever posts over HTTP, so anything else is rejected here
-// rather than by the backend with a generic validation message.
-const isHttpUrl = (value: string) => {
-  try {
-    const { protocol } = new URL(value.trim());
-    return protocol === "http:" || protocol === "https:";
-  } catch {
-    return false;
-  }
-};
-
-const draftFromUser = (user: CurrentUser): UserSettingsDraft => ({
-  nickname: user.settings?.nickname ?? "",
-  hostname: user.hostname,
-  locale: user.settings?.locale ?? "EN",
-  mailNotificationsEnabled: user.settings?.mailNotificationsEnabled ?? false,
-  ircNotificationsEnabled: user.settings?.ircNotificationsEnabled ?? false,
-  ircNickname: user.settings?.ircNickname ?? "",
-  webhookNotificationsEnabled:
-    user.settings?.webhookNotificationsEnabled ?? false,
-  webhookUrl: user.settings?.webhookUrl ?? "",
-  notificationPreferences: user.settings?.notificationPreferences ?? {},
-});
+const togglesClassName = "notification-preference-toggles ms-4";
 
 type UserSettingsModalProps = {
   user: CurrentUser;
   onClose: () => void;
   onSaved: () => void;
 };
+
+function SwitchField({
+  id,
+  className,
+  label,
+  checked,
+  onChange,
+}: {
+  id: string;
+  className: string;
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className={className}>
+      <input
+        checked={checked}
+        className="form-check-input"
+        id={id}
+        role="switch"
+        type="checkbox"
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <label className="form-check-label" htmlFor={id}>
+        {label}
+      </label>
+    </div>
+  );
+}
+
+function TextField({
+  id,
+  className = "mb-3",
+  label,
+  value,
+  invalid = false,
+  type = "text",
+  placeholder,
+  onChange,
+  feedback,
+}: {
+  id: string;
+  className?: string;
+  label: string;
+  value: string;
+  invalid?: boolean;
+  type?: string;
+  placeholder?: string;
+  onChange: (value: string) => void;
+  feedback?: ReactNode;
+}) {
+  return (
+    <div className={className}>
+      <label className="form-label" htmlFor={id}>
+        {label}
+      </label>
+      <input
+        className={invalid ? "form-control is-invalid" : "form-control"}
+        id={id}
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {feedback}
+    </div>
+  );
+}
 
 export function UserSettingsModal({
   user,
@@ -86,10 +104,20 @@ export function UserSettingsModal({
   const { idToken } = useAuth();
   const { t } = useI18n();
   const { showToast } = useToast();
-  const [userSettingsDraft, setUserSettingsDraft] = useState<UserSettingsDraft>(
-    draftFromUser(user),
+  const [draft, setDraft] = useState<UserSettingsDraft>(
+    draftFromUser(user, "EN"),
   );
-  const [savingUserSettings, setSavingUserSettings] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const ircNicknameMissing = ircNicknameRequired(draft);
+  const webhookInvalid = webhookUrlInvalid(draft);
+
+  const update = (nextDraft: Partial<UserSettingsDraft>) =>
+    setDraft((current) => ({ ...current, ...nextDraft }));
+
+  const toggleCategory = (
+    medium: NotificationMedium,
+    category: NotificationCategory,
+  ) => setDraft((current) => withCategoryToggled(current, medium, category));
 
   const errorLabel = (error: unknown) => {
     if (error instanceof ApiClientError) {
@@ -99,60 +127,29 @@ export function UserSettingsModal({
     return error instanceof Error ? error.message : t("backendError");
   };
 
-  const draftIrcNicknameRequired =
-    userSettingsDraft.ircNotificationsEnabled &&
-    !userSettingsDraft.ircNickname.trim();
-
-  const draftWebhookUrlInvalid =
-    userSettingsDraft.webhookNotificationsEnabled &&
-    !isHttpUrl(userSettingsDraft.webhookUrl);
-
-  const draftCategoryEnabled = (
-    medium: NotificationMedium,
-    category: NotificationCategory,
-  ) => userSettingsDraft.notificationPreferences[medium]?.[category] ?? true;
-
-  const toggleDraftCategory = (
-    medium: NotificationMedium,
-    category: NotificationCategory,
-  ) =>
-    setUserSettingsDraft((draft) => ({
-      ...draft,
-      notificationPreferences: {
-        ...draft.notificationPreferences,
-        [medium]: {
-          ...draft.notificationPreferences[medium],
-          [category]: !(draft.notificationPreferences[medium]?.[category] ?? true),
-        },
-      },
-    }));
-
   const saveUserSettings = async () => {
-    if (!idToken || draftIrcNicknameRequired || draftWebhookUrlInvalid) {
+    if (!idToken || ircNicknameMissing || webhookInvalid) {
       return;
     }
 
-    setSavingUserSettings(true);
+    setSaving(true);
     try {
-      const hostname = userSettingsDraft.hostname.trim();
+      const hostname = draft.hostname.trim();
       await apiRequest<UserSettings>(
-        `/v1/admin/users/${user.id}/settings`,
+        `/admin/users/${user.id}/settings`,
         idToken,
         {
           method: "PATCH",
           body: JSON.stringify({
-            nickname: userSettingsDraft.nickname.trim() || null,
+            nickname: draft.nickname.trim() || null,
             ...(hostname ? { hostname } : {}),
-            locale: userSettingsDraft.locale,
-            mailNotificationsEnabled:
-              userSettingsDraft.mailNotificationsEnabled,
-            ircNotificationsEnabled:
-              userSettingsDraft.ircNotificationsEnabled,
-            ircNickname: userSettingsDraft.ircNickname.trim() || null,
-            webhookNotificationsEnabled:
-              userSettingsDraft.webhookNotificationsEnabled,
-            webhookUrl: userSettingsDraft.webhookUrl.trim() || null,
-            notificationPreferences: userSettingsDraft.notificationPreferences,
+            locale: draft.locale,
+            mailNotificationsEnabled: draft.mailNotificationsEnabled,
+            ircNotificationsEnabled: draft.ircNotificationsEnabled,
+            ircNickname: draft.ircNickname.trim() || null,
+            webhookNotificationsEnabled: draft.webhookNotificationsEnabled,
+            webhookUrl: draft.webhookUrl.trim() || null,
+            notificationPreferences: draft.notificationPreferences,
           }),
         },
       );
@@ -162,9 +159,19 @@ export function UserSettingsModal({
     } catch (error) {
       showToast(errorLabel(error));
     } finally {
-      setSavingUserSettings(false);
+      setSaving(false);
     }
   };
+
+  const categoryToggles = (medium: NotificationMedium, margin: string) => (
+    <NotificationCategoryToggles
+      idPrefix="user-settings-"
+      medium={medium}
+      preferences={draft.notificationPreferences}
+      className={`${togglesClassName} ${margin}`}
+      onToggle={toggleCategory}
+    />
+  );
 
   return (
     <>
@@ -186,40 +193,18 @@ export function UserSettingsModal({
               />
             </div>
             <div className="modal-body">
-              <div className="mb-3">
-                <label className="form-label" htmlFor="user-settings-nickname">
-                  {t("nickname")}
-                </label>
-                <input
-                  className="form-control"
-                  id="user-settings-nickname"
-                  type="text"
-                  value={userSettingsDraft.nickname}
-                  onChange={(event) =>
-                    setUserSettingsDraft((draft) => ({
-                      ...draft,
-                      nickname: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="mb-3">
-                <label className="form-label" htmlFor="user-settings-hostname">
-                  {t("hostname")}
-                </label>
-                <input
-                  className="form-control"
-                  id="user-settings-hostname"
-                  type="text"
-                  value={userSettingsDraft.hostname}
-                  onChange={(event) =>
-                    setUserSettingsDraft((draft) => ({
-                      ...draft,
-                      hostname: event.target.value,
-                    }))
-                  }
-                />
-              </div>
+              <TextField
+                id="user-settings-nickname"
+                label={t("nickname")}
+                value={draft.nickname}
+                onChange={(nickname) => update({ nickname })}
+              />
+              <TextField
+                id="user-settings-hostname"
+                label={t("hostname")}
+                value={draft.hostname}
+                onChange={(hostname) => update({ hostname })}
+              />
               <div className="mb-3">
                 <label className="form-label" htmlFor="user-settings-locale">
                   {t("locale")}
@@ -227,218 +212,87 @@ export function UserSettingsModal({
                 <select
                   className="form-select"
                   id="user-settings-locale"
-                  value={userSettingsDraft.locale}
+                  value={draft.locale}
                   onChange={(event) =>
-                    setUserSettingsDraft((draft) => ({
-                      ...draft,
-                      locale: event.target.value as UserLocale,
-                    }))
+                    update({ locale: event.target.value as UserLocale })
                   }
                 >
                   <option value="FR">FR</option>
                   <option value="EN">EN</option>
                 </select>
               </div>
-              <div className="form-check form-switch mb-2">
-                <input
-                  checked={userSettingsDraft.mailNotificationsEnabled}
-                  className="form-check-input"
-                  id="user-settings-mail-notifications"
-                  role="switch"
-                  type="checkbox"
-                  onChange={(event) =>
-                    setUserSettingsDraft((draft) => ({
-                      ...draft,
-                      mailNotificationsEnabled: event.target.checked,
-                    }))
-                  }
-                />
-                <label
-                  className="form-check-label"
-                  htmlFor="user-settings-mail-notifications"
-                >
-                  {t("mailNotifications")}
-                </label>
-              </div>
-              {userSettingsDraft.mailNotificationsEnabled ? (
-                <div className="notification-preference-toggles ms-4 mb-3">
-                  {NOTIFICATION_CATEGORIES.map((category) => (
-                    <div
-                      className="form-check form-switch"
-                      key={`user-settings-mail-${category}`}
-                    >
-                      <input
-                        checked={draftCategoryEnabled("mail", category)}
-                        className="form-check-input"
-                        id={`user-settings-mail-${category}`}
-                        type="checkbox"
-                        onChange={() => toggleDraftCategory("mail", category)}
-                      />
-                      <label
-                        className="form-check-label"
-                        htmlFor={`user-settings-mail-${category}`}
-                      >
-                        {t(NOTIFICATION_CATEGORY_LABELS[category])}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              <div className="form-check form-switch mb-2">
-                <input
-                  checked={userSettingsDraft.ircNotificationsEnabled}
-                  className="form-check-input"
-                  id="user-settings-irc-notifications"
-                  role="switch"
-                  type="checkbox"
-                  onChange={(event) =>
-                    setUserSettingsDraft((draft) => ({
-                      ...draft,
-                      ircNotificationsEnabled: event.target.checked,
-                    }))
-                  }
-                />
-                <label
-                  className="form-check-label"
-                  htmlFor="user-settings-irc-notifications"
-                >
-                  {t("ircNotifications")}
-                </label>
-              </div>
-              {userSettingsDraft.ircNotificationsEnabled ? (
+              <SwitchField
+                id="user-settings-mail-notifications"
+                className="form-check form-switch mb-2"
+                label={t("mailNotifications")}
+                checked={draft.mailNotificationsEnabled}
+                onChange={(enabled) =>
+                  update({ mailNotificationsEnabled: enabled })
+                }
+              />
+              {draft.mailNotificationsEnabled
+                ? categoryToggles("mail", "mb-3")
+                : null}
+              <SwitchField
+                id="user-settings-irc-notifications"
+                className="form-check form-switch mb-2"
+                label={t("ircNotifications")}
+                checked={draft.ircNotificationsEnabled}
+                onChange={(enabled) =>
+                  update({ ircNotificationsEnabled: enabled })
+                }
+              />
+              {draft.ircNotificationsEnabled ? (
                 <>
-                  <div className="mb-2">
-                    <label
-                      className="form-label"
-                      htmlFor="user-settings-irc-nickname"
-                    >
-                      {t("ircNickname")}
-                    </label>
-                    <input
-                      className={
-                        draftIrcNicknameRequired
-                          ? "form-control is-invalid"
-                          : "form-control"
-                      }
-                      id="user-settings-irc-nickname"
-                      type="text"
-                      value={userSettingsDraft.ircNickname}
-                      onChange={(event) =>
-                        setUserSettingsDraft((draft) => ({
-                          ...draft,
-                          ircNickname: event.target.value,
-                        }))
-                      }
-                    />
-                    {draftIrcNicknameRequired ? (
-                      <div className="invalid-feedback">
-                        {t("ircNicknameRequired")}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="notification-preference-toggles ms-4 mb-0">
-                    {NOTIFICATION_CATEGORIES.map((category) => (
-                      <div
-                        className="form-check form-switch"
-                        key={`user-settings-irc-${category}`}
-                      >
-                        <input
-                          checked={draftCategoryEnabled("irc", category)}
-                          className="form-check-input"
-                          id={`user-settings-irc-${category}`}
-                          type="checkbox"
-                          onChange={() => toggleDraftCategory("irc", category)}
-                        />
-                        <label
-                          className="form-check-label"
-                          htmlFor={`user-settings-irc-${category}`}
-                        >
-                          {t(NOTIFICATION_CATEGORY_LABELS[category])}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+                  <TextField
+                    id="user-settings-irc-nickname"
+                    className="mb-2"
+                    label={t("ircNickname")}
+                    value={draft.ircNickname}
+                    invalid={ircNicknameMissing}
+                    onChange={(ircNickname) => update({ ircNickname })}
+                    feedback={
+                      ircNicknameMissing ? (
+                        <div className="invalid-feedback">
+                          {t("ircNicknameRequired")}
+                        </div>
+                      ) : null
+                    }
+                  />
+                  {categoryToggles("irc", "mb-0")}
                 </>
               ) : null}
-              <div className="form-check form-switch mb-2 mt-2">
-                <input
-                  checked={userSettingsDraft.webhookNotificationsEnabled}
-                  className="form-check-input"
-                  id="user-settings-webhook-notifications"
-                  role="switch"
-                  type="checkbox"
-                  onChange={(event) =>
-                    setUserSettingsDraft((draft) => ({
-                      ...draft,
-                      webhookNotificationsEnabled: event.target.checked,
-                    }))
-                  }
-                />
-                <label
-                  className="form-check-label"
-                  htmlFor="user-settings-webhook-notifications"
-                >
-                  {t("webhookNotifications")}
-                </label>
-              </div>
-              {userSettingsDraft.webhookNotificationsEnabled ? (
+              <SwitchField
+                id="user-settings-webhook-notifications"
+                className="form-check form-switch mb-2 mt-2"
+                label={t("webhookNotifications")}
+                checked={draft.webhookNotificationsEnabled}
+                onChange={(enabled) =>
+                  update({ webhookNotificationsEnabled: enabled })
+                }
+              />
+              {draft.webhookNotificationsEnabled ? (
                 <>
-                  <div className="mb-2">
-                    <label
-                      className="form-label"
-                      htmlFor="user-settings-webhook-url"
-                    >
-                      {t("webhookUrl")}
-                    </label>
-                    <input
-                      className={
-                        draftWebhookUrlInvalid
-                          ? "form-control is-invalid"
-                          : "form-control"
-                      }
-                      id="user-settings-webhook-url"
-                      type="url"
-                      placeholder="https://chat.company.tld/hooks/..."
-                      value={userSettingsDraft.webhookUrl}
-                      onChange={(event) =>
-                        setUserSettingsDraft((draft) => ({
-                          ...draft,
-                          webhookUrl: event.target.value,
-                        }))
-                      }
-                    />
-                    {draftWebhookUrlInvalid ? (
-                      <div className="invalid-feedback">
-                        {t("webhookUrlInvalid")}
-                      </div>
-                    ) : (
-                      <div className="form-text">{t("webhookUrlHelp")}</div>
-                    )}
-                  </div>
-                  <div className="notification-preference-toggles ms-4 mb-0">
-                    {NOTIFICATION_CATEGORIES.map((category) => (
-                      <div
-                        className="form-check form-switch"
-                        key={`user-settings-webhook-${category}`}
-                      >
-                        <input
-                          checked={draftCategoryEnabled("webhook", category)}
-                          className="form-check-input"
-                          id={`user-settings-webhook-${category}`}
-                          type="checkbox"
-                          onChange={() =>
-                            toggleDraftCategory("webhook", category)
-                          }
-                        />
-                        <label
-                          className="form-check-label"
-                          htmlFor={`user-settings-webhook-${category}`}
-                        >
-                          {t(NOTIFICATION_CATEGORY_LABELS[category])}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+                  <TextField
+                    id="user-settings-webhook-url"
+                    className="mb-2"
+                    label={t("webhookUrl")}
+                    type="url"
+                    placeholder="https://chat.company.tld/hooks/..."
+                    value={draft.webhookUrl}
+                    invalid={webhookInvalid}
+                    onChange={(webhookUrl) => update({ webhookUrl })}
+                    feedback={
+                      webhookInvalid ? (
+                        <div className="invalid-feedback">
+                          {t("webhookUrlInvalid")}
+                        </div>
+                      ) : (
+                        <div className="form-text">{t("webhookUrlHelp")}</div>
+                      )
+                    }
+                  />
+                  {categoryToggles("webhook", "mb-0")}
                 </>
               ) : null}
             </div>
@@ -453,14 +307,10 @@ export function UserSettingsModal({
               <button
                 className="btn btn-primary d-inline-flex align-items-center gap-2"
                 type="button"
-                disabled={
-                  savingUserSettings ||
-                  draftIrcNicknameRequired ||
-                  draftWebhookUrlInvalid
-                }
+                disabled={saving || ircNicknameMissing || webhookInvalid}
                 onClick={() => void saveUserSettings()}
               >
-                {savingUserSettings ? (
+                {saving ? (
                   <span className="spinner-border spinner-border-sm" />
                 ) : (
                   <i className="bi bi-check-lg" aria-hidden="true" />

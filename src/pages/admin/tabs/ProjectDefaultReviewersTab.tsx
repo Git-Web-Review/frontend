@@ -65,10 +65,10 @@ export function ProjectDefaultReviewersTab() {
     try {
       const [nextDefaultReviewers, nextKnownProjects] = await Promise.all([
         apiRequest<ProjectDefaultReviewer[]>(
-          "/v1/project-default-reviewers",
+          "/project-default-reviewers",
           idToken,
         ),
-        apiRequest<string[]>("/v1/project-default-reviewers/projects", idToken),
+        apiRequest<string[]>("/project-default-reviewers/projects", idToken),
       ]);
       setDefaultReviewers(nextDefaultReviewers);
       setKnownProjects(nextKnownProjects);
@@ -92,7 +92,7 @@ export function ProjectDefaultReviewersTab() {
     setErrorMessage("");
     try {
       await apiRequest<ProjectDefaultReviewer[]>(
-        "/v1/project-default-reviewers",
+        "/project-default-reviewers",
         idToken,
         {
           method: "POST",
@@ -122,7 +122,7 @@ export function ProjectDefaultReviewersTab() {
     setErrorMessage("");
     try {
       await apiRequest<ProjectDefaultReviewerDeletion>(
-        `/v1/project-default-reviewers/${id}`,
+        `/project-default-reviewers/${id}`,
         idToken,
         { method: "DELETE" },
       );

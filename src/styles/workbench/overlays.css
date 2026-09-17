@@ -1,0 +1,265 @@
+/* ---------------------------------------------------------------- modals */
+
+.modal-backdrop {
+  --bs-backdrop-bg: rgba(27, 31, 36, 0.5);
+  --bs-backdrop-opacity: 1;
+}
+
+.modal-content {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.modal-header,
+.modal-footer {
+  padding: var(--space-3) var(--space-4);
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+.modal-header {
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.modal-header .font-monospace,
+.modal-header .small {
+  color: var(--ink-2);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.modal-body {
+  padding: var(--space-4);
+}
+
+.modal-footer {
+  gap: var(--space-2);
+}
+
+.modal-footer > * {
+  margin: 0;
+}
+
+.btn-close {
+  --bs-btn-close-focus-shadow: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: var(--radius-md);
+  opacity: 0.6;
+}
+
+.btn-close:hover {
+  background-color: color-mix(in srgb, var(--color-text) 8%, transparent);
+  opacity: 1;
+}
+
+
+.modal-xxl {
+  max-width: min(1040px, calc(100vw - 44px));
+}
+
+/* The app's confirmation dialog, in place of the browser's. */
+
+.confirm-dialog-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid color-mix(in srgb, var(--color-del) 45%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-del) 12%, transparent);
+  color: var(--color-del);
+  font-size: 15px;
+}
+
+/* Leaving a review with comments still being written. */
+
+.unposted-comments-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid color-mix(in srgb, var(--color-warn) 45%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-warn) 12%, transparent);
+  color: var(--color-warn-ink);
+  font-size: 15px;
+}
+
+.unposted-draft-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.unposted-draft {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-left: 2px solid var(--color-accent);
+  border-radius: var(--radius-md);
+}
+
+.unposted-draft-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 6px 6px 6px var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+  background: color-mix(in srgb, var(--color-accent) 6%, transparent);
+  font-size: 12.5px;
+}
+
+.unposted-draft-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.unposted-draft-label > i {
+  color: var(--color-accent);
+}
+
+.unposted-draft-kind {
+  flex: none;
+  font-weight: 600;
+}
+
+.unposted-draft-target {
+  overflow: hidden;
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unposted-draft-header .btn {
+  flex: none;
+}
+
+.unposted-draft-header .btn.is-copied {
+  --bs-btn-color: var(--color-add-ink);
+  --bs-btn-hover-color: var(--color-add-ink);
+  --bs-btn-active-color: var(--color-add-ink);
+}
+
+/* Read-only: a block of text to select, not a field to type in. */
+.unposted-draft textarea.form-control {
+  min-height: 0;
+  max-height: 260px;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: 0;
+  background: var(--color-bg);
+  font-size: 13px;
+  resize: none;
+}
+
+/* --------------------------------------------- alerts, lists, dropdowns */
+
+.alert {
+  --bs-alert-border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  border-width: 1px;
+  font-size: 13px;
+}
+
+.alert-danger {
+  --bs-alert-color: var(--color-del);
+  --bs-alert-bg: color-mix(in srgb, var(--color-del) 8%, transparent);
+  --bs-alert-border-color: color-mix(in srgb, var(--color-del) 45%, transparent);
+}
+
+.alert-warning {
+  --bs-alert-color: var(--color-warn);
+  --bs-alert-bg: color-mix(in srgb, var(--color-warn) 10%, transparent);
+  --bs-alert-border-color: color-mix(
+    in srgb,
+    var(--color-warn) 45%,
+    transparent
+  );
+}
+
+.alert-info,
+.alert-primary {
+  --bs-alert-color: var(--color-accent-700);
+  --bs-alert-bg: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  --bs-alert-border-color: color-mix(
+    in srgb,
+    var(--color-accent) 40%,
+    transparent
+  );
+}
+
+.list-group {
+  --bs-list-group-border-color: var(--color-border);
+  --bs-list-group-bg: transparent;
+  --bs-list-group-color: var(--color-text);
+  --bs-list-group-border-radius: var(--radius-md);
+  --bs-list-group-action-hover-bg: var(--color-surface);
+  --bs-list-group-item-padding-x: var(--space-3);
+  --bs-list-group-item-padding-y: var(--space-2);
+}
+
+.dropdown-menu {
+  --bs-dropdown-border-color: var(--color-border);
+  --bs-dropdown-border-radius: var(--radius-md);
+  --bs-dropdown-bg: var(--color-bg);
+  --bs-dropdown-color: var(--color-text);
+  --bs-dropdown-link-color: var(--color-text);
+  --bs-dropdown-link-hover-bg: var(--color-surface);
+  --bs-dropdown-link-hover-color: var(--color-text);
+  --bs-dropdown-link-active-bg: var(--color-surface);
+  --bs-dropdown-link-active-color: var(--color-text);
+  --bs-dropdown-font-size: 13.5px;
+  --bs-dropdown-padding-y: 0;
+  --bs-dropdown-item-padding-x: var(--space-3);
+  --bs-dropdown-item-padding-y: var(--space-2);
+  --bs-dropdown-divider-bg: var(--color-divider);
+  z-index: 40;
+  box-shadow: var(--shadow-lg);
+}
+
+.dropdown-menu-lg {
+  min-width: 390px;
+}
+
+.app-toast {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.toast.text-bg-success {
+  background-color: var(--color-bg) !important;
+  border-left: 3px solid var(--color-add);
+  color: var(--color-text) !important;
+}
+
+.toast.text-bg-danger {
+  background-color: var(--color-bg) !important;
+  border-left: 3px solid var(--color-del);
+  color: var(--color-text) !important;
+}
+
+.empty-state {
+  min-height: 120px;
+  padding: var(--space-8) var(--space-4);
+  color: var(--ink-2);
+  font-size: 13.5px;
+  text-align: center;
+}

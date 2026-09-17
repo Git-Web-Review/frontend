@@ -1,0 +1,104 @@
+/* ------------------------------------------------- notifications panel */
+
+.notification-dropdown {
+  display: flex;
+  flex-direction: column;
+  top: calc(100% - 4px);
+  right: 0;
+  left: auto;
+  width: 390px;
+  max-width: calc(100vw - 32px);
+  max-height: 440px;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 50;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+}
+
+.notification-dropdown-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  flex: none;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.notification-dropdown-header:hover,
+.notification-dropdown-header:focus {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.notification-dropdown-header .notification-mark-all-button {
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* The header stays put; only the rows scroll. */
+.notification-dropdown > .dropdown-divider {
+  display: none;
+}
+
+.notification-dropdown .notification-entry,
+.notification-dropdown > .dropdown-item {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+  color: var(--color-text);
+  font-size: 13.5px;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.notification-entry:last-child {
+  border-bottom: 0;
+}
+
+.notification-entry:hover,
+.notification-entry:focus-within {
+  background: var(--color-surface);
+}
+
+/* Unread rows read as accent-tinted and bolder; `bg-primary-subtle`
+   resolves to the accent 5% mix through the bridge above. */
+.notification-entry .fw-semibold {
+  font-weight: 600;
+}
+
+.notification-entry .small {
+  margin-top: 2px;
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.notification-entry .text-secondary.small {
+  margin-top: 3px;
+  color: var(--ink-3) !important;
+  font-size: 11px;
+  font-feature-settings: "tnum";
+}
+
+.notification-seen-button {
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.notification-seen-button:hover {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent);
+}

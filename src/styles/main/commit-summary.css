@@ -1,0 +1,123 @@
+.commit-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.commit-summary-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "icon label"
+    "icon value";
+  align-items: center;
+  gap: 0 0.625rem;
+  min-height: 4.25rem;
+  padding: 0.75rem;
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: 0.5rem;
+  background: rgba(var(--commit-summary-rgb), 0.1);
+  box-shadow: inset 0 0 0 1px rgba(var(--commit-summary-rgb), 0.08);
+}
+
+.commit-summary-icon {
+  display: grid;
+  grid-area: icon;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 0.5rem;
+  color: rgb(var(--commit-summary-rgb));
+  background: rgba(var(--commit-summary-rgb), 0.16);
+  font-size: 1.05rem;
+}
+
+.commit-summary-label {
+  grid-area: label;
+  color: var(--bs-secondary-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: none;
+}
+
+.commit-summary-value {
+  grid-area: value;
+  color: var(--bs-body-color);
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.commit-summary-project {
+  --commit-summary-rgb: var(--bs-primary-rgb);
+}
+
+.commit-summary-branch {
+  --commit-summary-rgb: var(--bs-success-rgb);
+}
+
+.commit-summary-hash {
+  --commit-summary-rgb: var(--bs-warning-rgb);
+}
+
+.commit-summary-fetch {
+  --commit-summary-rgb: var(--bs-info-rgb);
+}
+
+.commit-log-match-panel {
+  padding: 0.75rem;
+  border: 1px solid rgba(var(--bs-primary-rgb), 0.22);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.1), transparent 54%),
+    rgba(var(--bs-info-rgb), 0.06);
+}
+
+.commit-log-match-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+  color: var(--bs-primary);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  text-transform: none;
+}
+
+.commit-log-match-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.commit-log-match-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 100%;
+  padding: 0.45rem 0.625rem;
+  border: 1px solid rgba(var(--bs-primary-rgb), 0.2);
+  border-radius: 999px;
+  color: var(--bs-body-color);
+  background: var(--bs-body-bg);
+  text-decoration: none;
+  box-shadow: 0 0.35rem 1rem rgba(var(--bs-primary-rgb), 0.08);
+}
+
+.commit-log-match-chip:hover {
+  color: var(--bs-primary);
+  border-color: rgba(var(--bs-primary-rgb), 0.45);
+  background: rgba(var(--bs-primary-rgb), 0.08);
+}
+
+.commit-log-match-label {
+  color: var(--bs-secondary-color);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.commit-log-match-value {
+  overflow: hidden;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

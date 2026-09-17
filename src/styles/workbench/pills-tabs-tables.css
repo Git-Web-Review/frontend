@@ -1,0 +1,207 @@
+/* -------------------------------------------------------- tags & pills */
+
+.badge {
+  --bs-badge-padding-x: 9px;
+  --bs-badge-padding-y: 2px;
+  --bs-badge-font-size: 11px;
+  --bs-badge-font-weight: 600;
+  --bs-badge-border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.02em;
+}
+
+/* The app's semantic `text-bg-*` badges become Workbench tints — the design
+   has no filled labels. */
+.badge.text-bg-primary {
+  background-color: var(--color-accent-200) !important;
+  color: var(--color-accent-800) !important;
+}
+
+.badge.text-bg-info {
+  background-color: var(--color-accent-2-200) !important;
+  color: var(--color-accent-2-800) !important;
+}
+
+.badge.text-bg-secondary,
+.badge.text-bg-light,
+.badge.text-bg-dark,
+.review-meta-badge {
+  border: 0;
+  background-color: var(--color-neutral-100) !important;
+  color: var(--color-neutral-800) !important;
+}
+
+.badge.text-bg-success {
+  background-color: color-mix(in srgb, var(--color-add) 14%, transparent) !important;
+  color: var(--color-add) !important;
+}
+
+.badge.text-bg-danger {
+  background-color: color-mix(in srgb, var(--color-del) 14%, transparent) !important;
+  color: var(--color-del) !important;
+}
+
+.badge.text-bg-warning {
+  background-color: color-mix(in srgb, var(--color-warn) 16%, transparent) !important;
+  color: var(--color-warn) !important;
+}
+
+/* Status pills — one hue per state, so a list of reviews is scannable at a
+   glance and the same colour means the same thing in the review view:
+   amber waiting, blue in review, violet read, green acked, grey closed.
+   Each carries a hairline of its own hue; at 10px the tint alone is too
+   faint to tell apart. */
+.review-status-badge {
+  --pill-bg: transparent;
+  --pill-ink: var(--color-text);
+  --pill-border: transparent;
+  border: 1px solid var(--pill-border);
+  background-color: var(--pill-bg) !important;
+  color: var(--pill-ink) !important;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.review-status-badge.is-pending {
+  --pill-bg: color-mix(in srgb, var(--color-warn) 18%, transparent);
+  --pill-ink: var(--color-warn-ink);
+  --pill-border: color-mix(in srgb, var(--color-warn) 38%, transparent);
+}
+
+.review-status-badge.is-in-review {
+  --pill-bg: var(--color-accent-200);
+  --pill-ink: var(--color-accent-800);
+  --pill-border: color-mix(in srgb, var(--color-accent) 38%, transparent);
+}
+
+.review-status-badge.is-reviewed {
+  --pill-bg: var(--color-accent-2-200);
+  --pill-ink: var(--color-accent-2-800);
+  --pill-border: color-mix(in srgb, var(--color-accent-2) 38%, transparent);
+}
+
+.review-status-badge.is-acked {
+  --pill-bg: color-mix(in srgb, var(--color-add) 16%, transparent);
+  --pill-ink: var(--color-add-ink);
+  --pill-border: color-mix(in srgb, var(--color-add) 38%, transparent);
+}
+
+.review-status-badge.is-closed {
+  --pill-bg: var(--color-neutral-100);
+  --pill-ink: var(--color-neutral-800);
+  --pill-border: var(--color-divider);
+}
+
+/* ------------------------------------------------------------------ tabs */
+
+.nav-tabs {
+  --bs-nav-tabs-border-width: 0;
+  --bs-nav-tabs-border-color: transparent;
+  --bs-nav-link-padding-x: 2px;
+  --bs-nav-link-padding-y: 0;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.nav-tabs .nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 2px var(--space-2);
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.nav-tabs .nav-link:hover {
+  border: 0;
+  color: var(--color-accent-700);
+  isolation: auto;
+}
+
+.nav-tabs .nav-link.active {
+  border: 0;
+  background: transparent;
+  box-shadow: inset 0 -2px 0 var(--color-accent);
+  color: var(--color-accent-700);
+}
+
+.nav-tabs .nav-link .badge {
+  --bs-badge-padding-x: 0;
+  --bs-badge-padding-y: 0;
+  background: transparent !important;
+  color: inherit !important;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.card-header-tabs {
+  margin: 0;
+  border-bottom: 0;
+}
+
+/* Admin tabs wrap rather than scroll. */
+.admin-tabs {
+  flex-wrap: wrap;
+  overflow: visible;
+  row-gap: var(--space-2);
+}
+
+.admin-tabs .nav-link {
+  gap: 7px;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- tables */
+
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--color-text);
+  --bs-table-border-color: var(--color-divider);
+  --bs-table-hover-bg: var(--color-surface);
+  --bs-table-hover-color: var(--color-text);
+  --bs-table-striped-bg: var(--color-surface);
+  --bs-table-cell-padding-y: var(--space-2);
+  --bs-table-cell-padding-x: var(--space-3);
+  font-size: 13px;
+}
+
+.table > thead {
+  background: var(--color-surface);
+}
+
+.table > thead > tr > th {
+  border-bottom: 1px solid var(--color-divider);
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table > tbody > tr > td {
+  border-bottom: 1px solid var(--color-divider);
+  vertical-align: middle;
+}
+
+.table > tbody > tr:last-child > td {
+  border-bottom: 0;
+}
+
+/* The section keeps `overflow: hidden` for its rounded corners, so the
+   scroller has to live inside it or the Actions column gets clipped. */
+.table-responsive {
+  overflow-x: auto;
+}

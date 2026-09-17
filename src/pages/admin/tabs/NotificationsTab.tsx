@@ -32,7 +32,7 @@ export function NotificationsTab() {
     setErrorMessage("");
     try {
       const response = await apiRequest<AdminTextNotificationResponse>(
-        "/v1/admin/notifications/text",
+        "/admin/notifications/text",
         idToken,
         {
           method: "POST",

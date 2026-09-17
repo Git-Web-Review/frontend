@@ -1,68 +1,16 @@
 import type { ReactNode } from "react";
-import { GitBranchIcon } from "../../components/GitBranchIcon";
 import { ReviewerSearchSelect } from "../../components/ReviewerSearchSelect";
-import { DateTimeText } from "../../components/DateTimeText";
 import { useI18n } from "../../i18n/I18nProvider";
-import { gitwebFetchErrorLabel } from "../../utils/gitwebFetchError";
-import { projectName } from "../../utils/projectName";
 import type {
   CommitLogLinkRule,
   ReviewField,
   ReviewItem,
   ReviewUserSummary,
 } from "../../types/api";
-import { gitwebBrowseUrl, linkedCommitLog } from "./gitweb-links";
+import { CollapsibleDescription } from "./CollapsibleDescription";
+import { ReviewFieldValues } from "./ReviewFieldValues";
+import { ReviewSourceSummary } from "./ReviewSourceSummary";
 import type { CommentTarget, ReviewCommentThread } from "./review-utils";
-
-function CollapsibleDescription({
-  review,
-  collapsedDescription,
-  expandedDescription,
-  expanded,
-  onToggle,
-  commitLogLinkRules,
-}: {
-  review: ReviewItem;
-  collapsedDescription: string;
-  expandedDescription: string;
-  expanded: boolean;
-  onToggle: () => void;
-  commitLogLinkRules: CommitLogLinkRule[];
-}) {
-  const { t } = useI18n();
-  const canExpand = expandedDescription.length > 220;
-  const visibleDescription = expanded
-    ? expandedDescription
-    : canExpand
-      ? collapsedDescription.slice(0, 220).trimEnd()
-      : collapsedDescription;
-
-  return (
-    <div
-      className={
-        expanded ? "review-description is-expanded" : "review-description"
-      }
-    >
-      {visibleDescription
-        ? linkedCommitLog(visibleDescription, review, commitLogLinkRules)
-        : t("notAvailable")}
-      {canExpand ? (
-        <button
-          className="description-ellipsis-button"
-          type="button"
-          aria-label={expanded ? t("collapseDescription") : t("expandDescription")}
-          title={expanded ? t("collapseDescription") : t("expandDescription")}
-          onClick={onToggle}
-        >
-          <i
-            className={expanded ? "bi bi-chevron-up" : "bi bi-chevron-down"}
-            aria-hidden="true"
-          />
-        </button>
-      ) : null}
-    </div>
-  );
-}
 
 type OverviewTabPanelProps = {
   review: ReviewItem;
@@ -188,70 +136,11 @@ export function OverviewTabPanel({
               )}
             </dd>
           </dl>
-          <div className="commit-summary-grid mt-3 mb-3">
-            <div className="commit-summary-item commit-summary-project">
-              <span className="commit-summary-icon">
-                <i className="bi bi-box" aria-hidden="true" />
-              </span>
-              <span className="commit-summary-label">{t("sourceProject")}</span>
-              <span className="commit-summary-value text-break">
-                {projectName(review.sourceProject) || t("notAvailable")}
-              </span>
-            </div>
-            <div className="commit-summary-item commit-summary-branch">
-              <span className="commit-summary-icon">
-                <GitBranchIcon />
-              </span>
-              <span className="commit-summary-label">{t("sourceBranch")}</span>
-              <span className="commit-summary-value text-break">
-                {sourceBranchLabelText}
-              </span>
-            </div>
-            <div className="commit-summary-item commit-summary-hash">
-              <span className="commit-summary-icon">
-                <i className="bi bi-git" aria-hidden="true" />
-              </span>
-              <span className="commit-summary-label">{t("sourceCommit")}</span>
-              <span className="commit-summary-value font-monospace text-break">
-                {sourceCommitLabel || t("notAvailable")}
-              </span>
-            </div>
-            <div className="commit-summary-item commit-summary-fetch">
-              <span className="commit-summary-icon">
-                <i className="bi bi-clock-history" aria-hidden="true" />
-              </span>
-              <span className="commit-summary-label">
-                {t("gitwebFetchedAt")}
-              </span>
-              <span className="commit-summary-value">
-                <DateTimeText
-                  fallback={t("notAvailable")}
-                  label={t("gitwebFetchedAt")}
-                  value={review.gitwebFetchedAt}
-                />
-              </span>
-            </div>
-          </div>
-          <dl className="row mb-0 small">
-            <dt className="col-4">{t("gitwebUrl")}</dt>
-            <dd className="col-8 text-break">
-              <a href={gitwebBrowseUrl(review)} rel="noreferrer" target="_blank">
-                {review.gitwebUrl}
-              </a>
-            </dd>
-            {review.gitwebFetchError ? (
-              <>
-                <dt className="col-4">{t("gitwebFetchError")}</dt>
-                <dd className="col-8 text-danger text-break">
-                  {gitwebFetchErrorLabel(review.gitwebFetchError, t)}
-                </dd>
-              </>
-            ) : null}
-            <dt className="col-4">{t("updatedAt")}</dt>
-            <dd className="col-8">
-              <DateTimeText label={t("updatedAt")} value={review.updatedAt} />
-            </dd>
-          </dl>
+          <ReviewSourceSummary
+            review={review}
+            sourceBranchLabelText={sourceBranchLabelText}
+            sourceCommitLabel={sourceCommitLabel}
+          />
         </div>
         <div className="col-lg-5">
           <div className="mb-3">
@@ -276,98 +165,16 @@ export function OverviewTabPanel({
               onChange={onReviewersChange}
             />
           </div>
-          {reviewFieldDefs.length ? (
-            <div className="mb-3">
-              <span className="form-label d-block">{t("reviewFields")}</span>
-              {reviewFieldDefs.map((field) => {
-                const draft = fieldValueDrafts[field.id] ?? "";
-                const saved = savedFieldValue(field.id);
-                const changed = draft.trim() !== saved;
-                const saving = savingFieldIds.includes(field.id);
-
-                return (
-                  <div className="mb-2" key={field.id}>
-                    <label
-                      className="form-label small mb-1"
-                      htmlFor={`review-field-${field.id}`}
-                    >
-                      {field.name}
-                    </label>
-                    <div className="input-group input-group-sm">
-                      {field.type === "TEXT" ? (
-                        <textarea
-                          className="form-control"
-                          id={`review-field-${field.id}`}
-                          disabled={!canEditReviewDetails}
-                          placeholder={fieldPlaceholder(field.type)}
-                          rows={3}
-                          value={draft}
-                          onChange={(event) =>
-                            onFieldDraftChange(field.id, event.target.value)
-                          }
-                        />
-                      ) : (
-                        <input
-                          className="form-control"
-                          id={`review-field-${field.id}`}
-                          disabled={!canEditReviewDetails}
-                          placeholder={fieldPlaceholder(field.type)}
-                          type={field.type === "NUMBER" ? "number" : "url"}
-                          value={draft}
-                          onChange={(event) =>
-                            onFieldDraftChange(field.id, event.target.value)
-                          }
-                        />
-                      )}
-                      {canEditReviewDetails && changed ? (
-                        <button
-                          className="btn btn-outline-success d-inline-flex align-items-center gap-1"
-                          type="button"
-                          disabled={saving}
-                          onClick={() => onSaveFieldValue(field.id)}
-                        >
-                          {saving ? (
-                            <span className="spinner-border spinner-border-sm" />
-                          ) : (
-                            <i className="bi bi-save" aria-hidden="true" />
-                          )}
-                          {t("save")}
-                        </button>
-                      ) : null}
-                    </div>
-                    {saved && field.type === "LINK" ? (
-                      <a
-                        className="small text-break d-inline-flex align-items-center gap-1 mt-1"
-                        href={saved}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        <i
-                          className="bi bi-box-arrow-up-right"
-                          aria-hidden="true"
-                        />
-                        {saved}
-                      </a>
-                    ) : null}
-                    {saved && field.type === "IMAGE" ? (
-                      <a
-                        className="d-block mt-1"
-                        href={saved}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        <img
-                          alt={field.name}
-                          className="review-field-image"
-                          src={saved}
-                        />
-                      </a>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
+          <ReviewFieldValues
+            fields={reviewFieldDefs}
+            canEdit={canEditReviewDetails}
+            drafts={fieldValueDrafts}
+            onDraftChange={onFieldDraftChange}
+            savedValue={savedFieldValue}
+            placeholder={fieldPlaceholder}
+            savingFieldIds={savingFieldIds}
+            onSave={onSaveFieldValue}
+          />
         </div>
       </div>
       {hasReviewChanges && canAddReviewers ? (

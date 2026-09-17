@@ -315,12 +315,6 @@ export type ReviewFileView = {
   createdAt: string;
 };
 
-export type FileViewedResponse = {
-  commitId: string;
-  filePath: string;
-  viewed: boolean;
-};
-
 export type ReviewCommitChangeKind =
   | "NEW"
   | "UNCHANGED"

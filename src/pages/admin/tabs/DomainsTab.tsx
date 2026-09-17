@@ -69,7 +69,7 @@ export function DomainsTab({
     setErrorMessage("");
     try {
       const settings = await apiRequest<GlobalSettings>(
-        "/v1/admin/settings",
+        "/admin/settings",
         idToken,
         {
           method: "PATCH",
@@ -98,7 +98,7 @@ export function DomainsTab({
     setBrandingError("");
     try {
       const settings = await apiRequest<GlobalSettings>(
-        "/v1/admin/settings",
+        "/admin/settings",
         idToken,
         {
           method: "PATCH",
@@ -127,7 +127,7 @@ export function DomainsTab({
     setSavingLogo(true);
     setBrandingError("");
     try {
-      await apiRequest<AppLogo>("/v1/admin/settings/logo", idToken, {
+      await apiRequest<AppLogo>("/admin/settings/logo", idToken, {
         method: "PATCH",
         body,
       });
@@ -151,7 +151,7 @@ export function DomainsTab({
     setSavingLogo(true);
     setBrandingError("");
     try {
-      await apiRequest("/v1/admin/settings/logo", idToken, {
+      await apiRequest("/admin/settings/logo", idToken, {
         method: "DELETE",
       });
       showToast(t("appLogoRemoved"));

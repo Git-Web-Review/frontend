@@ -1,0 +1,280 @@
+/* --------------------------------------------------- panels (.card) */
+
+.card {
+  --bs-card-border-color: var(--color-border);
+  --bs-card-border-radius: var(--radius-md);
+  --bs-card-inner-border-radius: var(--radius-md);
+  --bs-card-bg: var(--color-bg);
+  --bs-card-spacer-x: var(--space-4);
+  --bs-card-spacer-y: var(--space-4);
+  --bs-card-cap-padding-x: var(--space-3);
+  --bs-card-cap-padding-y: var(--space-2);
+  --bs-card-cap-bg: var(--color-surface);
+  --bs-card-cap-color: var(--color-text);
+  --bs-card-color: var(--color-text);
+  box-shadow: none;
+}
+
+.card-header {
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.card-header h3,
+.card-header h4,
+.card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.card-footer {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--space-3) var(--space-4);
+}
+
+/* AdminLTE's accent-card variants are gone; the only accent top border in
+   the design is on the login card. */
+.card.card-outline,
+.card.card-primary {
+  border-top-width: 1px;
+}
+
+/* ReviewHeader reuses `.card-header` as a bare layout box outside a card. */
+.card-header.border-bottom-0 {
+  padding: 0 0 var(--space-4);
+  border: 0;
+  background: transparent;
+}
+
+.card-header.p-0 {
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+}
+
+/* --------------------------------------------------------------- buttons */
+
+.btn {
+  --bs-btn-padding-x: 12px;
+  --bs-btn-padding-y: 6px;
+  --bs-btn-font-size: 13px;
+  --bs-btn-font-weight: 600;
+  --bs-btn-line-height: 1.35;
+  --bs-btn-border-radius: var(--radius-md);
+  --bs-btn-focus-shadow-rgb: var(--rgb-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.45;
+}
+
+.btn-sm {
+  --bs-btn-padding-x: 8px;
+  --bs-btn-padding-y: 4px;
+  --bs-btn-font-size: 12.5px;
+  --bs-btn-border-radius: var(--radius-md);
+}
+
+/* Solid primary. `.btn-success` is the app's save/confirm button — the
+   design gives those the same solid accent treatment. */
+.btn-primary,
+.btn-success {
+  --bs-btn-bg: var(--color-accent);
+  --bs-btn-border-color: var(--color-accent);
+  --bs-btn-color: var(--primary-btn-ink);
+  --bs-btn-hover-bg: var(--color-accent-600);
+  --bs-btn-hover-border-color: var(--color-accent-600);
+  --bs-btn-hover-color: var(--primary-btn-ink);
+  --bs-btn-active-bg: var(--color-accent-600);
+  --bs-btn-active-border-color: var(--color-accent-600);
+  --bs-btn-active-color: var(--primary-btn-ink);
+  --bs-btn-disabled-bg: var(--color-accent);
+  --bs-btn-disabled-border-color: var(--color-accent);
+  --bs-btn-disabled-color: var(--primary-btn-ink);
+}
+
+/* Secondary: page-coloured with a hairline border. */
+.btn-secondary,
+.btn-outline-secondary,
+.btn-outline-primary,
+.btn-outline-warning,
+.btn-outline-success,
+.btn-light {
+  --bs-btn-bg: var(--color-bg);
+  --bs-btn-border-color: var(--color-divider);
+  --bs-btn-color: var(--color-text);
+  --bs-btn-hover-bg: var(--color-surface);
+  --bs-btn-hover-border-color: var(--color-divider);
+  --bs-btn-hover-color: var(--color-text);
+  --bs-btn-active-bg: var(--color-surface);
+  --bs-btn-active-border-color: var(--color-divider);
+  --bs-btn-active-color: var(--color-text);
+  --bs-btn-disabled-bg: var(--color-bg);
+  --bs-btn-disabled-border-color: var(--color-divider);
+  --bs-btn-disabled-color: var(--color-text);
+}
+
+/* Destructive: never a red fill. */
+.btn-danger,
+.btn-outline-danger {
+  --bs-btn-bg: var(--color-bg);
+  --bs-btn-border-color: color-mix(in srgb, var(--color-del) 45%, transparent);
+  --bs-btn-color: var(--color-del);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--color-del) 8%, transparent);
+  --bs-btn-hover-border-color: color-mix(
+    in srgb,
+    var(--color-del) 45%,
+    transparent
+  );
+  --bs-btn-hover-color: var(--color-del);
+  --bs-btn-active-bg: color-mix(in srgb, var(--color-del) 14%, transparent);
+  --bs-btn-active-border-color: color-mix(
+    in srgb,
+    var(--color-del) 45%,
+    transparent
+  );
+  --bs-btn-active-color: var(--color-del);
+  --bs-btn-disabled-bg: var(--color-bg);
+  --bs-btn-disabled-border-color: color-mix(
+    in srgb,
+    var(--color-del) 45%,
+    transparent
+  );
+  --bs-btn-disabled-color: var(--color-del);
+}
+
+/* Ghost. */
+.btn-link {
+  --bs-btn-color: var(--color-accent);
+  --bs-btn-hover-color: var(--bs-link-hover-color);
+  --bs-btn-border-color: transparent;
+  --bs-btn-bg: transparent;
+  text-decoration: none;
+}
+
+.btn-link:hover {
+  text-decoration: none;
+}
+
+/* Inline icon buttons in panel headers: 26px, no chrome. */
+.btn.border-0.p-1 {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  padding: 0 !important;
+  place-items: center;
+  background: transparent;
+  color: var(--color-text);
+  opacity: 0.6;
+}
+
+.btn.border-0.p-1:hover {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  opacity: 1;
+}
+
+/* ----------------------------------------------------------------- forms */
+
+.form-label {
+  margin-bottom: 5px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.form-control,
+.form-select {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: 13px;
+  caret-color: var(--color-accent);
+}
+
+.form-control:hover,
+.form-select:hover {
+  border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
+}
+
+.form-control::placeholder {
+  color: var(--ink-3);
+  opacity: 0.75;
+}
+
+.form-control-sm,
+.form-select-sm {
+  min-height: 32px;
+  padding: 5px 8px;
+  font-size: 12.5px;
+}
+
+textarea.form-control {
+  min-height: 76px;
+  resize: vertical;
+}
+
+.font-monospace.form-control,
+.form-control.font-monospace {
+  font-size: 12.5px;
+}
+
+.input-group > .form-control,
+.input-group > .form-select {
+  min-height: 36px;
+}
+
+.input-group-text {
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--ink-2);
+  font-size: 15px;
+}
+
+.form-check-input {
+  border-color: var(--color-border);
+  background-color: var(--color-bg);
+}
+
+.form-check-input:checked {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+}
+
+.form-check-label {
+  font-size: 13.5px;
+}
+
+.invalid-feedback {
+  color: var(--color-del);
+  font-size: 12.5px;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: var(--color-del);
+  background-image: none;
+}
+
+.notification-preference-toggles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.notification-preference-toggles .form-check-label {
+  font-size: 13px;
+  font-weight: 400;
+}

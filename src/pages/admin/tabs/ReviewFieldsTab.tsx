@@ -56,7 +56,7 @@ export function ReviewFieldsTab() {
     setErrorMessage("");
     try {
       const fields = await apiRequest<ReviewField[]>(
-        "/v1/review-fields",
+        "/review-fields",
         idToken,
       );
       setReviewFields(fields);
@@ -102,7 +102,7 @@ export function ReviewFieldsTab() {
     setSavingReviewField(true);
     setErrorMessage("");
     try {
-      await apiRequest<ReviewField>("/v1/review-fields", idToken, {
+      await apiRequest<ReviewField>("/review-fields", idToken, {
         method: "POST",
         body: JSON.stringify({
           name: newReviewField.name.trim(),
@@ -136,7 +136,7 @@ export function ReviewFieldsTab() {
     setUpdatingReviewFieldId(fieldId);
     setErrorMessage("");
     try {
-      await apiRequest<ReviewField>(`/v1/review-fields/${fieldId}`, idToken, {
+      await apiRequest<ReviewField>(`/review-fields/${fieldId}`, idToken, {
         method: "PATCH",
         body: JSON.stringify({ name: draft.name.trim(), type: draft.type }),
       });
@@ -158,7 +158,7 @@ export function ReviewFieldsTab() {
     setErrorMessage("");
     try {
       await apiRequest<ReviewFieldDeletion>(
-        `/v1/review-fields/${fieldId}`,
+        `/review-fields/${fieldId}`,
         idToken,
         { method: "DELETE" },
       );

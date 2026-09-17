@@ -34,7 +34,7 @@ export function AdminsTab() {
     setLoading(true);
     setErrorMessage("");
     try {
-      setAdmins(await apiRequest<AdminGrant[]>("/v1/admin/admins", idToken));
+      setAdmins(await apiRequest<AdminGrant[]>("/admin/admins", idToken));
     } catch (error) {
       setErrorMessage(errorLabel(error));
     } finally {
@@ -55,7 +55,7 @@ export function AdminsTab() {
     setSaving(true);
     setErrorMessage("");
     try {
-      await apiRequest<AdminGrant>("/v1/admin/admins", idToken, {
+      await apiRequest<AdminGrant>("/admin/admins", idToken, {
         method: "POST",
         body: JSON.stringify({ email: normalizedEmail }),
       });
@@ -78,7 +78,7 @@ export function AdminsTab() {
     setErrorMessage("");
     try {
       await apiRequest<AdminRemoval>(
-        `/v1/admin/admins/${encodeURIComponent(adminEmail)}`,
+        `/admin/admins/${encodeURIComponent(adminEmail)}`,
         idToken,
         { method: "DELETE" },
       );

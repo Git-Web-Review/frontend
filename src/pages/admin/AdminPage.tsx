@@ -59,7 +59,7 @@ export function AdminPage() {
     setSettingsError("");
     try {
       setGlobalSettings(
-        await apiRequest<GlobalSettings>("/v1/admin/settings", idToken),
+        await apiRequest<GlobalSettings>("/admin/settings", idToken),
       );
     } catch (error) {
       setSettingsError(

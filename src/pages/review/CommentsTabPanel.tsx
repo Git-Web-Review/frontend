@@ -4,13 +4,15 @@ import { useI18n } from "../../i18n/I18nProvider";
 import type { ReviewUserSummary } from "../../types/api";
 import {
   CommentMessages,
-  CommentReplyForm,
+  type CommentMessageActions,
+} from "./CommentMessages";
+import { CommentReplyForm } from "./CommentReplyForm";
+import {
   CommentThreadControls,
   CommentThreadIdentityLine,
   CommentThreadSummary,
   CommentThreadTargetLine,
-  type CommentMessageActions,
-} from "./CommentThreadParts";
+} from "./CommentThreadHeader";
 import {
   commentThreadGroups,
   filteredCommentThreads,

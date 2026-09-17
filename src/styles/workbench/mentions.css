@@ -1,0 +1,50 @@
+/* Mentions: a name in a message, and the people offered after `@`. */
+
+.mention {
+  padding: 0 3px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent-700);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mention.is-me {
+  background: color-mix(in srgb, var(--color-warn) 18%, transparent);
+  color: var(--color-warn-ink);
+}
+
+.mention-suggestions {
+  position: fixed;
+  min-width: 16rem;
+  max-width: 24rem;
+  overflow-y: auto;
+  z-index: 1080;
+  font-family: var(--font-body);
+}
+
+.mention-suggestion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mention-suggestion .user-avatar {
+  flex: none;
+}
+
+.mention-suggestion-identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.mention-suggestion-email {
+  overflow: hidden;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-overflow: ellipsis;
+}

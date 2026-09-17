@@ -1,0 +1,121 @@
+/* ------------------------------------------------------ base & typography */
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  letter-spacing: -0.01em;
+}
+
+/* The hierarchy is size and weight, not typeface — and it caps at 600. */
+.fw-bold,
+.fw-bolder,
+strong,
+b,
+th {
+  font-weight: 600;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--bs-link-hover-color);
+  text-decoration: underline;
+}
+
+code,
+pre,
+.font-monospace {
+  font-family: var(--font-mono);
+}
+
+hr {
+  border-top: 1px solid var(--color-divider);
+  opacity: 1;
+}
+
+/* Figures, counts, dates and line numbers get tabular figures; prose does not. */
+.gwr-tabnum,
+.datetime-text,
+.review-status-badge,
+.review-meta-badge,
+.diff-line-number,
+.commit-summary-value,
+td .text-secondary,
+table td,
+table th {
+  font-feature-settings: "tnum";
+}
+
+.text-secondary,
+.text-body-secondary {
+  color: var(--ink-2) !important;
+}
+
+.small {
+  font-size: 13px;
+}
+
+/* Themed focus ring — never the browser default. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.btn:focus,
+.btn:focus-visible,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  box-shadow: none;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--color-accent);
+}
+
+.form-check-input {
+  accent-color: var(--color-accent);
+}
+
+/* ------------------------------------------------------------ animations */
+
+@keyframes gwr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner-border {
+  --bs-spinner-border-width: 2px;
+  --bs-spinner-animation-speed: 900ms;
+  --bs-spinner-animation-name: gwr-spin;
+  color: var(--color-accent);
+}
+
+.spinner-border-sm {
+  --bs-spinner-border-width: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner-border {
+    animation: none;
+  }
+}

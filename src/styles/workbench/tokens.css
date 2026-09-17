@@ -1,0 +1,208 @@
+/* ---------------------------------------------------------------- tokens */
+
+:root {
+  --font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
+    monospace;
+  --font-heading-weight: 600;
+
+  --color-bg: #ffffff;
+  --color-surface: #f6f7f9;
+  --color-text: #1f2328;
+  /* Hairlines *inside* a panel: table rules, list rows, section splits. */
+  --color-divider: #d9dde2;
+  /* Outline *around* a box: cards, modals, menus, toasts, form controls. In
+     light mode it matches the divider; in dark it is lifted clear of the
+     surface, which the divider tone alone sits too close to (1.5:1) to read
+     as an edge. Inputs share it so a field never looks fainter than the card
+     it sits in. */
+  --color-border: var(--color-divider);
+
+  --color-accent: #2f6fdb;
+  --color-accent-100: #eef4fe;
+  --color-accent-200: #d6e5fb;
+  --color-accent-300: #a9c6f2;
+  --color-accent-400: #6b9ce8;
+  --color-accent-500: #2f6fdb;
+  --color-accent-600: #2a60c0;
+  --color-accent-700: #1e4b98;
+  --color-accent-800: #173b78;
+  --color-accent-900: #112b57;
+
+  --color-accent-2: #5b45c9;
+  --color-accent-2-100: #efecfd;
+  --color-accent-2-200: #ded8fb;
+  --color-accent-2-700: #4433a0;
+  --color-accent-2-800: #33257e;
+
+  --color-neutral-100: #f0f2f5;
+  --color-neutral-200: #e3e7ec;
+  --color-neutral-300: #c9cfd6;
+  --color-neutral-600: #5b636c;
+  --color-neutral-800: #3b4148;
+  --color-neutral-900: #22262b;
+
+  --color-add: #1a7f37;
+  --color-del: #c9302c;
+  --color-warn: #9a6700;
+
+  /* Ink for the green / amber status pills. Darker than the base hue, which
+     alone only reaches ~4:1 on its own 16% tint — too thin for 10px caps. */
+  --color-add-ink: #106b28;
+  --color-warn-ink: #7a5200;
+
+  /* Contrast floor for secondary text — do not go lighter than these. */
+  --ink-2: color-mix(in srgb, var(--color-text) 72%, transparent);
+  --ink-3: color-mix(in srgb, var(--color-text) 68%, transparent);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 22px;
+  --space-8: 30px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+
+  --shadow-sm: 0 1px 2px rgba(27, 31, 36, 0.1);
+  --shadow-md: 0 3px 8px rgba(27, 31, 36, 0.12);
+  --shadow-lg: 0 10px 26px rgba(27, 31, 36, 0.16);
+
+  /* rgb triplets, for the rgba() call sites Bootstrap and main.css use */
+  --rgb-bg: 255, 255, 255;
+  --rgb-surface: 246, 247, 249;
+  --rgb-text: 31, 35, 40;
+  --rgb-accent: 47, 111, 219;
+  --rgb-accent-2: 91, 69, 201;
+  --rgb-neutral: 91, 99, 108;
+  --rgb-add: 26, 127, 55;
+  --rgb-del: 201, 48, 44;
+  --rgb-warn: 154, 103, 0;
+
+  --primary-btn-ink: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #1b1f24;
+  --color-surface: #242a31;
+  --color-text: #e6edf3;
+  --color-divider: #343b43;
+  --color-border: #525d6a;
+
+  --color-accent: #7aa7ec;
+  --color-accent-100: #1c2941;
+  --color-accent-200: #24375a;
+  --color-accent-300: #4d76b8;
+  --color-accent-400: #9dc0f4;
+  --color-accent-500: #7aa7ec;
+  --color-accent-600: #6b98de;
+  --color-accent-700: #cfe0fb;
+  --color-accent-800: #dce9fd;
+  --color-accent-900: #eaf2fe;
+
+  --color-accent-2: #a596ef;
+  --color-accent-2-100: #241f45;
+  --color-accent-2-200: #332c60;
+  --color-accent-2-700: #cfc6f8;
+  --color-accent-2-800: #ded7fb;
+
+  --color-neutral-100: #242a31;
+  --color-neutral-200: #2d343c;
+  --color-neutral-300: #454d56;
+  --color-neutral-600: #9aa4af;
+  --color-neutral-800: #e6edf3;
+  --color-neutral-900: #f2f6fa;
+
+  --color-add: #57ab5a;
+  --color-del: #e5837c;
+  --color-warn: #d29922;
+
+  --color-add-ink: #6fc275;
+  --color-warn-ink: #e3b341;
+
+  --rgb-bg: 27, 31, 36;
+  --rgb-surface: 36, 42, 49;
+  --rgb-text: 230, 237, 243;
+  --rgb-accent: 122, 167, 236;
+  --rgb-accent-2: 165, 150, 239;
+  --rgb-neutral: 154, 164, 175;
+  --rgb-add: 87, 171, 90;
+  --rgb-del: 229, 131, 124;
+  --rgb-warn: 210, 153, 34;
+
+  /* White would fail contrast on the lighter blue. */
+  --primary-btn-ink: #10161c;
+}
+
+/* --------------------------------------------------- bootstrap var bridge
+
+   `[data-bs-theme]` is matched as well as `:root` so that any subtree which
+   re-opens Bootstrap's theme scope gets these too. Same specificity as
+   Bootstrap's own block, and this sheet loads later, so these win.        */
+
+:root,
+[data-bs-theme] {
+  --bs-body-font-family: var(--font-body);
+  --bs-font-sans-serif: var(--font-body);
+  --bs-font-monospace: var(--font-mono);
+  --bs-body-font-size: 15px;
+  --bs-body-line-height: 1.5;
+
+  --bs-body-bg: var(--color-bg);
+  --bs-body-bg-rgb: var(--rgb-bg);
+  --bs-body-color: var(--color-text);
+  --bs-body-color-rgb: var(--rgb-text);
+  --bs-emphasis-color: var(--color-text);
+  --bs-secondary-color: var(--ink-2);
+  --bs-tertiary-color: var(--ink-3);
+  --bs-secondary-bg: var(--color-surface);
+  --bs-secondary-bg-rgb: var(--rgb-surface);
+  --bs-tertiary-bg: var(--color-surface);
+  --bs-tertiary-bg-rgb: var(--rgb-surface);
+
+  --bs-border-color: var(--color-border);
+  --bs-border-color-translucent: var(--color-divider);
+  --bs-border-width: 1px;
+  --bs-border-radius: var(--radius-md);
+  --bs-border-radius-sm: var(--radius-sm);
+  --bs-border-radius-lg: var(--radius-lg);
+  --bs-border-radius-xl: var(--radius-lg);
+  --bs-border-radius-2xl: var(--radius-lg);
+
+  --bs-primary: var(--color-accent);
+  --bs-primary-rgb: var(--rgb-accent);
+  --bs-primary-text-emphasis: var(--color-accent-700);
+  --bs-primary-bg-subtle: color-mix(in srgb, var(--color-accent) 5%, transparent);
+  --bs-primary-border-subtle: var(--color-accent-300);
+
+  --bs-secondary: var(--color-neutral-600);
+  --bs-secondary-rgb: var(--rgb-neutral);
+  --bs-success: var(--color-add);
+  --bs-success-rgb: var(--rgb-add);
+  --bs-danger: var(--color-del);
+  --bs-danger-rgb: var(--rgb-del);
+  --bs-warning: var(--color-warn);
+  --bs-warning-rgb: var(--rgb-warn);
+  --bs-info: var(--color-accent-2);
+  --bs-info-rgb: var(--rgb-accent-2);
+  --bs-orange: var(--color-warn);
+
+  --bs-link-color: var(--color-accent);
+  --bs-link-color-rgb: var(--rgb-accent);
+  --bs-link-hover-color: var(--color-accent-600);
+  --bs-code-color: var(--color-accent-700);
+
+  --bs-box-shadow: var(--shadow-md);
+  --bs-box-shadow-sm: var(--shadow-sm);
+  --bs-box-shadow-lg: var(--shadow-lg);
+}
+
+:root[data-theme="dark"],
+[data-theme="dark"] [data-bs-theme] {
+  --bs-link-hover-color: var(--color-accent-400);
+}

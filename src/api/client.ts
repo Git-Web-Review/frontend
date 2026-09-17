@@ -20,6 +20,9 @@ type RetriableConfig = InternalAxiosRequestConfig & {
   tokenRetried?: boolean;
 };
 
+// Backend API version, prefixed to every request path.
+const apiVersion = "v1";
+
 const httpClient = axios.create({ baseURL: backendUrl });
 
 // Expired/invalid Firebase token: force-refresh it and replay the
@@ -87,7 +90,7 @@ async function doRequest(
 
   try {
     return await httpClient.request({
-      url: path,
+      url: `/${apiVersion}${path}`,
       method: (init.method ?? "GET").toLowerCase(),
       headers,
       data: init.body ?? undefined,
@@ -114,5 +117,3 @@ export async function apiRequestBlob(
   const response = await doRequest(path, token, {}, "blob");
   return response.data as Blob;
 }
-
-export { backendUrl };

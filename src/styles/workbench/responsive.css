@@ -1,0 +1,57 @@
+/* ------------------------------------------------------------ responsive
+
+   The only breakpoint is 900px.                                          */
+
+@media (max-width: 900px) {
+  .app-content,
+  .app-content-header {
+    padding: var(--space-4);
+  }
+
+  .app-content-header {
+    padding-bottom: 0;
+  }
+
+  .app-header > .container-fluid {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .notification-dropdown {
+    width: calc(100vw - 32px);
+  }
+
+  .commit-summary-grid,
+  .notification-preference-toggles,
+  .diff-inline-comment-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-avatar-panel {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  /* The thread header stacks: the right cluster drops under the identity
+     column, the avatar stack stays where it is. */
+  .comment-thread-header {
+    flex-wrap: wrap;
+  }
+
+  .comment-thread-controls {
+    flex: 1 1 100%;
+    padding-left: 38px;
+  }
+
+  .comment-thread-header.is-resolved-row {
+    flex-wrap: nowrap;
+  }
+
+  .comment-thread-header.is-resolved-row .comment-thread-controls {
+    flex: none;
+    padding-left: 0;
+  }
+
+  .review-comment-body {
+    padding-left: var(--space-3);
+  }
+}

@@ -1,0 +1,45 @@
+/* Inline threads in the diff. */
+
+.diff-inline-comment-panel,
+.diff-inline-comments {
+  padding: var(--space-3);
+  border-left: 2px solid var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 6%, transparent);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+}
+
+/* Several threads can hang off one line. */
+.diff-inline-comments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Expanded, the body picks up right under the author line: 48px = 12px
+   padding + 26px avatar + 10px gap, the avatar serving as the gutter. */
+.diff-inline-comment .comment-thread-header[aria-expanded="true"] {
+  padding-bottom: 0;
+}
+
+.diff-inline-comment .review-comment-body {
+  padding: 6px var(--space-3) 10px 48px;
+}
+
+.diff-inline-comment .comment-thread-excerpt {
+  margin-top: 6px;
+}
+
+/* The header already names the author, so the root message needs no box. */
+.diff-inline-comment .review-comment-root {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.next-comment-button {
+  /* Below the modal layer, above the page. */
+  z-index: 30;
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+}

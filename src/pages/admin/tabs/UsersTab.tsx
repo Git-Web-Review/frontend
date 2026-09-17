@@ -46,7 +46,7 @@ export function UsersTab({ reloadKey, onEditUser }: UsersTabProps) {
     setLoadingUsers(true);
     setErrorMessage("");
     try {
-      setUsers(await apiRequest<CurrentUser[]>("/v1/admin/users", idToken));
+      setUsers(await apiRequest<CurrentUser[]>("/admin/users", idToken));
     } catch (error) {
       setErrorMessage(errorLabel(error));
     } finally {
@@ -72,7 +72,7 @@ export function UsersTab({ reloadKey, onEditUser }: UsersTabProps) {
     try {
       setPreview(
         await apiRequest<UserDeletionPreview>(
-          `/v1/admin/users/${user.id}/deletion-preview`,
+          `/admin/users/${user.id}/deletion-preview`,
           idToken,
         ),
       );
@@ -93,7 +93,7 @@ export function UsersTab({ reloadKey, onEditUser }: UsersTabProps) {
     setErrorMessage("");
     try {
       await apiRequest<UserRemoval>(
-        `/v1/admin/users/${pendingDeletion.id}`,
+        `/admin/users/${pendingDeletion.id}`,
         idToken,
         { method: "DELETE" },
       );

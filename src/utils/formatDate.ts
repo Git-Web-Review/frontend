@@ -16,10 +16,6 @@ export const formatDateTime = (value: string | Date | null | undefined) => {
   ).slice(-2)} ${padTwo(date.getHours())}:${padTwo(date.getMinutes())}`;
 };
 
-/** dd/mm/yy, locale-independent. */
-export const formatDate = (value: string | Date | null | undefined) =>
-  formatDateTime(value).split(" ")[0] ?? "";
-
 /** Locale used to spell dates out in words, per UI language. */
 const LONG_DATE_LOCALES: Record<string, string> = {
   fr: "fr-FR",

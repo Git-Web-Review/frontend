@@ -1,0 +1,260 @@
+/* --------------------------------------------------------- review detail */
+
+.review-header-title {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.review-workbench > .card,
+.review-workbench {
+  border: 0;
+  background: transparent;
+}
+
+.review-workbench .nav-link {
+  color: var(--color-text);
+}
+
+/* Overview: description panel and summary grid. */
+.review-readonly-value {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.review-description {
+  text-wrap: pretty;
+}
+
+.review-description-summary dt {
+  margin-bottom: var(--space-1);
+  color: var(--ink-3);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.review-description-summary dd {
+  margin-bottom: var(--space-4);
+  font-size: 13.5px;
+}
+
+/* Summary cells: a hairline row of icon + label + value, not tinted boxes. */
+.commit-summary-grid {
+  gap: 0;
+  border-top: 1px solid var(--color-divider);
+}
+
+.commit-summary-item {
+  min-height: 0;
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-divider);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.commit-summary-icon {
+  width: auto;
+  height: auto;
+  margin-top: 3px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: 16px;
+}
+
+.commit-summary-label {
+  color: var(--ink-3);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.commit-summary-value {
+  font-size: 13.5px;
+}
+
+/* Commit-log rule matches: pill anchors. */
+.commit-log-match-panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.commit-log-match-title {
+  margin-bottom: var(--space-2);
+  color: var(--color-accent-700);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.commit-log-match-chip {
+  gap: var(--space-1);
+  padding: 5px 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: var(--color-bg);
+  font-size: 12px;
+  box-shadow: none;
+}
+
+.commit-log-match-chip:hover {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.commit-log-match-label {
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.commit-log-match-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* Reviewer list and search. */
+.reviewer-selected-chip {
+  padding: 6px var(--space-2);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: 13.5px;
+}
+
+.reviewer-selected-chip {
+  border-radius: 999px;
+}
+
+/* Initials sit on the panel surface so the ring reads even without a photo. */
+.user-avatar {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-accent);
+  font-size: 10px;
+}
+
+.reviewer-selected-email {
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.reviewer-search-menu {
+  z-index: 40;
+}
+
+.reviewer-add-button {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+}
+
+/* Commit picker (Files tab toolbar). */
+.review-commit-nav-toggle {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.review-commit-nav-toggle:hover,
+.review-commit-nav-toggle[aria-expanded="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-bg);
+}
+
+.review-commit-nav-toggle .text-truncate {
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.review-commit-nav-item {
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.review-commit-nav-item:last-child {
+  border-bottom: 0;
+}
+
+.review-commit-nav .review-commit-nav-item.active {
+  background: color-mix(in srgb, var(--color-accent) 7%, transparent);
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.review-commit-nav .review-commit-nav-item.active .review-meta-badge {
+  background: var(--color-neutral-100) !important;
+  border-color: var(--color-divider);
+  color: var(--color-neutral-800) !important;
+}
+
+.review-commit-nav .review-commit-nav-item.active .text-success {
+  color: var(--color-add) !important;
+}
+
+.review-commit-nav-menu {
+  z-index: 40;
+  box-shadow: var(--shadow-lg);
+}
+
+.review-action-group .review-action-menu {
+  z-index: 40;
+  min-width: 250px;
+  margin-top: var(--space-1);
+}
+
+.review-action-menu .dropdown-item {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--color-divider);
+  white-space: normal;
+}
+
+.review-action-menu .dropdown-item:last-child {
+  border-bottom: 0;
+}
+
+.review-action-menu .dropdown-item i {
+  margin-top: 3px;
+  color: var(--color-accent);
+  font-size: 15px;
+}
+
+.review-action-menu .dropdown-item .small {
+  color: var(--ink-2);
+  font-size: 11.5px;
+}
+
+/* Commit log <details>. */
+.review-log-card > summary {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.review-log-body {
+  padding: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.commit-log-link {
+  font-weight: 600;
+}

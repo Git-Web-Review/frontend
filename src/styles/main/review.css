@@ -1,0 +1,182 @@
+.review-workbench .nav-link {
+  color: var(--bs-body-color);
+}
+
+.review-header-title {
+  display: block;
+  float: none;
+  margin-bottom: 0.5rem;
+  line-height: 1.25;
+}
+
+.review-list-item {
+  position: relative;
+  text-align: start;
+}
+
+.review-status-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Short date stamp: the full instant, spelled out, lives in its title. */
+.datetime-text {
+  cursor: help;
+}
+
+.review-meta-badge {
+  color: var(--bs-body-color);
+  background-color: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color);
+}
+
+.commit-selection-list {
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.commit-selection-item {
+  cursor: pointer;
+}
+
+.review-commit-nav .review-commit-nav-item.active .review-meta-badge {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.review-commit-nav .review-commit-nav-item.active .text-success {
+  color: #fff !important;
+}
+
+.review-commit-nav .min-w-0 {
+  min-width: 0;
+}
+
+.review-commit-nav-menu {
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.review-action-group {
+  position: relative;
+}
+
+.review-action-group .review-action-menu {
+  top: 100%;
+  right: 0;
+  left: auto;
+  margin-top: 0.125rem;
+}
+
+.review-actions-toggle {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  color: var(--bs-secondary-color);
+  text-decoration: none;
+  place-items: center;
+}
+
+.review-actions-toggle:hover,
+.review-actions-toggle:focus {
+  color: var(--bs-body-color);
+  text-decoration: none;
+}
+
+.review-actions-menu {
+  display: block;
+  top: 100%;
+  right: 0;
+  left: auto;
+  min-width: 11rem;
+  z-index: 1080;
+}
+
+.disabled-button-tooltip {
+  display: inline-flex;
+}
+
+.review-description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  white-space: pre-wrap;
+}
+
+.review-description.is-expanded {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+
+.description-ellipsis-button {
+  display: inline;
+  padding: 0 0.125rem;
+  color: var(--bs-link-color);
+  background: transparent;
+  border: 0;
+  font: inherit;
+}
+
+.description-ellipsis-button:hover,
+.description-ellipsis-button:focus {
+  color: var(--bs-link-hover-color);
+  text-decoration: underline;
+}
+
+.review-description-summary dt {
+  margin-bottom: 0.25rem;
+}
+
+.review-description-summary dd {
+  margin-bottom: 1rem;
+}
+
+.review-description-summary dd:last-child {
+  margin-bottom: 0;
+}
+
+.review-readonly-value {
+  display: block;
+  padding: 0.625rem 0.75rem;
+  background: var(--bs-tertiary-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.375rem;
+}
+
+.review-readonly-value .review-description {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+}
+
+.review-log-body {
+  max-height: 420px;
+  overflow: auto;
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+}
+
+.review-log-card > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.review-log-card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.review-log-chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.review-log-card:not([open]) .review-log-chevron {
+  transform: rotate(-90deg);
+}

@@ -1,0 +1,334 @@
+/* ----------------------------------------------------------- app shell */
+
+.app-wrapper {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* -- top bar -- */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 0;
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  box-shadow: none;
+}
+
+.app-header > .container-fluid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+}
+
+.app-header-end {
+  display: flex;
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+/* -- brand, flush with the page title below -- */
+
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: var(--space-2);
+  margin-left: calc(var(--space-2) * -1);
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/*
+ * Customer logo: never taller than the top bar and never wider than half the
+ * viewport, whatever the uploaded file measures.
+ */
+.app-brand-logo {
+  flex: 0 0 auto;
+  max-width: 50vw;
+  height: auto;
+  max-height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
+.app-brand-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-brand:hover,
+.app-brand:focus-visible {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* -- account menu -- */
+
+.account-menu {
+  position: relative;
+}
+
+.account-menu-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px 3px 3px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.account-menu-toggle:hover,
+.account-menu-toggle[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.account-avatar {
+  display: grid;
+  inline-size: 30px;
+  block-size: 30px;
+  min-inline-size: 30px;
+  min-block-size: 30px;
+  max-inline-size: 30px;
+  max-block-size: 30px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  background: var(--color-bg);
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.account-avatar img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+  object-position: center;
+}
+
+.account-menu-caret {
+  color: var(--ink-2);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.account-menu-toggle[aria-expanded="true"] .account-menu-caret {
+  transform: rotate(180deg);
+}
+
+.account-dropdown {
+  display: flex;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: auto;
+  z-index: 50;
+  min-width: 232px;
+  max-width: calc(100vw - 32px);
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+}
+
+.account-dropdown-header {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--space-3);
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-surface);
+}
+
+.account-dropdown-name {
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-dropdown-host {
+  overflow: hidden;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-dropdown-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: start;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.account-dropdown-item:hover,
+.account-dropdown-item:focus-visible {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.account-dropdown-item i {
+  flex: none;
+  width: 16px;
+  font-size: 15px;
+  line-height: 1;
+  text-align: center;
+}
+
+.account-dropdown > .dropdown-divider {
+  margin: 0;
+}
+
+.app-header .navbar-nav {
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.app-header .navbar-nav .nav-link {
+  padding: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.app-header .navbar-nav .nav-link.text-secondary {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* Icon buttons: 34px square in the top bar. */
+.app-header .nav-link.btn-link {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 17px;
+  text-decoration: none;
+}
+
+.app-header .nav-link.btn-link:hover,
+.app-header .nav-link.btn-link[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-text);
+}
+
+/* Unread notification count: a filled pill pinned to the bell's top-right
+   corner. The ring is painted in the header ground so the badge stays legible
+   where it overlaps the glyph. */
+.navbar-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  display: inline-flex;
+  min-width: 17px;
+  height: 17px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-bg);
+  color: var(--primary-btn-ink);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+  font-feature-settings: "tnum";
+  pointer-events: none;
+}
+
+/* -- main -- */
+
+.app-main {
+  min-width: 0;
+  background: var(--color-bg);
+}
+
+.app-content-header {
+  padding: var(--space-6) var(--space-6) 0;
+}
+
+.app-content-header .row {
+  --bs-gutter-x: 0;
+}
+
+.app-content-header h3 {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.app-kicker {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--color-accent);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.app-content {
+  padding: var(--space-6);
+}
+
+.app-content > .container-fluid,
+.app-content-header > .container-fluid {
+  padding: 0;
+  margin: 0;
+}
+
+/* Every screen spans the full width of the shell. */
+.app-main .app-content > .container-fluid,
+.app-main .app-content-header > .container-fluid {
+  width: 100%;
+  max-width: none;
+}

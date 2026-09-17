@@ -1,0 +1,246 @@
+/* Target chip: basename plus line, full path in the tooltip. */
+.comment-thread-target {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 1px var(--space-2);
+  overflow: hidden;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comment-thread-target i {
+  flex: none;
+  color: var(--color-accent);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.comment-thread-target.is-link {
+  color: inherit;
+  cursor: pointer;
+}
+
+.comment-thread-target.is-link:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-700);
+  text-decoration: underline;
+}
+
+.comment-thread-target .comment-thread-target-go {
+  margin-inline-start: -2px;
+  font-size: 15px;
+  transition: transform 120ms ease;
+}
+
+.comment-thread-target.is-link:hover .comment-thread-target-go {
+  transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comment-thread-target .comment-thread-target-go {
+    transition: none;
+  }
+}
+
+.comment-thread-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.comment-thread-link:hover {
+  color: var(--color-accent-700);
+  text-decoration: underline;
+}
+
+/* Collapsed body: two-line excerpt then the participants footer. */
+
+/* Markdown blocks go inline so the two-line clamp has line boxes to cut. */
+.comment-thread-excerpt > * {
+  display: inline;
+  margin: 0;
+}
+
+.comment-thread-excerpt {
+  display: -webkit-box;
+  margin-top: var(--space-2);
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 14px;
+  text-wrap: pretty;
+}
+
+.comment-thread-header.is-resolved-row .comment-thread-excerpt {
+  flex: 1 1 auto;
+  display: block;
+  min-width: 0;
+  margin-top: 0;
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.is-done .comment-thread-excerpt {
+  color: var(--ink-2);
+}
+
+.comment-thread-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  color: var(--ink-2);
+  font-size: 11.5px;
+  font-feature-settings: "tnum";
+}
+
+.is-done .comment-thread-footer {
+  color: var(--ink-3);
+}
+
+.comment-thread-header.is-resolved-row .comment-thread-footer {
+  flex: none;
+  margin-top: 0;
+  color: var(--ink-3);
+}
+
+.comment-avatar-stack {
+  display: flex;
+  align-items: center;
+}
+
+.comment-avatar-stack .user-avatar {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 0 0 1px var(--color-border);
+  font-size: 9px;
+}
+
+.comment-avatar-stack > * + * {
+  margin-left: -7px;
+}
+
+.comment-avatar-more {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 2px solid var(--color-bg);
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: 0 0 0 1px var(--color-border);
+  color: var(--ink-2);
+  font-size: 9px;
+  font-weight: 700;
+  font-feature-settings: "tnum";
+}
+
+/* Right-hand cluster: reply count, done, chevron. */
+
+.comment-thread-controls {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.comment-reply-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--color-accent-200);
+  color: var(--color-accent-800);
+  font-size: 11px;
+  font-weight: 600;
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+
+.comment-reply-badge i {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.comment-done-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px var(--space-2);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-add-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.comment-done-button:hover {
+  border-color: color-mix(in srgb, var(--color-add) 55%, transparent);
+  color: var(--color-add-ink);
+}
+
+.comment-done-button i,
+.comment-done-button .spinner-border-sm {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Reopening a resolved thread is a quiet link, not a button. */
+.comment-done-button.is-reopen {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-accent);
+}
+
+.comment-done-button.is-reopen:hover {
+  border-color: transparent;
+  color: var(--color-accent-700);
+  text-decoration: underline;
+}
+
+.comment-thread-toggle {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.comment-thread-toggle i {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.comment-thread-toggle.is-expanded {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent);
+}
+
+.comment-thread-toggle:hover {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent);
+}

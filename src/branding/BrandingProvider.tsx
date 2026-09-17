@@ -37,7 +37,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      setBranding(await apiRequest<Branding>("/v1/branding", idToken));
+      setBranding(await apiRequest<Branding>("/branding", idToken));
     } catch {
       setBranding(null);
     }
@@ -60,7 +60,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const blob = await apiRequestBlob("/v1/branding/logo", idToken);
+        const blob = await apiRequestBlob("/branding/logo", idToken);
         const nextObjectUrl = URL.createObjectURL(blob);
         if (cancelled) {
           URL.revokeObjectURL(nextObjectUrl);

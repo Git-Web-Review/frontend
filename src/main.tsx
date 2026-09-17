@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import { BrandingProvider } from "./branding/BrandingProvider";
 import { I18nProvider } from "./i18n/I18nProvider";
+import { ConfirmProvider } from "./layout/ConfirmProvider";
 import { ThemeProvider } from "./layout/ThemeProvider";
 import { ToastProvider } from "./layout/ToastProvider";
 import { App } from "./App";
@@ -21,11 +22,13 @@ createRoot(document.getElementById("root")!).render(
     <ThemeProvider>
       <I18nProvider>
         <ToastProvider>
-          <AuthProvider>
-            <BrandingProvider>
-              <RouterProvider router={router} />
-            </BrandingProvider>
-          </AuthProvider>
+          <ConfirmProvider>
+            <AuthProvider>
+              <BrandingProvider>
+                <RouterProvider router={router} />
+              </BrandingProvider>
+            </AuthProvider>
+          </ConfirmProvider>
         </ToastProvider>
       </I18nProvider>
     </ThemeProvider>
