@@ -196,6 +196,7 @@ export type GitwebUrlRule = {
   label: string | null;
   regex: string;
   remoteTemplate: string | null;
+  webTemplate: string | null;
   linkKind: GitwebUrlRuleKind;
   priority: number;
   enabled: boolean;
@@ -347,6 +348,7 @@ export type ReviewDiff = {
 export type ReviewItem = {
   id: string;
   gitwebUrl: string;
+  gitwebProjectUrl: string | null;
   title: string | null;
   description: string | null;
   status: ReviewStatus;

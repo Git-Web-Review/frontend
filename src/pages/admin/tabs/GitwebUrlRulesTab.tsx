@@ -14,6 +14,7 @@ type GitwebUrlRuleDraft = {
   label: string;
   regex: string;
   remoteTemplate: string;
+  webTemplate: string;
   linkKind: GitwebUrlRuleKind;
   priority: string;
   enabled: boolean;
@@ -25,6 +26,7 @@ const emptyGitwebUrlRuleDraft: GitwebUrlRuleDraft = {
   label: "",
   regex: "",
   remoteTemplate: "",
+  webTemplate: "",
   linkKind: "AUTO",
   priority: "100",
   enabled: true,
@@ -72,6 +74,7 @@ export function GitwebUrlRulesTab() {
           label: rule.label ?? "",
           regex: rule.regex,
           remoteTemplate: rule.remoteTemplate ?? "",
+          webTemplate: rule.webTemplate ?? "",
           linkKind: rule.linkKind,
           priority: String(rule.priority),
           enabled: rule.enabled,
@@ -112,6 +115,7 @@ export function GitwebUrlRulesTab() {
     (draft.label !== (rule.label ?? "") ||
       draft.regex !== rule.regex ||
       draft.remoteTemplate !== (rule.remoteTemplate ?? "") ||
+      draft.webTemplate !== (rule.webTemplate ?? "") ||
       draft.linkKind !== rule.linkKind ||
       parseGitwebUrlRulePriority(draft.priority) !== rule.priority ||
       draft.enabled !== rule.enabled);
@@ -141,6 +145,7 @@ export function GitwebUrlRulesTab() {
           label: newGitwebUrlRule.label.trim() || null,
           regex: newGitwebUrlRule.regex.trim(),
           remoteTemplate: newGitwebUrlRule.remoteTemplate.trim() || null,
+          webTemplate: newGitwebUrlRule.webTemplate.trim() || null,
           linkKind: newGitwebUrlRule.linkKind,
           priority,
           enabled: newGitwebUrlRule.enabled,
@@ -186,6 +191,7 @@ export function GitwebUrlRulesTab() {
             label: draft.label.trim() || null,
             regex: draft.regex.trim(),
             remoteTemplate: draft.remoteTemplate.trim() || null,
+            webTemplate: draft.webTemplate.trim() || null,
             linkKind: draft.linkKind,
             priority,
             enabled: draft.enabled,
@@ -256,7 +262,7 @@ export function GitwebUrlRulesTab() {
               }
             />
           </div>
-          <div className="col-lg-4">
+          <div className="col-lg-3">
             <label className="form-label" htmlFor="new-gitweb-url-rule-regex">
               {t("ruleRegex")}
             </label>
@@ -273,7 +279,7 @@ export function GitwebUrlRulesTab() {
               }
             />
           </div>
-          <div className="col-lg-3">
+          <div className="col-lg-2">
             <label
               className="form-label"
               htmlFor="new-gitweb-url-rule-template"
@@ -289,6 +295,26 @@ export function GitwebUrlRulesTab() {
                 setNewGitwebUrlRule((current) => ({
                   ...current,
                   remoteTemplate: event.target.value,
+                }))
+              }
+            />
+          </div>
+          <div className="col-lg-2">
+            <label
+              className="form-label"
+              htmlFor="new-gitweb-url-rule-web-template"
+            >
+              {t("ruleWebTemplate")}
+            </label>
+            <input
+              className="form-control font-monospace"
+              id="new-gitweb-url-rule-web-template"
+              placeholder="http://${HOSTNAME}/git/?p=${USERNAME}/${PROJECT}.git"
+              value={newGitwebUrlRule.webTemplate}
+              onChange={(event) =>
+                setNewGitwebUrlRule((current) => ({
+                  ...current,
+                  webTemplate: event.target.value,
                 }))
               }
             />
@@ -385,6 +411,7 @@ export function GitwebUrlRulesTab() {
                   <th>{t("ruleLabel")}</th>
                   <th>{t("ruleRegex")}</th>
                   <th>{t("ruleRemoteTemplate")}</th>
+                  <th>{t("ruleWebTemplate")}</th>
                   <th>{t("ruleLinkKind")}</th>
                   <th>{t("rulePriority")}</th>
                   <th>{t("enabled")}</th>
@@ -430,6 +457,17 @@ export function GitwebUrlRulesTab() {
                           onChange={(event) =>
                             updateGitwebUrlRuleDraft(rule.id, {
                               remoteTemplate: event.target.value,
+                            })
+                          }
+                        />
+                      </td>
+                      <td className="link-rule-cell">
+                        <input
+                          className="form-control form-control-sm font-monospace"
+                          value={draft?.webTemplate ?? ""}
+                          onChange={(event) =>
+                            updateGitwebUrlRuleDraft(rule.id, {
+                              webTemplate: event.target.value,
                             })
                           }
                         />

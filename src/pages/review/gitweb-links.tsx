@@ -4,8 +4,17 @@ import { shortHostname } from "./review-utils";
 
 export type GitwebLinkSource = {
   gitwebUrl: string;
+  // The gitweb project page resolved by the backend when the review URL is
+  // not a gitweb page itself (e.g. a git:// remote).
+  gitwebProjectUrl?: string | null;
   sourceCommit: string | null;
 };
+
+/** Where "open in git web" goes: a git:// URL does not open in a browser. */
+export const gitwebBrowseUrl = (source: GitwebLinkSource) =>
+  /^https?:\/\//i.test(source.gitwebUrl)
+    ? source.gitwebUrl
+    : (source.gitwebProjectUrl ?? source.gitwebUrl);
 
 export const gitwebParams = (gitwebUrl: string) => {
   const params = new Map<string, string>();
@@ -74,13 +83,14 @@ export const diffMetaLink = (
   );
 
 export const gitwebTemplateVariables = (source: GitwebLinkSource) => {
+  const projectPageUrl = source.gitwebProjectUrl ?? source.gitwebUrl;
   const params = gitwebParams(source.gitwebUrl);
-  const project = params.get("p") ?? "";
+  const project = gitwebParams(projectPageUrl).get("p") ?? "";
   const [username = "", rawComponent = ""] = project.split("/");
   const component = rawComponent.replace(/\.git$/, "");
 
   try {
-    const url = new URL(source.gitwebUrl);
+    const url = new URL(projectPageUrl);
     return {
       USERNAME: username,
       HOSTNAME: shortHostname(url.hostname),

@@ -11,7 +11,7 @@ import type {
   ReviewItem,
   ReviewUserSummary,
 } from "../../types/api";
-import { linkedCommitLog } from "./gitweb-links";
+import { gitwebBrowseUrl, linkedCommitLog } from "./gitweb-links";
 import type { CommentTarget, ReviewCommentThread } from "./review-utils";
 
 function CollapsibleDescription({
@@ -233,7 +233,7 @@ export function OverviewTabPanel({
           <dl className="row mb-0 small">
             <dt className="col-4">{t("gitwebUrl")}</dt>
             <dd className="col-8 text-break">
-              <a href={review.gitwebUrl} rel="noreferrer" target="_blank">
+              <a href={gitwebBrowseUrl(review)} rel="noreferrer" target="_blank">
                 {review.gitwebUrl}
               </a>
             </dd>

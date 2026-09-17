@@ -3,6 +3,7 @@ import { DateTimeText } from "../../components/DateTimeText";
 import { useI18n } from "../../i18n/I18nProvider";
 import { reviewStatusBadgeClass } from "../../utils/reviewStatus";
 import type { ReviewCommit, ReviewItem } from "../../types/api";
+import { gitwebBrowseUrl } from "./gitweb-links";
 import { ReviewerActionSplit } from "./ReviewerActionSplit";
 import type { ReviewTab } from "./review-utils";
 
@@ -83,7 +84,7 @@ export function ReviewHeader({
         <div className="d-flex flex-wrap gap-2">
           <a
             className="btn btn-outline-primary d-inline-flex align-items-center"
-            href={review.gitwebUrl}
+            href={gitwebBrowseUrl(review)}
             rel="noreferrer"
             target="_blank"
           >

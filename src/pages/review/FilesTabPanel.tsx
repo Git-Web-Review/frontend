@@ -357,7 +357,7 @@ export function FilesTabPanel({
       return (
         <DiffFileCard
           key={`${commit.hash}-${file.path}`}
-          gitwebUrl={review.gitwebUrl}
+          gitwebUrl={review.gitwebProjectUrl ?? review.gitwebUrl}
           commit={commit}
           file={file}
           expanded={fileExpanded}

@@ -841,32 +841,11 @@ button.diff-line-number-link:hover {
   margin-top: 0.5rem;
 }
 
-.diff-inline-comment-preview,
-.diff-inline-comment {
+.diff-inline-comment-preview {
   padding: 0.75rem;
   border: 1px solid var(--bs-border-color);
   border-radius: 0.375rem;
   background: var(--bs-body-bg);
-}
-
-.diff-inline-comment + .diff-inline-comment {
-  margin-top: 0.5rem;
-}
-
-.diff-inline-comment.is-done,
-.review-comment-card.is-done {
-  border-color: rgba(var(--bs-success-rgb), 0.45);
-  background: rgba(var(--bs-success-rgb), 0.06);
-}
-
-.diff-inline-comment-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  color: var(--bs-secondary-color);
-  font-size: 0.8125rem;
 }
 
 .comment-thread-header {
@@ -878,47 +857,8 @@ button.diff-line-number-link:hover {
   outline-offset: 2px;
 }
 
-.comment-done-meta {
-  color: var(--bs-secondary-color);
-  font-size: 0.8125rem;
-}
-
-.review-comment-messages {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.review-comment-message {
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--bs-border-color-translucent);
-}
-
-.review-comment-message:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
-}
-
 .review-comment-edit {
   margin-top: 0.5rem;
-}
-
-.review-comment-message-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.375rem;
-  color: var(--bs-secondary-color);
-  font-size: 0.8125rem;
-}
-
-.review-comment-message-meta.is-compact {
-  justify-content: flex-end;
-  margin-bottom: 0.125rem;
-}
-
-.review-comment-reply {
-  margin-top: 0.75rem;
 }
 
 .markdown-body {
@@ -947,10 +887,6 @@ button.diff-line-number-link:hover {
 .markdown-body pre code {
   padding: 0;
   background: transparent;
-}
-
-.review-comment-body {
-  white-space: pre-wrap;
 }
 
 @media (max-width: 575.98px) {

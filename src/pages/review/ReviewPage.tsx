@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/AuthProvider";
 import { ReviewerSearchSelect } from "../../components/ReviewerSearchSelect";
-import { DateTimeText } from "../../components/DateTimeText";
+import { UserAvatar } from "../../components/UserAvatar";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useToast } from "../../layout/ToastProvider";
 import {
@@ -35,15 +35,21 @@ import { linkedCommitLog } from "./gitweb-links";
 import { ReviewHeader } from "./ReviewHeader";
 import { MarkdownView } from "./MarkdownView";
 import {
-  CommentDoneMeta,
   CommentMessages,
   CommentReplyForm,
   CommentThreadControls,
+  CommentThreadIdentityLine,
+  CommentThreadSummary,
   type CommentMessageActions,
 } from "./CommentThreadParts";
 import {
   notificationMatchesReview,
+  threadNewReplyCount,
+  threadReplies,
+  threadRootMessage,
   type CommentTarget,
+  type DiscussionFilter,
+  type DiscussionSort,
   type ReviewCommentThread,
   type ReviewTab,
 } from "./review-utils";
@@ -91,10 +97,19 @@ export function ReviewPage() {
   const [expandedDiscussionIds, setExpandedDiscussionIds] = useState<string[]>(
     [],
   );
+  const [expandedRepliesIds, setExpandedRepliesIds] = useState<string[]>([]);
+  const [discussionFilter, setDiscussionFilter] =
+    useState<DiscussionFilter>("open");
+  const [discussionSort, setDiscussionSort] =
+    useState<DiscussionSort>("recent");
   const [pendingDiffAnchor, setPendingDiffAnchor] = useState<string | null>(
     null,
   );
   const handledDiffLocationRef = useRef<string | null>(null);
+  // Replies posted since the previous visit get a banner in their thread.
+  // The stamp lives in this browser only; there is no server state for it.
+  const [lastSeenAt, setLastSeenAt] = useState<string | null>(null);
+  const stampedReviewIdRef = useRef<string | null>(null);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [savingReplyCommentIds, setSavingReplyCommentIds] = useState<string[]>(
     [],
@@ -381,6 +396,23 @@ export function ReviewPage() {
     void loadReviewFieldDefs();
     void loadReviewComments();
   }, [idToken, reviewId]);
+
+  useEffect(() => {
+    // StrictMode runs this twice; stamping twice would erase the previous
+    // visit before it is read.
+    if (!reviewId || stampedReviewIdRef.current === reviewId) {
+      return;
+    }
+    stampedReviewIdRef.current = reviewId;
+
+    const storageKey = `review-last-seen:${reviewId}`;
+    try {
+      setLastSeenAt(localStorage.getItem(storageKey));
+      localStorage.setItem(storageKey, new Date().toISOString());
+    } catch {
+      setLastSeenAt(null);
+    }
+  }, [reviewId]);
 
   useEffect(() => {
     if (!review) {
@@ -975,6 +1007,52 @@ export function ReviewPage() {
   const isDiscussionExpanded = (thread: ReviewCommentThread) =>
     expandedDiscussionIds.includes(thread.commentId);
 
+  const areRepliesExpanded = (thread: ReviewCommentThread) =>
+    expandedRepliesIds.includes(thread.commentId);
+
+  const toggleRepliesExpanded = (thread: ReviewCommentThread) => {
+    setExpandedRepliesIds((current) =>
+      current.includes(thread.commentId)
+        ? current.filter((commentId) => commentId !== thread.commentId)
+        : [...current, thread.commentId],
+    );
+  };
+
+  const newReplyCount = (thread: ReviewCommentThread) =>
+    threadNewReplyCount(thread, lastSeenAt, currentUser?.id);
+
+  // The composer shows the current user's avatar, which `UserAvatar` only
+  // knows how to draw from a review participant summary.
+  const currentUserSummary: ReviewUserSummary | null = currentUser
+    ? {
+        id: currentUser.id,
+        email: currentUser.email,
+        hostname: currentUser.hostname,
+        nickname: currentUser.settings?.nickname ?? null,
+        mailNotificationsEnabled:
+          currentUser.settings?.mailNotificationsEnabled ?? false,
+        ircNotificationsEnabled:
+          currentUser.settings?.ircNotificationsEnabled ?? false,
+        webhookNotificationsEnabled:
+          currentUser.settings?.webhookNotificationsEnabled ?? false,
+        hasProfileImage: !!currentUser.profileImage,
+        profileImageUrl: currentUser.settings?.profileImageUrl ?? null,
+      }
+    : null;
+
+  const commentRoleLabel = (user: ReviewUserSummary) => {
+    if (!review) {
+      return null;
+    }
+    if (user.id === review.ownerId) {
+      return t("commentRoleAuthor");
+    }
+    if (review.reviewers.some((reviewer) => reviewer.userId === user.id)) {
+      return t("commentRoleReviewer");
+    }
+    return null;
+  };
+
   const toggleDiscussionExpanded = (thread: ReviewCommentThread) => {
     setExpandedDiscussionIds((current) =>
       current.includes(thread.commentId)
@@ -1122,11 +1200,16 @@ export function ReviewPage() {
     }
   };
 
-  const addCommentReply = async (thread: ReviewCommentThread) => {
+  const addCommentReply = async (
+    thread: ReviewCommentThread,
+    { resolve = false }: { resolve?: boolean } = {},
+  ) => {
     const message = (replyDrafts[thread.commentId] ?? "").trim();
     if (!idToken || !review || !message) {
       return;
     }
+
+    let replied = false;
 
     setSavingReplyCommentIds((current) => [...current, thread.commentId]);
     setErrorMessage("");
@@ -1141,7 +1224,10 @@ export function ReviewPage() {
       );
       replaceCommentThread(comments);
       setReplyDrafts((current) => ({ ...current, [thread.commentId]: "" }));
-      await refreshReviewSnapshot();
+      replied = true;
+      if (!resolve) {
+        await refreshReviewSnapshot();
+      }
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : t("backendError"),
@@ -1150,6 +1236,11 @@ export function ReviewPage() {
       setSavingReplyCommentIds((current) =>
         current.filter((commentId) => commentId !== thread.commentId),
       );
+    }
+
+    // "Reply and resolve": the PATCH only goes out once the reply landed.
+    if (replied && resolve) {
+      await updateCommentDone(thread, true);
     }
   };
 
@@ -1207,6 +1298,8 @@ export function ReviewPage() {
 
   const commentMessageActions: CommentMessageActions = {
     renderUserLabel,
+    idToken,
+    roleLabel: commentRoleLabel,
     editingCommentId,
     editCommentDraft,
     savingEditCommentIds,
@@ -1235,62 +1328,127 @@ export function ReviewPage() {
     />
   );
 
+  const renderReplyForm = (thread: ReviewCommentThread, compact: boolean) => (
+    <CommentReplyForm
+      draft={replyDrafts[thread.commentId] ?? ""}
+      saving={savingReplyCommentIds.includes(thread.commentId)}
+      currentUser={currentUserSummary}
+      idToken={idToken}
+      compact={compact}
+      canResolve={canUpdateCommentDone && !thread.done}
+      onDraftChange={(value) =>
+        setReplyDrafts((current) => ({
+          ...current,
+          [thread.commentId]: value,
+        }))
+      }
+      onSubmit={() => void addCommentReply(thread)}
+      onSubmitAndResolve={() => void addCommentReply(thread, { resolve: true })}
+    />
+  );
+
+  // Same anatomy as the Discussion tab, tighter. A resolved thread folds
+  // into a single line until it is opened again.
   const renderInlineCommentThreads = (threads: ReviewCommentThread[]) =>
     threads.length ? (
       <div className="diff-inline-comments">
-        {threads.map((thread) => (
-          <div
-            className={`diff-inline-comment${thread.done ? " is-done" : ""}`}
-            key={thread.commentId}
-          >
+        {threads.map((thread) => {
+          const expanded = isCommentThreadExpanded(thread);
+          const root = threadRootMessage(thread);
+          const replies = threadReplies(thread);
+          const resolvedRow = thread.done && !expanded;
+          const toggle = () => toggleCommentThreadExpanded(thread);
+          const controls = (
+            <CommentThreadControls
+              thread={thread}
+              replyCount={replies.length}
+              expanded={expanded}
+              canUpdateDone={canUpdateCommentDone && !resolvedRow}
+              savingDone={savingDoneCommentIds.includes(thread.commentId)}
+              shortDoneLabel
+              onToggleDone={() => void updateCommentDone(thread, !thread.done)}
+              onToggleExpanded={toggle}
+            />
+          );
+
+          return (
             <div
-              aria-expanded={isCommentThreadExpanded(thread)}
-              className="diff-inline-comment-meta comment-thread-header"
-              role="button"
-              tabIndex={0}
-              onClick={() => toggleCommentThreadExpanded(thread)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  toggleCommentThreadExpanded(thread);
-                }
-              }}
+              className={`diff-inline-comment${thread.done ? " is-done" : ""}`}
+              key={thread.commentId}
             >
-              <span className="fw-semibold">
-                {renderUserLabel(thread.messages[0].author)}
-              </span>
-              <DateTimeText
-                label={t("createdAt")}
-                value={thread.createdAt}
-              />
-              <CommentThreadControls
-                thread={thread}
-                targetLabel={commentTargetLabel(thread)}
-                canUpdateDone={canUpdateCommentDone}
-                savingDone={savingDoneCommentIds.includes(thread.commentId)}
-                onToggleDone={() => void updateCommentDone(thread, !thread.done)}
-              />
-            </div>
-            {isCommentThreadExpanded(thread) ? (
-              <>
-                <CommentMessages thread={thread} actions={commentMessageActions} />
-                <CommentDoneMeta thread={thread} renderUserLabel={renderUserLabel} />
-                <CommentReplyForm
-                  thread={thread}
-                  draft={replyDrafts[thread.commentId] ?? ""}
-                  saving={savingReplyCommentIds.includes(thread.commentId)}
-                  onDraftChange={(value) =>
-                    setReplyDrafts((current) => ({
-                      ...current,
-                      [thread.commentId]: value,
-                    }))
+              <div
+                aria-expanded={expanded}
+                className={`comment-thread-header${
+                  resolvedRow ? " is-resolved-row" : ""
+                }`}
+                role="button"
+                tabIndex={0}
+                onClick={toggle}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    toggle();
                   }
-                  onSubmit={() => void addCommentReply(thread)}
+                }}
+              >
+                {resolvedRow ? (
+                  <>
+                    <i className="bi bi-check2-circle" aria-hidden="true" />
+                    <UserAvatar user={root.author} idToken={idToken} />
+                    <span className="comment-thread-author">
+                      {renderUserLabel(root.author)}
+                    </span>{" "}
+                    <span className="comment-thread-excerpt markdown-body">
+                      <MarkdownView value={root.message} />
+                    </span>{" "}
+                    <span className="comment-thread-footer">
+                      {t("commentResolved").toLowerCase()}
+                      {replies.length
+                        ? ` · ${
+                            replies.length === 1
+                              ? t("commentReplyOne")
+                              : t("commentReplyMany", {
+                                  count: replies.length,
+                                })
+                          }`
+                        : ""}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <UserAvatar user={root.author} idToken={idToken} />
+                    <div className="comment-thread-identity">
+                      <CommentThreadIdentityLine
+                        compact
+                        thread={thread}
+                        renderUserLabel={renderUserLabel}
+                        showOpenedBy
+                      />
+                      {expanded ? null : (
+                        <CommentThreadSummary
+                          thread={thread}
+                          idToken={idToken}
+                          renderUserLabel={renderUserLabel}
+                        />
+                      )}
+                    </div>
+                  </>
+                )}
+                {controls}
+              </div>
+              {expanded ? (
+                <CommentMessages
+                  thread={thread}
+                  actions={commentMessageActions}
+                  newReplyCount={newReplyCount(thread)}
+                  repliesExpanded={areRepliesExpanded(thread)}
+                  onToggleReplies={() => toggleRepliesExpanded(thread)}
+                  composer={renderReplyForm(thread, true)}
                 />
-              </>
-            ) : null}
-          </div>
-        ))}
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     ) : null;
 
@@ -1519,8 +1677,21 @@ export function ReviewPage() {
         {activeReviewTab === "comments" ? (
           <CommentsTabPanel
             threads={reviewCommentThreads}
+            currentUser={currentUserSummary}
+            idToken={idToken}
+            filter={discussionFilter}
+            onFilterChange={setDiscussionFilter}
+            sort={discussionSort}
+            onSortChange={setDiscussionSort}
             isDiscussionExpanded={isDiscussionExpanded}
             onToggleDiscussion={toggleDiscussionExpanded}
+            onExpandAll={(threads) =>
+              setExpandedDiscussionIds(threads.map((thread) => thread.commentId))
+            }
+            onCollapseAll={() => setExpandedDiscussionIds([])}
+            areRepliesExpanded={areRepliesExpanded}
+            onToggleReplies={toggleRepliesExpanded}
+            newReplyCount={newReplyCount}
             threadDiffAvailable={threadDiffAvailable}
             onOpenDiffForThread={openDiffForThread}
             renderUserLabel={renderUserLabel}
@@ -1538,6 +1709,9 @@ export function ReviewPage() {
               }))
             }
             onSubmitReply={(thread) => void addCommentReply(thread)}
+            onSubmitReplyAndResolve={(thread) =>
+              void addCommentReply(thread, { resolve: true })
+            }
           />
         ) : null}
       </div>
