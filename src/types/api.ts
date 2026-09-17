@@ -224,6 +224,19 @@ export type ReviewFieldDeletion = {
   deleted: boolean;
 };
 
+export type ProjectDefaultReviewer = {
+  id: string;
+  project: string;
+  userId: string;
+  user: ReviewUserSummary;
+  createdAt: string;
+};
+
+export type ProjectDefaultReviewerDeletion = {
+  id: string;
+  deleted: boolean;
+};
+
 export type ReviewFieldValue = {
   id: string;
   reviewId: string;
@@ -394,6 +407,7 @@ export type ReviewPreview = {
   gitwebFetchError: string | null;
   reviewerEmails: string[];
   reviewerUsers: ReviewUserSummary[];
+  defaultReviewerUsers: ReviewUserSummary[];
   gitDiff: ReviewDiff;
 };
 

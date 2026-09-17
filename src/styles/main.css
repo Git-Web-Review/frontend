@@ -433,6 +433,13 @@ button {
   line-height: 1;
 }
 
+.reviewer-selected-locked {
+  color: var(--bs-secondary-color);
+  cursor: help;
+  flex: 0 0 auto;
+  line-height: 1;
+}
+
 .reviewer-notification-warning {
   color: var(--bs-orange);
   cursor: help;

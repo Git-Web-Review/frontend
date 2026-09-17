@@ -320,9 +320,13 @@ export function DashboardPage() {
         },
       );
       setPreview(nextPreview);
-      setCreateReviewerUserIds(
-        nextPreview.reviewerUsers.map((reviewer) => reviewer.id),
-      );
+      setCreateReviewerUserIds([
+        ...new Set(
+          [...nextPreview.defaultReviewerUsers, ...nextPreview.reviewerUsers].map(
+            (reviewer) => reviewer.id,
+          ),
+        ),
+      ]);
       const selectedHashes = nextPreview.commitOptions.map(
         (option) => option.hash,
       );

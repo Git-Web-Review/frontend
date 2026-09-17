@@ -10,6 +10,10 @@ type ReviewerSearchSelectProps = {
   selectedUserIds: string[];
   selectedUsers: ReviewUserSummary[];
   excludeUserIds?: string[];
+  /** Selected reviewers the user cannot remove, e.g. project defaults. */
+  lockedUserIds?: string[];
+  /** Offer the current user too, who is left out of the search otherwise. */
+  includeSelf?: boolean;
   disabled?: boolean;
   onChange: (userIds: string[]) => void;
 };
@@ -22,6 +26,8 @@ export function ReviewerSearchSelect({
   selectedUserIds,
   selectedUsers,
   excludeUserIds = [],
+  lockedUserIds = [],
+  includeSelf = false,
   disabled = false,
   onChange,
 }: ReviewerSearchSelectProps) {
@@ -82,6 +88,9 @@ export function ReviewerSearchSelect({
         page: nextPage.toString(),
         limit: reviewerSearchLimit.toString(),
       });
+      if (includeSelf) {
+        params.set("includeSelf", "true");
+      }
       for (const userId of excludedIds) {
         params.append("excludeUserIds", userId);
       }
@@ -187,15 +196,25 @@ export function ReviewerSearchSelect({
                   title={t("reviewerNotificationsDisabled")}
                 />
               ) : null}
-              <button
-                className="btn btn-sm btn-link p-0 reviewer-selected-remove"
-                disabled={disabled}
-                type="button"
-                onClick={() => removeReviewer(user.id)}
-              >
-                <i className="bi bi-x-lg" aria-hidden="true" />
-                <span className="visually-hidden">{t("removeReviewer")}</span>
-              </button>
+              {lockedUserIds.includes(user.id) ? (
+                <i
+                  aria-label={t("defaultReviewer")}
+                  className="bi bi-pin-angle-fill reviewer-selected-locked"
+                  title={t("defaultReviewer")}
+                />
+              ) : (
+                <button
+                  className="btn btn-sm btn-link p-0 reviewer-selected-remove"
+                  disabled={disabled}
+                  type="button"
+                  onClick={() => removeReviewer(user.id)}
+                >
+                  <i className="bi bi-x-lg" aria-hidden="true" />
+                  <span className="visually-hidden">
+                    {t("removeReviewer")}
+                  </span>
+                </button>
+              )}
             </span>
           ))}
         </div>

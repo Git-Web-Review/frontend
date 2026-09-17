@@ -10,6 +10,7 @@ import { DomainsTab } from "./tabs/DomainsTab";
 import { GitwebUrlRulesTab } from "./tabs/GitwebUrlRulesTab";
 import { LinkRulesTab } from "./tabs/LinkRulesTab";
 import { NotificationsTab } from "./tabs/NotificationsTab";
+import { ProjectDefaultReviewersTab } from "./tabs/ProjectDefaultReviewersTab";
 import { ReviewFieldsTab } from "./tabs/ReviewFieldsTab";
 import { ServiceAccountsTab } from "./tabs/ServiceAccountsTab";
 import { UsersTab } from "./tabs/UsersTab";
@@ -23,6 +24,7 @@ const adminTabIds = [
   "linkRules",
   "gitwebUrlRules",
   "reviewFields",
+  "projectDefaultReviewers",
   "serviceAccounts",
   "crons",
 ] as const;
@@ -89,6 +91,11 @@ export function AdminPage() {
       icon: "bi-input-cursor-text",
     },
     {
+      id: "projectDefaultReviewers",
+      label: t("projectDefaultReviewers"),
+      icon: "bi-person-check",
+    },
+    {
       id: "serviceAccounts",
       label: t("serviceAccounts"),
       icon: "bi-robot",
@@ -125,6 +132,8 @@ export function AdminPage() {
         return <GitwebUrlRulesTab />;
       case "reviewFields":
         return <ReviewFieldsTab />;
+      case "projectDefaultReviewers":
+        return <ProjectDefaultReviewersTab />;
       case "serviceAccounts":
         return <ServiceAccountsTab />;
       case "crons":

@@ -233,7 +233,13 @@ export function CreateReviewModal({
                       idToken={idToken}
                       label={t("reviewers")}
                       selectedUserIds={createReviewerUserIds}
-                      selectedUsers={preview.reviewerUsers}
+                      selectedUsers={[
+                        ...preview.defaultReviewerUsers,
+                        ...preview.reviewerUsers,
+                      ]}
+                      lockedUserIds={preview.defaultReviewerUsers.map(
+                        (reviewer) => reviewer.id,
+                      )}
                       onChange={onReviewersChange}
                     />
                   </div>
