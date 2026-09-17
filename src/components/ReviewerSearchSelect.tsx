@@ -12,6 +12,8 @@ type ReviewerSearchSelectProps = {
   excludeUserIds?: string[];
   /** Selected reviewers the user cannot remove, e.g. project defaults. */
   lockedUserIds?: string[];
+  /** Why locked reviewers cannot be removed, shown on a pin icon. */
+  lockedTitle?: string;
   /** Offer the current user too, who is left out of the search otherwise. */
   includeSelf?: boolean;
   disabled?: boolean;
@@ -27,6 +29,7 @@ export function ReviewerSearchSelect({
   selectedUsers,
   excludeUserIds = [],
   lockedUserIds = [],
+  lockedTitle,
   includeSelf = false,
   disabled = false,
   onChange,
@@ -197,11 +200,13 @@ export function ReviewerSearchSelect({
                 />
               ) : null}
               {lockedUserIds.includes(user.id) ? (
-                <i
-                  aria-label={t("defaultReviewer")}
-                  className="bi bi-pin-angle-fill reviewer-selected-locked"
-                  title={t("defaultReviewer")}
-                />
+                lockedTitle ? (
+                  <i
+                    aria-label={lockedTitle}
+                    className="bi bi-pin-angle-fill reviewer-selected-locked"
+                    title={lockedTitle}
+                  />
+                ) : null
               ) : (
                 <button
                   className="btn btn-sm btn-link p-0 reviewer-selected-remove"

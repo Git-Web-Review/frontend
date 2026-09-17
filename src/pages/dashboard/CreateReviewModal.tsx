@@ -240,6 +240,7 @@ export function CreateReviewModal({
                       lockedUserIds={preview.defaultReviewerUsers.map(
                         (reviewer) => reviewer.id,
                       )}
+                      lockedTitle={t("defaultReviewer")}
                       onChange={onReviewersChange}
                     />
                   </div>

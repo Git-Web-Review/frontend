@@ -68,6 +68,7 @@ type OverviewTabPanelProps = {
   review: ReviewItem;
   idToken: string | null;
   canEditReviewDetails: boolean;
+  canAddReviewers: boolean;
   titleDraft: string;
   onTitleDraftChange: (value: string) => void;
   descriptionDraft: string;
@@ -106,6 +107,7 @@ export function OverviewTabPanel({
   review,
   idToken,
   canEditReviewDetails,
+  canAddReviewers,
   titleDraft,
   onTitleDraftChange,
   descriptionDraft,
@@ -260,8 +262,13 @@ export function OverviewTabPanel({
           </div>
           <div className="mb-3">
             <ReviewerSearchSelect
-              disabled={!canEditReviewDetails}
+              disabled={!canAddReviewers}
               excludeUserIds={[review.ownerId]}
+              lockedUserIds={
+                canEditReviewDetails
+                  ? []
+                  : review.reviewers.map((reviewer) => reviewer.userId)
+              }
               idToken={idToken}
               label={t("reviewers")}
               selectedUserIds={reviewerUserIds}
@@ -363,7 +370,7 @@ export function OverviewTabPanel({
           ) : null}
         </div>
       </div>
-      {hasReviewChanges && canEditReviewDetails ? (
+      {hasReviewChanges && canAddReviewers ? (
         <div className="d-flex gap-2 mt-4">
           <button
             className="btn btn-success d-inline-flex align-items-center gap-2"
@@ -373,7 +380,7 @@ export function OverviewTabPanel({
             {savingReview ? (
               <span className="spinner-border spinner-border-sm" />
             ) : null}
-            {t("saveReview")}
+            {t(canEditReviewDetails ? "saveReview" : "addReviewers")}
           </button>
         </div>
       ) : null}

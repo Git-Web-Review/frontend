@@ -209,6 +209,8 @@
     "updatedBy": "Updated by",
     "saveReview": "Save",
     "reviewSaved": "Review saved.",
+    "addReviewers": "Add reviewers",
+    "reviewersAdded": "Reviewers added.",
     "actionInProgress": "Action in progress.",
     "ackReview": "Ack review",
     "reviewAcknowledged": "Review acknowledged",

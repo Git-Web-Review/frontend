@@ -550,6 +550,12 @@ export function ReviewPage() {
   const currentReviewer = review?.reviewers.find(
     (reviewer) => reviewer.userId === currentUser?.id,
   );
+  // Reviewers can bring other reviewers in; only the owner removes any.
+  const canAddReviewers = canEditReviewDetails || !!currentReviewer;
+  const addedReviewerUserIds = reviewerUserIds.filter(
+    (userId) =>
+      !review?.reviewers.some((reviewer) => reviewer.userId === userId),
+  );
   const commitAckedByMe = (commit: ReviewCommit) =>
     commit.acks.some((ack) => ack.userId === currentUser?.id);
   const openCommentCountForCommit = (commitHash: string) =>
@@ -598,13 +604,14 @@ export function ReviewPage() {
       : undefined;
   const hasReviewChanges =
     !!review &&
-    canEditReviewDetails &&
-    (sortedReviewerUserIds(reviewerUserIds).join("\n") !==
-      sortedReviewerUserIds(
-        review.reviewers.map((reviewer) => reviewer.userId),
-      ).join("\n") ||
-      reviewTitleDraft.trim() !== (review.title ?? "").trim() ||
-      reviewDescriptionDraft.trim() !== (review.description ?? "").trim());
+    (canEditReviewDetails
+      ? sortedReviewerUserIds(reviewerUserIds).join("\n") !==
+          sortedReviewerUserIds(
+            review.reviewers.map((reviewer) => reviewer.userId),
+          ).join("\n") ||
+        reviewTitleDraft.trim() !== (review.title ?? "").trim() ||
+        reviewDescriptionDraft.trim() !== (review.description ?? "").trim()
+      : canAddReviewers && addedReviewerUserIds.length > 0);
 
   const reviewStatusLabel = (reviewStatus: ReviewStatus) =>
     t(`reviewStatus${reviewStatus}`);
@@ -647,31 +654,30 @@ export function ReviewPage() {
       return;
     }
 
-    const body = {
-      ...(canEditReviewDetails
-        ? {
-            reviewerUserIds,
-            ...(reviewTitleDraft.trim() !== (review.title ?? "").trim()
-              ? { title: reviewTitleDraft.trim() }
-              : {}),
-            description: reviewDescriptionDraft.trim() || null,
-          }
-        : {}),
-    };
-
     setSavingReview(true);
     setErrorMessage("");
     try {
-      const nextReview = await apiRequest<ReviewItem>(
-        `/v1/reviews/${review.id}`,
-        idToken,
-        {
-          method: "PATCH",
-          body: JSON.stringify(body),
-        },
-      );
+      const nextReview = canEditReviewDetails
+        ? await apiRequest<ReviewItem>(`/v1/reviews/${review.id}`, idToken, {
+            method: "PATCH",
+            body: JSON.stringify({
+              reviewerUserIds,
+              ...(reviewTitleDraft.trim() !== (review.title ?? "").trim()
+                ? { title: reviewTitleDraft.trim() }
+                : {}),
+              description: reviewDescriptionDraft.trim() || null,
+            }),
+          })
+        : await apiRequest<ReviewItem>(
+            `/v1/reviews/${review.id}/reviewers`,
+            idToken,
+            {
+              method: "POST",
+              body: JSON.stringify({ userIds: addedReviewerUserIds }),
+            },
+          );
       setReview(nextReview);
-      showToast(t("reviewSaved"));
+      showToast(t(canEditReviewDetails ? "reviewSaved" : "reviewersAdded"));
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : t("backendError"),
@@ -1583,6 +1589,7 @@ export function ReviewPage() {
             review={review}
             idToken={idToken}
             canEditReviewDetails={canEditReviewDetails}
+            canAddReviewers={canAddReviewers}
             titleDraft={reviewTitleDraft}
             onTitleDraftChange={setReviewTitleDraft}
             descriptionDraft={reviewDescriptionDraft}
