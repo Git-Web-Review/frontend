@@ -20,6 +20,7 @@ const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   "reviewAcked",
   "reviewClosed",
   "commentReceived",
+  "commentMention",
 ];
 
 const NOTIFICATION_CATEGORY_LABELS: Record<
@@ -32,6 +33,7 @@ const NOTIFICATION_CATEGORY_LABELS: Record<
   reviewAcked: "notifCategoryReviewAcked",
   reviewClosed: "notifCategoryReviewClosed",
   commentReceived: "notifCategoryCommentReceived",
+  commentMention: "notifCategoryCommentMention",
 };
 
 type UserSettingsDraft = {

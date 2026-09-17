@@ -1,12 +1,17 @@
-import { type ReactNode, useState } from "react";
+import type { ReactNode } from "react";
+import { MentionTextarea } from "./MentionTextarea";
 
 export function InlineCommentComposer({
+  draft,
   saving,
   labels,
   renderMarkdown,
+  onDraftChange,
   onCancel,
   onSubmit,
 }: {
+  /** Owned by the page, so leaving it can warn about an unposted comment. */
+  draft: string;
   saving: boolean;
   labels: {
     placeholder: string;
@@ -15,19 +20,18 @@ export function InlineCommentComposer({
     previewEmpty: string;
   };
   renderMarkdown: (value: string) => ReactNode;
+  onDraftChange: (value: string) => void;
   onCancel: () => void;
   onSubmit: (message: string) => void;
 }) {
-  const [draft, setDraft] = useState("");
-
   return (
     <div className="diff-inline-comment-panel">
       <div className="diff-inline-comment-editor">
-        <textarea
+        <MentionTextarea
           className="form-control"
           rows={4}
           value={draft}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={onDraftChange}
           placeholder={labels.placeholder}
         />
         <div className="diff-inline-comment-actions">

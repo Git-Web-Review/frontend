@@ -43,7 +43,8 @@ export type NotificationCategory =
   | "reviewDone"
   | "reviewAcked"
   | "reviewClosed"
-  | "commentReceived";
+  | "commentReceived"
+  | "commentMention";
 
 export type NotificationMediumPreferences = Partial<
   Record<NotificationCategory, boolean>
@@ -253,6 +254,7 @@ export type NotificationItem = {
     | "REVIEW_PENDING"
     | "REVIEW_STATUS_CHANGED"
     | "COMMENT_RECEIVED"
+    | "COMMENT_MENTION"
     | "COMMIT_REVIEWED"
     | "REVIEW_NEW_VERSION";
   payload: unknown;
@@ -450,6 +452,8 @@ export type ReviewComment = {
   doneBy: ReviewUserSummary | null;
   doneAt: string | null;
   message: string;
+  /** Users the message mentions as `@<user id>`. */
+  mentions: ReviewUserSummary[];
   createdAt: string;
 };
 

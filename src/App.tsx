@@ -1,4 +1,4 @@
-import { Link, Navigate, Route, Routes } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { useAuth } from "./auth/AuthProvider";
 import { useI18n } from "./i18n/I18nProvider";
 import { AppShell } from "./layout/AppShell";
@@ -23,6 +23,14 @@ function ReviewIndexPage() {
   );
 }
 
+// Keyed so moving to another review starts from that review's own state,
+// its stored comment drafts included, instead of carrying the previous one.
+function ReviewRoute() {
+  const { reviewId } = useParams<{ reviewId: string }>();
+
+  return <ReviewPage key={reviewId} />;
+}
+
 export function App() {
   const { currentUser, loading } = useAuth();
 
@@ -45,7 +53,7 @@ export function App() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/review" element={<ReviewIndexPage />} />
-        <Route path="/review/:reviewId" element={<ReviewPage />} />
+        <Route path="/review/:reviewId" element={<ReviewRoute />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

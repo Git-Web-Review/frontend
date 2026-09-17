@@ -1,5 +1,10 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  useBlocker,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/AuthProvider";
 import { ReviewerSearchSelect } from "../../components/ReviewerSearchSelect";
@@ -34,6 +39,7 @@ import { OverviewTabPanel } from "./OverviewTabPanel";
 import { linkedCommitLog } from "./gitweb-links";
 import { ReviewHeader } from "./ReviewHeader";
 import { MarkdownView } from "./MarkdownView";
+import { MentionUsersProvider } from "./mentions";
 import {
   CommentMessages,
   CommentReplyForm,
@@ -54,6 +60,16 @@ import {
   type ReviewTab,
 } from "./review-utils";
 import { SyncModal } from "./SyncModal";
+import {
+  clearCommentDrafts,
+  readCommentDrafts,
+  writeCommentDrafts,
+  type CommentDrafts,
+} from "./comment-drafts";
+import {
+  UnpostedCommentsModal,
+  type UnpostedCommentDraft,
+} from "./UnpostedCommentsModal";
 
 export function ReviewPage() {
   const { reviewId = "" } = useParams<{ reviewId: string }>();
@@ -62,6 +78,12 @@ export function ReviewPage() {
   const { currentUser, idToken } = useAuth();
   const { t } = useI18n();
   const { showToast } = useToast();
+  // <App> only routes here once signed in.
+  const draftOwnerId = currentUser?.id ?? "";
+  // Read once: the page is mounted afresh for each review.
+  const [storedDrafts] = useState(() =>
+    readCommentDrafts(draftOwnerId, reviewId),
+  );
   const [review, setReview] = useState<ReviewItem | null>(null);
   const [commitLogLinkRules, setCommitLogLinkRules] = useState<
     CommitLogLinkRule[]
@@ -81,14 +103,25 @@ export function ReviewPage() {
   const [deletingReview, setDeletingReview] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [inlineCommentTarget, setInlineCommentTarget] =
-    useState<CommentTarget | null>(null);
+    useState<CommentTarget | null>(
+      storedDrafts.openTargetKey
+        ? storedDrafts.newComments[storedDrafts.openTargetKey].target
+        : null,
+    );
+  const [newCommentDrafts, setNewCommentDrafts] = useState(
+    storedDrafts.newComments,
+  );
   const [savingComment, setSavingComment] = useState(false);
   const [reviewComments, setReviewComments] = useState<ReviewComment[]>([]);
   const [loadingReviewComments, setLoadingReviewComments] = useState(false);
   const [savingDoneCommentIds, setSavingDoneCommentIds] = useState<string[]>([]);
   const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
-  const [editCommentDraft, setEditCommentDraft] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(
+    storedDrafts.edit?.messageId ?? null,
+  );
+  const [editCommentDraft, setEditCommentDraft] = useState(
+    storedDrafts.edit?.message ?? "",
+  );
   const [savingEditCommentIds, setSavingEditCommentIds] = useState<string[]>(
     [],
   );
@@ -110,7 +143,9 @@ export function ReviewPage() {
   // The stamp lives in this browser only; there is no server state for it.
   const [lastSeenAt, setLastSeenAt] = useState<string | null>(null);
   const stampedReviewIdRef = useRef<string | null>(null);
-  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>(
+    storedDrafts.replies,
+  );
   const [savingReplyCommentIds, setSavingReplyCommentIds] = useState<string[]>(
     [],
   );
@@ -139,6 +174,9 @@ export function ReviewPage() {
   const [loadingSyncPreview, setLoadingSyncPreview] = useState(false);
   const [syncingReview, setSyncingReview] = useState(false);
   const [syncCommitHashes, setSyncCommitHashes] = useState<string[]>([]);
+  const [draftStorageFailed, setDraftStorageFailed] = useState(false);
+  // Set right before a navigation that must not ask about unposted comments.
+  const skipUnpostedGuardRef = useRef(false);
 
   const loadReview = async () => {
     if (!idToken) {
@@ -703,6 +741,8 @@ export function ReviewPage() {
         method: "DELETE",
       });
       showToast(t("reviewDeleted"));
+      clearCommentDrafts(draftOwnerId, review.id);
+      skipUnpostedGuardRef.current = true;
       navigate("/dashboard");
     } catch (error) {
       setErrorMessage(
@@ -1250,6 +1290,39 @@ export function ReviewPage() {
     }
   };
 
+  // One draft per target: hiding a composer or opening another one keeps
+  // what was typed, only Cancel and posting throw it away.
+  const inlineCommentDraft = inlineCommentTarget
+    ? (newCommentDrafts[targetKey(inlineCommentTarget)]?.message ?? "")
+    : "";
+
+  const updateInlineCommentDraft = (message: string) => {
+    if (!inlineCommentTarget) {
+      return;
+    }
+
+    const target = inlineCommentTarget;
+    setNewCommentDrafts((current) => ({
+      ...current,
+      [targetKey(target)]: { target, message },
+    }));
+  };
+
+  const discardNewCommentDraft = (target: CommentTarget) => {
+    setNewCommentDrafts((current) =>
+      Object.fromEntries(
+        Object.entries(current).filter(([key]) => key !== targetKey(target)),
+      ),
+    );
+  };
+
+  const closeInlineComment = () => {
+    if (inlineCommentTarget) {
+      discardNewCommentDraft(inlineCommentTarget);
+    }
+    setInlineCommentTarget(null);
+  };
+
   const toggleInlineComment = (target: CommentTarget) => {
     if (inlineCommentTarget && targetKey(inlineCommentTarget) === targetKey(target)) {
       setInlineCommentTarget(null);
@@ -1278,16 +1351,18 @@ export function ReviewPage() {
   };
 
   const addInlineComment = async (message: string) => {
-    if (!inlineCommentTarget || !message) {
+    const target = inlineCommentTarget;
+    if (!target || !message) {
       return;
     }
 
     setSavingComment(true);
     setErrorMessage("");
     try {
-      const comment = await createReviewComment(inlineCommentTarget, message);
+      const comment = await createReviewComment(target, message);
       if (comment) {
         setReviewComments((current) => [...current, comment]);
+        discardNewCommentDraft(target);
         setInlineCommentTarget(null);
         await refreshReviewSnapshot();
       }
@@ -1321,6 +1396,7 @@ export function ReviewPage() {
 
   const renderInlineCommentComposer = () => (
     <InlineCommentComposer
+      draft={inlineCommentDraft}
       saving={savingComment}
       labels={{
         placeholder: t("markdownCommentPlaceholder"),
@@ -1329,7 +1405,8 @@ export function ReviewPage() {
         previewEmpty: t("markdownPreviewEmpty"),
       }}
       renderMarkdown={renderMarkdown}
-      onCancel={() => setInlineCommentTarget(null)}
+      onDraftChange={updateInlineCommentDraft}
+      onCancel={closeInlineComment}
       onSubmit={(message) => void addInlineComment(message)}
     />
   );
@@ -1458,6 +1535,113 @@ export function ReviewPage() {
       </div>
     ) : null;
 
+  // Everything typed and not posted yet.
+  const unpostedDrafts: UnpostedCommentDraft[] = [];
+  for (const [key, draft] of Object.entries(newCommentDrafts)) {
+    if (draft.message.trim()) {
+      unpostedDrafts.push({
+        key: `comment:${key}`,
+        kind: "comment",
+        targetLabel: commentTargetLabel(draft.target),
+        message: draft.message,
+      });
+    }
+  }
+  const editedComment = reviewComments.find(
+    (comment) => comment.id === editingCommentId,
+  );
+  if (
+    editedComment &&
+    editCommentDraft.trim() &&
+    editCommentDraft.trim() !== editedComment.message.trim()
+  ) {
+    unpostedDrafts.push({
+      key: `edit:${editedComment.id}`,
+      kind: "edit",
+      targetLabel: commentTargetLabel(editedComment),
+      message: editCommentDraft,
+    });
+  }
+  for (const [commentId, message] of Object.entries(replyDrafts)) {
+    if (!message.trim()) {
+      continue;
+    }
+    const threadComment = reviewComments.find(
+      (comment) => comment.commentId === commentId,
+    );
+    unpostedDrafts.push({
+      key: `reply:${commentId}`,
+      kind: "reply",
+      targetLabel: threadComment ? commentTargetLabel(threadComment) : "",
+      message,
+    });
+  }
+  const hasUnpostedDrafts = unpostedDrafts.length > 0;
+
+  // Kept in the browser, never in the backend. Until the comments load, an
+  // edit cannot be told apart from an untouched message, so it is kept.
+  const draftsToStore: CommentDrafts = {
+    newComments: Object.fromEntries(
+      Object.entries(newCommentDrafts).filter(([, draft]) =>
+        draft.message.trim(),
+      ),
+    ),
+    openTargetKey: null,
+    replies: Object.fromEntries(
+      Object.entries(replyDrafts).filter(([, message]) => message.trim()),
+    ),
+    edit:
+      editingCommentId &&
+      editCommentDraft.trim() &&
+      editCommentDraft.trim() !== editedComment?.message.trim()
+        ? { messageId: editingCommentId, message: editCommentDraft }
+        : null,
+  };
+  if (
+    inlineCommentTarget &&
+    targetKey(inlineCommentTarget) in draftsToStore.newComments
+  ) {
+    draftsToStore.openTargetKey = targetKey(inlineCommentTarget);
+  }
+  const serializedDrafts = JSON.stringify(draftsToStore);
+
+  useEffect(() => {
+    setDraftStorageFailed(
+      !writeCommentDrafts(draftOwnerId, reviewId, draftsToStore),
+    );
+  }, [draftOwnerId, reviewId, serializedDrafts]);
+
+  // Stored drafts come back on the next visit, so leaving only loses them
+  // when the browser refused to store them. Tabs and diff links only touch
+  // the query string and never lose anything.
+  const draftsAtRisk = draftStorageFailed && hasUnpostedDrafts;
+  const unpostedBlocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      draftsAtRisk &&
+      !skipUnpostedGuardRef.current &&
+      currentLocation.pathname !== nextLocation.pathname,
+  );
+
+  useEffect(() => {
+    if (!draftsAtRisk) {
+      return;
+    }
+
+    // Reloading or closing the tab only allows the browser's own prompt.
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [draftsAtRisk]);
+
+  // An earlier write may have succeeded; leaving anyway must not bring that
+  // older copy back on the next visit.
+  const leaveWithoutPosting = () => {
+    clearCommentDrafts(draftOwnerId, reviewId);
+    unpostedBlocker.proceed?.();
+  };
+
   if (!review && loadingReview) {
     return (
       <div className="card">
@@ -1542,7 +1726,17 @@ export function ReviewPage() {
       )
     : review.gitDiff.files.length;
 
-  return (
+  // Who a mention can be named after without asking the backend.
+  const mentionUsers = [
+    review.owner,
+    ...review.reviewers.map((reviewer) => reviewer.user),
+    ...reviewComments.flatMap((comment) => [
+      comment.author,
+      ...comment.mentions,
+    ]),
+  ];
+
+  const reviewPageContent = (
     <div className="review-page">
       <ReviewHeader
         review={review}
@@ -1734,6 +1928,20 @@ export function ReviewPage() {
           onApply={() => void applySync()}
         />
       ) : null}
+
+      {unpostedBlocker.state === "blocked" ? (
+        <UnpostedCommentsModal
+          drafts={unpostedDrafts}
+          onStay={() => unpostedBlocker.reset?.()}
+          onLeave={leaveWithoutPosting}
+        />
+      ) : null}
     </div>
+  );
+
+  return (
+    <MentionUsersProvider users={mentionUsers}>
+      {reviewPageContent}
+    </MentionUsersProvider>
   );
 }

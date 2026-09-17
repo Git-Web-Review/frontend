@@ -7,6 +7,7 @@ import type {
   ReviewUserSummary,
 } from "../../types/api";
 import { MarkdownView } from "./MarkdownView";
+import { MentionTextarea } from "./MentionTextarea";
 import {
   threadChipLabel,
   threadLastMessage,
@@ -47,11 +48,11 @@ function MessageEditor({
 
   return (
     <div className="review-comment-edit">
-      <textarea
+      <MentionTextarea
         className="form-control form-control-sm"
         rows={3}
         value={actions.editCommentDraft}
-        onChange={(event) => actions.onEditDraftChange(event.target.value)}
+        onChange={actions.onEditDraftChange}
       />
       <div className="d-flex justify-content-end gap-2 mt-2">
         <button
@@ -464,16 +465,16 @@ export function CommentReplyForm({
         <UserAvatar user={currentUser} idToken={idToken} />
       ) : null}
       <div className="review-comment-reply-fields">
-        <textarea
+        <MentionTextarea
           className="form-control form-control-sm"
           rows={compact ? 1 : 2}
           value={draft}
-          onChange={(event) => onDraftChange(event.target.value)}
+          onChange={onDraftChange}
           placeholder={t("replyCommentPlaceholder")}
         />
         <div className="review-comment-reply-footer">
           <span className="review-comment-reply-hint">
-            {t("markdownSupported")}
+            {t("markdownSupported")} · {t("mentionHint")}
           </span>{" "}
           <span className="review-comment-reply-actions">
             {canResolve && onSubmitAndResolve ? (
