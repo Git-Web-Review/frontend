@@ -2884,8 +2884,11 @@ textarea.form-control {
   resize: vertical;
 }
 
+/* min-height: 0 undoes the global textarea minimum, which otherwise turns
+   the one-row pill into a tall half-disc that swallows the placeholder. */
 .review-comment-reply.is-compact textarea {
-  padding: 6px 10px;
+  min-height: 0;
+  padding: 6px 14px;
   border-radius: 999px;
 }
 
@@ -2907,6 +2910,7 @@ textarea.form-control {
 
 .review-comment-reply.is-compact:focus-within textarea,
 .review-comment-reply.is-compact.has-draft textarea {
+  min-height: 60px;
   border-radius: var(--radius-md);
   resize: vertical;
 }
