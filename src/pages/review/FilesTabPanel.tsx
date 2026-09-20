@@ -8,6 +8,7 @@ import type {
   ReviewItem,
   ReviewUserSummary,
 } from "../../types/api";
+import { CommitFileList } from "./CommitFileList";
 import { DiffFileCard } from "./DiffFileCard";
 import { linkedCommitLog } from "./gitweb-links";
 import { ReviewerActionSplit } from "./ReviewerActionSplit";
@@ -103,6 +104,7 @@ export function FilesTabPanel({
   markCommitReviewed,
 }: FilesTabPanelProps) {
   const { t } = useI18n();
+  const activeCommitFiles = activeCommit ? commitDiffFiles(activeCommit) : [];
 
   const commitChangeKindBadge = (commit: ReviewCommit) =>
     review.version > 1 && commit.changeKind ? (
@@ -327,8 +329,13 @@ export function FilesTabPanel({
                     )}
                   </details>
                 ) : null}
+                <CommitFileList
+                  commitHash={activeCommit.hash}
+                  files={activeCommitFiles}
+                  gitwebUrl={review.gitwebProjectUrl ?? review.gitwebUrl}
+                />
               </div>
-              {renderGitDiff(activeCommit, commitDiffFiles(activeCommit))}
+              {renderGitDiff(activeCommit, activeCommitFiles)}
             </>
           ) : null}
         </>

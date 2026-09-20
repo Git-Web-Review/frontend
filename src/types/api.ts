@@ -319,7 +319,8 @@ export type ReviewCommitChangeKind =
   | "NEW"
   | "UNCHANGED"
   | "REBASED"
-  | "MODIFIED";
+  | "MODIFIED"
+  | "LOG_MODIFIED";
 
 export type ReviewCommit = {
   id: string;

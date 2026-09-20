@@ -34,16 +34,8 @@ export const gitwebParams = (gitwebUrl: string) => {
   return params;
 };
 
-export const gitwebBlobUrl = (
-  gitwebUrl: string,
-  filePath: string,
-  blobHash: string | null,
-  baseCommitHash?: string,
-) => {
-  if (!blobHash) {
-    return null;
-  }
-
+/** A gitweb action on the same project as the review URL. */
+const gitwebActionUrl = (gitwebUrl: string, params: string[]) => {
   const project = gitwebParams(gitwebUrl).get("p");
   if (!project) {
     return null;
@@ -51,17 +43,98 @@ export const gitwebBlobUrl = (
 
   try {
     const url = new URL(gitwebUrl);
-    const params = [
+    return `${url.origin}${url.pathname}?${[
       `p=${encodeURIComponent(project)}`,
-      "a=blob",
-      `f=${encodeURIComponent(filePath).replace(/%2F/g, "/")}`,
-      `h=${blobHash}`,
-      ...(baseCommitHash ? [`hb=${baseCommitHash}`] : []),
-    ];
-    return `${url.origin}${url.pathname}?${params.join(";")}`;
+      ...params,
+    ].join(";")}`;
   } catch {
     return null;
   }
+};
+
+/** gitweb keeps the slashes of `f=` readable. */
+const gitwebFileParam = (filePath: string) =>
+  encodeURIComponent(filePath).replace(/%2F/g, "/");
+
+export const gitwebBlobUrl = (
+  gitwebUrl: string,
+  filePath: string,
+  blobHash: string | null,
+  baseCommitHash?: string,
+) =>
+  blobHash
+    ? gitwebActionUrl(gitwebUrl, [
+        "a=blob",
+        `f=${gitwebFileParam(filePath)}`,
+        `h=${blobHash}`,
+        ...(baseCommitHash ? [`hb=${baseCommitHash}`] : []),
+      ])
+    : null;
+
+export type GitwebFileAction = "blobdiff" | "blob" | "blame" | "history";
+
+export type GitwebFileTarget = {
+  path: string;
+  oldPath: string | null;
+  status: string;
+  oldHash: string | null;
+  newHash: string | null;
+};
+
+/**
+ * The links gitweb puts next to every file of a commit. A file the commit
+ * deletes is no longer in its tree, so gitweb would 404 on a path lookup:
+ * its links carry the parent blob hash instead, and it has no blame at all.
+ */
+export const gitwebFileActions = (
+  gitwebUrl: string,
+  commitHash: string,
+  file: GitwebFileTarget,
+): Record<GitwebFileAction, string | null> => {
+  const deleted = file.status === "DELETED";
+  const path = gitwebFileParam(file.path);
+  const oldPath = gitwebFileParam(file.oldPath ?? file.path);
+  const blobHash = deleted ? file.oldHash : file.newHash;
+
+  return {
+    // Without a parent commit hash the diff is asked for blob against blob,
+    // which gitweb answers as long as both sides exist.
+    blobdiff:
+      file.oldHash && file.newHash
+        ? gitwebActionUrl(gitwebUrl, [
+            "a=blobdiff",
+            `f=${path}`,
+            ...(file.oldPath ? [`fp=${oldPath}`] : []),
+            `h=${file.newHash}`,
+            `hp=${file.oldHash}`,
+            `hb=${commitHash}`,
+          ])
+        : null,
+    blob: blobHash
+      ? gitwebActionUrl(gitwebUrl, [
+          "a=blob",
+          `f=${deleted ? oldPath : path}`,
+          `h=${blobHash}`,
+          ...(deleted ? [] : [`hb=${commitHash}`]),
+        ])
+      : null,
+    blame: deleted
+      ? null
+      : gitwebActionUrl(gitwebUrl, [
+          "a=blame",
+          `f=${path}`,
+          `hb=${commitHash}`,
+          ...(file.newHash ? [`h=${file.newHash}`] : []),
+        ]),
+    history: blobHash
+      ? gitwebActionUrl(gitwebUrl, [
+          "a=history",
+          `f=${deleted ? oldPath : path}`,
+          `h=${blobHash}`,
+          `hb=${commitHash}`,
+        ])
+      : null,
+  };
 };
 
 export const diffMetaLink = (

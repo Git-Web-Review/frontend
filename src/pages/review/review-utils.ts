@@ -158,6 +158,7 @@ export const changeKindBadgeClass = (kind: ReviewCommitChangeKind) => {
   switch (kind) {
     case "NEW":
     case "MODIFIED":
+    case "LOG_MODIFIED":
     case "REBASED":
       return "text-bg-info";
     default:
