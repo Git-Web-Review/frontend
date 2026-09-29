@@ -8,6 +8,7 @@ import { useI18n } from "../../../../i18n/I18nProvider";
 import type { TranslationKey } from "../../../../i18n/translations";
 import { useToast } from "../../../../layout/ToastProvider";
 import type { ProjectDefaultReviewer } from "../../../../types/api";
+import { ProjectUsersModal } from "./ProjectUsersModal";
 
 /** A user attached to a project: a default reviewer or a project owner. */
 type ProjectUser = ProjectDefaultReviewer;
@@ -24,6 +25,8 @@ export type ProjectUsersLabels = {
   added: TranslationKey;
   removed: TranslationKey;
   remove: TranslationKey;
+  edit: TranslationKey;
+  saved: TranslationKey;
   loading: TranslationKey;
   empty: TranslationKey;
 };
@@ -66,6 +69,7 @@ export function ProjectUsersTab({
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [editingProject, setEditingProject] = useState<string | null>(null);
 
   const errorLabel = (error: unknown) => {
     if (error instanceof ApiClientError) {
@@ -145,6 +149,9 @@ export function ProjectUsersTab({
   };
 
   const projectGroups = groupByProject(entries);
+  const editingGroup = projectGroups.find(
+    (group) => group.project === editingProject,
+  );
   const knownProjectsListId = `${idPrefix}-known-projects`;
 
   return (
@@ -216,6 +223,7 @@ export function ProjectUsersTab({
                   <tr>
                     <th>{t("sourceProject")}</th>
                     <th>{t(labels.users)}</th>
+                    <th className="text-end">{t("actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -265,6 +273,19 @@ export function ProjectUsersTab({
                           ))}
                         </div>
                       </td>
+                      <td className="text-end">
+                        <button
+                          className="btn btn-outline-secondary btn-sm"
+                          title={t(labels.edit)}
+                          type="button"
+                          onClick={() => setEditingProject(group.project)}
+                        >
+                          <i className="bi bi-pencil" aria-hidden="true" />
+                          <span className="visually-hidden">
+                            {t(labels.edit)}
+                          </span>
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -277,6 +298,16 @@ export function ProjectUsersTab({
           )}
         </div>
       </div>
+      {editingGroup ? (
+        <ProjectUsersModal
+          endpoint={endpoint}
+          labels={labels}
+          project={editingGroup.project}
+          entries={editingGroup.entries}
+          onClose={() => setEditingProject(null)}
+          onSaved={() => void loadEntries()}
+        />
+      ) : null}
     </div>
   );
 }

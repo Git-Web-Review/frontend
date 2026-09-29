@@ -1,75 +1,97 @@
-import { type RefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/AuthProvider";
 import { realtimeNotificationEvent } from "../../realtime/events";
-import type { ReviewDashboard } from "../../types/api";
+import type { ReviewDashboard, ReviewDashboardPage } from "../../types/api";
 import {
   DASHBOARD_PAGE_SIZE,
   emptyDashboardPage,
+  projectSection,
+  sectionProject,
   type DashboardSection,
+  type PersonalSection,
 } from "./dashboard-utils";
 
-const dashboardQuery = (pages?: Partial<Record<DashboardSection, number>>) =>
+const dashboardQuery = (pages?: Partial<Record<PersonalSection, number>>) =>
   new URLSearchParams({
     ownedPage: String(pages?.owned ?? 1),
     assignedPage: String(pages?.assigned ?? 1),
-    projectPage: String(pages?.project ?? 1),
     donePage: String(pages?.done ?? 1),
     limit: String(DASHBOARD_PAGE_SIZE),
   }).toString();
 
+const pagesFromDashboard = (
+  dashboard: ReviewDashboard,
+): Partial<Record<DashboardSection, ReviewDashboardPage>> => ({
+  owned: dashboard.owned,
+  assigned: dashboard.assigned,
+  done: dashboard.done,
+  ...Object.fromEntries(
+    dashboard.projects.map((page) => [projectSection(page.project), page]),
+  ),
+});
+
 /**
- * The four paginated review lists. The first page of each reloads on
- * realtime events; the next pages load as the end of the list scrolls in.
+ * The paginated review lists: the personal ones, then one per owned project.
+ * The first page of each reloads on realtime events; the next pages load as
+ * the end of the active list scrolls in.
  */
 export function useReviewDashboard(activeSection: DashboardSection) {
   const { idToken } = useAuth();
-  const [dashboard, setDashboard] = useState<ReviewDashboard>({
-    owned: emptyDashboardPage(),
-    assigned: emptyDashboardPage(),
-    project: emptyDashboardPage(),
-    done: emptyDashboardPage(),
-  });
+  const [pages, setPages] = useState<
+    Partial<Record<DashboardSection, ReviewDashboardPage>>
+  >({});
+  const [projects, setProjects] = useState<string[]>([]);
   const [loadingSections, setLoadingSections] = useState<
-    Record<DashboardSection, boolean>
-  >({
-    owned: false,
-    assigned: false,
-    project: false,
-    done: false,
-  });
-  const ownedLoadMoreRef = useRef<HTMLDivElement | null>(null);
-  const assignedLoadMoreRef = useRef<HTMLDivElement | null>(null);
-  const projectLoadMoreRef = useRef<HTMLDivElement | null>(null);
-  const doneLoadMoreRef = useRef<HTMLDivElement | null>(null);
-  const loadMoreRefs: Record<
-    DashboardSection,
-    RefObject<HTMLDivElement | null>
-  > = {
-    owned: ownedLoadMoreRef,
-    assigned: assignedLoadMoreRef,
-    project: projectLoadMoreRef,
-    done: doneLoadMoreRef,
-  };
+    Partial<Record<DashboardSection, boolean>>
+  >({});
+  // Only the active section is mounted, so one sentinel serves them all.
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const loadDashboard = async () => {
     if (!idToken) {
       return;
     }
 
-    setDashboard(
-      await apiRequest<ReviewDashboard>(
-        `/reviews/dashboard?${dashboardQuery()}`,
-        idToken,
-      ),
+    const dashboard = await apiRequest<ReviewDashboard>(
+      `/reviews/dashboard?${dashboardQuery()}`,
+      idToken,
     );
+    setPages(pagesFromDashboard(dashboard));
+    setProjects(dashboard.projects.map((page) => page.project));
   };
 
+  const pageOf = (section: DashboardSection) =>
+    pages[section] ?? emptyDashboardPage();
+
   const hasMoreReviews = (section: DashboardSection) =>
-    dashboard[section].page < dashboard[section].totalPages;
+    pageOf(section).page < pageOf(section).totalPages;
 
   const setSectionLoading = (section: DashboardSection, loading: boolean) =>
     setLoadingSections((current) => ({ ...current, [section]: loading }));
+
+  const fetchPage = async (
+    token: string,
+    section: DashboardSection,
+    page: number,
+  ): Promise<ReviewDashboardPage> => {
+    const project = sectionProject(section);
+    if (project !== null) {
+      return apiRequest<ReviewDashboardPage>(
+        `/reviews/dashboard/projects/${encodeURIComponent(project)}?${new URLSearchParams(
+          { page: String(page), limit: String(DASHBOARD_PAGE_SIZE) },
+        )}`,
+        token,
+      );
+    }
+
+    const personalSection = section as PersonalSection;
+    const dashboard = await apiRequest<ReviewDashboard>(
+      `/reviews/dashboard?${dashboardQuery({ [personalSection]: page })}`,
+      token,
+    );
+    return dashboard[personalSection];
+  };
 
   const loadNextPage = async (section: DashboardSection) => {
     if (!idToken || loadingSections[section] || !hasMoreReviews(section)) {
@@ -78,23 +100,22 @@ export function useReviewDashboard(activeSection: DashboardSection) {
 
     setSectionLoading(section, true);
     try {
-      const nextDashboard = await apiRequest<ReviewDashboard>(
-        `/reviews/dashboard?${dashboardQuery({
-          [section]: dashboard[section].page + 1,
-        })}`,
+      const nextPage = await fetchPage(
         idToken,
+        section,
+        pageOf(section).page + 1,
       );
-      const nextPage = nextDashboard[section];
-      setDashboard((current) => {
+      setPages((current) => {
+        const currentItems = current[section]?.items ?? [];
         const existingReviewIds = new Set(
-          current[section].items.map((review) => review.id),
+          currentItems.map((review) => review.id),
         );
         return {
           ...current,
           [section]: {
             ...nextPage,
             items: [
-              ...current[section].items,
+              ...currentItems,
               ...nextPage.items.filter(
                 (review) => !existingReviewIds.has(review.id),
               ),
@@ -123,43 +144,33 @@ export function useReviewDashboard(activeSection: DashboardSection) {
   }, [idToken]);
 
   useEffect(() => {
-    if (!idToken || typeof IntersectionObserver === "undefined") {
+    if (
+      !idToken ||
+      typeof IntersectionObserver === "undefined" ||
+      !loadMoreRef.current ||
+      !hasMoreReviews(activeSection)
+    ) {
       return;
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) {
-            continue;
-          }
-
-          const section = entry.target.getAttribute(
-            "data-dashboard-section",
-          ) as DashboardSection | null;
-          if (section) {
-            void loadNextPage(section);
-          }
+        if (entries.some((entry) => entry.isIntersecting)) {
+          void loadNextPage(activeSection);
         }
       },
       { rootMargin: "180px" },
     );
-
-    for (const [section, ref] of Object.entries(loadMoreRefs) as Array<
-      [DashboardSection, RefObject<HTMLDivElement | null>]
-    >) {
-      if (ref.current && hasMoreReviews(section)) {
-        observer.observe(ref.current);
-      }
-    }
+    observer.observe(loadMoreRef.current);
 
     return () => observer.disconnect();
-  }, [idToken, dashboard, loadingSections, activeSection]);
+  }, [idToken, pages, loadingSections, activeSection]);
 
   return {
-    dashboard,
+    projects,
+    pageOf,
     loadingSections,
-    loadMoreRefs,
+    loadMoreRef,
     hasMoreReviews,
     loadDashboard,
   };

@@ -12,6 +12,8 @@ export function ProjectDefaultReviewersTab() {
         added: "projectDefaultReviewersAdded",
         removed: "projectDefaultReviewerRemoved",
         remove: "removeReviewer",
+        edit: "editProjectDefaultReviewers",
+        saved: "projectDefaultReviewersSaved",
         loading: "loadingProjectDefaultReviewers",
         empty: "noProjectDefaultReviewers",
       }}

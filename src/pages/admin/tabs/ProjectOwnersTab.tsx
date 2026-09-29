@@ -12,6 +12,8 @@ export function ProjectOwnersTab() {
         added: "projectOwnersAdded",
         removed: "projectOwnerRemoved",
         remove: "removeOwner",
+        edit: "editProjectOwners",
+        saved: "projectOwnersSaved",
         loading: "loadingProjectOwners",
         empty: "noProjectOwners",
       }}

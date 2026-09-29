@@ -17,7 +17,21 @@ export type CommitLogMatch = {
   index: number;
 };
 
-export type DashboardSection = "owned" | "assigned" | "project" | "done";
+export type PersonalSection = "owned" | "assigned" | "done";
+
+/** A personal list, or the reviews of one project the user owns. */
+export type DashboardSection = PersonalSection | `project:${string}`;
+
+const PROJECT_SECTION_PREFIX = "project:";
+
+export const projectSection = (project: string): DashboardSection =>
+  `${PROJECT_SECTION_PREFIX}${project}`;
+
+/** The project a section lists, or null for a personal section. */
+export const sectionProject = (section: DashboardSection) =>
+  section.startsWith(PROJECT_SECTION_PREFIX)
+    ? section.slice(PROJECT_SECTION_PREFIX.length)
+    : null;
 
 export const DASHBOARD_PAGE_SIZE = 10;
 

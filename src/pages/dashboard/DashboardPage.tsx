@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/AuthProvider";
 import { useI18n } from "../../i18n/I18nProvider";
@@ -8,18 +8,24 @@ import { useToast } from "../../layout/ToastProvider";
 import type { ReviewDeletion, ReviewItem } from "../../types/api";
 import { errorText, fieldPlaceholder } from "../review/review-display";
 import { canManageReview } from "../review/review-permissions";
-import { commitLogMatches, type DashboardSection } from "./dashboard-utils";
+import {
+  commitLogMatches,
+  projectSection,
+  sectionProject,
+  type DashboardSection,
+  type PersonalSection,
+} from "./dashboard-utils";
 import { CreateReviewModal } from "./CreateReviewModal";
 import { DASHBOARD_PANEL_ID, ReviewSection } from "./ReviewSection";
 import { useCreateReview } from "./useCreateReview";
 import { useReviewDashboard } from "./useReviewDashboard";
 
 /**
- * The review lists, as tabs: reviews you opened, reviews waiting on you,
- * reviews of the projects you own, closed ones.
+ * The personal review lists, as tabs: reviews you opened, reviews waiting on
+ * you, closed ones. The projects you own follow, one tab each.
  */
 const DASHBOARD_TABS: Array<{
-  section: DashboardSection;
+  section: PersonalSection;
   icon: string;
   labelKey: TranslationKey;
   emptyKey: TranslationKey;
@@ -35,12 +41,6 @@ const DASHBOARD_TABS: Array<{
     icon: "bi-inbox",
     labelKey: "assignedReviews",
     emptyKey: "emptyAssigned",
-  },
-  {
-    section: "project",
-    icon: "bi-folder2-open",
-    labelKey: "projectReviews",
-    emptyKey: "emptyProject",
   },
   {
     section: "done",
@@ -129,16 +129,28 @@ export function DashboardPage() {
     }
   };
 
-  // Only project owners have project reviews: hide the empty tab for others.
-  const visibleTabs = DASHBOARD_TABS.filter(
-    (tab) =>
-      tab.section !== "project" ||
-      activeSection === "project" ||
-      reviews.dashboard.project.total > 0,
-  );
+  const tabs: Array<{
+    section: DashboardSection;
+    icon: string;
+    label: string;
+    emptyMessage: string;
+  }> = [
+    ...DASHBOARD_TABS.map((tab) => ({
+      section: tab.section,
+      icon: tab.icon,
+      label: t(tab.labelKey),
+      emptyMessage: t(tab.emptyKey),
+    })),
+    ...reviews.projects.map((project) => ({
+      section: projectSection(project),
+      icon: "bi-folder2-open",
+      label: project,
+      emptyMessage: t("emptyProject"),
+    })),
+  ];
+  // A project removed from the user's ownership falls back to the first tab.
   const activeTab =
-    DASHBOARD_TABS.find((tab) => tab.section === activeSection) ??
-    DASHBOARD_TABS[0];
+    tabs.find((tab) => tab.section === activeSection) ?? tabs[0];
   const { preview } = create;
 
   return (
@@ -189,36 +201,54 @@ export function DashboardPage() {
 
       <div className="col-12">
         <ul className="nav nav-tabs dashboard-tabs" role="tablist">
-          {visibleTabs.map((tab) => (
-            <li className="nav-item" key={tab.section} role="presentation">
-              <button
-                aria-controls={DASHBOARD_PANEL_ID}
-                aria-selected={activeSection === tab.section}
-                className={
-                  activeSection === tab.section ? "nav-link active" : "nav-link"
-                }
-                id={`dashboard-tab-${tab.section}`}
-                role="tab"
-                type="button"
-                onClick={() => setActiveSection(tab.section)}
-              >
-                <i className={`bi ${tab.icon}`} aria-hidden="true" />
-                {t(tab.labelKey)}
-                <span className="badge">
-                  {reviews.dashboard[tab.section].total}
-                </span>
-              </button>
-            </li>
+          {tabs.map((tab) => (
+            <Fragment key={tab.section}>
+              {tab.section === projectSection(reviews.projects[0] ?? "") ? (
+                <li
+                  aria-hidden="true"
+                  className="dashboard-tabs-group"
+                  role="presentation"
+                >
+                  {t("projectReviews")}
+                </li>
+              ) : null}
+              <li className="nav-item" role="presentation">
+                <button
+                  aria-controls={DASHBOARD_PANEL_ID}
+                  aria-selected={activeTab.section === tab.section}
+                  className={
+                    activeTab.section === tab.section
+                      ? "nav-link active"
+                      : "nav-link"
+                  }
+                  id={`dashboard-tab-${tab.section}`}
+                  role="tab"
+                  title={
+                    sectionProject(tab.section) !== null
+                      ? `${t("sourceProject")} ${tab.label}`
+                      : undefined
+                  }
+                  type="button"
+                  onClick={() => setActiveSection(tab.section)}
+                >
+                  <i className={`bi ${tab.icon}`} aria-hidden="true" />
+                  {tab.label}
+                  <span className="badge">
+                    {reviews.pageOf(tab.section).total}
+                  </span>
+                </button>
+              </li>
+            </Fragment>
           ))}
         </ul>
         <ReviewSection
           key={activeTab.section}
           section={activeTab.section}
-          emptyMessage={t(activeTab.emptyKey)}
-          page={reviews.dashboard[activeTab.section]}
-          loadingMore={reviews.loadingSections[activeTab.section]}
+          emptyMessage={activeTab.emptyMessage}
+          page={reviews.pageOf(activeTab.section)}
+          loadingMore={!!reviews.loadingSections[activeTab.section]}
           hasMore={reviews.hasMoreReviews(activeTab.section)}
-          loadMoreRef={reviews.loadMoreRefs[activeTab.section]}
+          loadMoreRef={reviews.loadMoreRef}
           currentUserId={currentUser?.id}
           openReviewActionsId={openReviewActionsId}
           onToggleActions={(reviewId) =>

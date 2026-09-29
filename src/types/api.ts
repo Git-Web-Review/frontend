@@ -457,9 +457,14 @@ export type ReviewDashboardPage = {
   totalPages: number;
 };
 
+export type ReviewDashboardProjectPage = ReviewDashboardPage & {
+  project: string;
+};
+
 export type ReviewDashboard = {
   owned: ReviewDashboardPage;
   assigned: ReviewDashboardPage;
-  project: ReviewDashboardPage;
   done: ReviewDashboardPage;
+  /** Reviews of each owned project that are not in the personal lists. */
+  projects: ReviewDashboardProjectPage[];
 };
