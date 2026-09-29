@@ -1,5 +1,6 @@
 import type { RefObject } from "react";
 import type { ReviewItem } from "../../types/api";
+import { canManageReview } from "../review/review-permissions";
 import { ReviewListItem } from "./ReviewListItem";
 import type { DashboardSection } from "./dashboard-utils";
 
@@ -52,7 +53,7 @@ export function ReviewSection({
             <ReviewListItem
               key={review.id}
               review={review}
-              canDelete={review.ownerId === currentUserId}
+              canDelete={canManageReview(review, currentUserId)}
               actionsOpen={openReviewActionsId === review.id}
               onToggleActions={() => onToggleActions(review.id)}
               deleting={deletingReviewId === review.id}

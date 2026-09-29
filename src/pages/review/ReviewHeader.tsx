@@ -5,6 +5,7 @@ import { reviewStatusBadgeClass } from "../../utils/reviewStatus";
 import type { ReviewCommit, ReviewItem } from "../../types/api";
 import { gitwebBrowseUrl } from "./gitweb-links";
 import { ReviewerActionSplit } from "./ReviewerActionSplit";
+import { canManageReview } from "./review-permissions";
 import type { ReviewTab } from "./review-utils";
 
 type ReviewHeaderProps = {
@@ -125,7 +126,7 @@ export function ReviewHeader({
               {t("unackReview")}
             </button>
           ) : null}
-          {review.ownerId === currentUserId && review.status !== "CLOSED" ? (
+          {canManageReview(review, currentUserId) && review.status !== "CLOSED" ? (
             <button
               className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
               type="button"
@@ -140,7 +141,7 @@ export function ReviewHeader({
               {t("syncReview")}
             </button>
           ) : null}
-          {review.ownerId === currentUserId && review.status !== "CLOSED" ? (
+          {canManageReview(review, currentUserId) && review.status !== "CLOSED" ? (
             <span
               className="disabled-button-tooltip"
               title={

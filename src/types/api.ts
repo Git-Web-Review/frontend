@@ -233,11 +233,6 @@ export type ProjectDefaultReviewer = {
   createdAt: string;
 };
 
-export type ProjectDefaultReviewerDeletion = {
-  id: string;
-  deleted: boolean;
-};
-
 export type ReviewFieldValue = {
   id: string;
   reviewId: string;
@@ -365,6 +360,8 @@ export type ReviewItem = {
   version: number;
   ownerId: string;
   owner: ReviewUserSummary;
+  /** Owners of the review's project: they manage it as its owner does. */
+  projectOwnerIds: string[];
   sourceProject: string | null;
   sourceBranch: string | null;
   sourceCommit: string | null;
@@ -463,5 +460,6 @@ export type ReviewDashboardPage = {
 export type ReviewDashboard = {
   owned: ReviewDashboardPage;
   assigned: ReviewDashboardPage;
+  project: ReviewDashboardPage;
   done: ReviewDashboardPage;
 };

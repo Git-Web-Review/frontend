@@ -13,12 +13,13 @@ const dashboardQuery = (pages?: Partial<Record<DashboardSection, number>>) =>
   new URLSearchParams({
     ownedPage: String(pages?.owned ?? 1),
     assignedPage: String(pages?.assigned ?? 1),
+    projectPage: String(pages?.project ?? 1),
     donePage: String(pages?.done ?? 1),
     limit: String(DASHBOARD_PAGE_SIZE),
   }).toString();
 
 /**
- * The three paginated review lists. The first page of each reloads on
+ * The four paginated review lists. The first page of each reloads on
  * realtime events; the next pages load as the end of the list scrolls in.
  */
 export function useReviewDashboard(activeSection: DashboardSection) {
@@ -26,6 +27,7 @@ export function useReviewDashboard(activeSection: DashboardSection) {
   const [dashboard, setDashboard] = useState<ReviewDashboard>({
     owned: emptyDashboardPage(),
     assigned: emptyDashboardPage(),
+    project: emptyDashboardPage(),
     done: emptyDashboardPage(),
   });
   const [loadingSections, setLoadingSections] = useState<
@@ -33,10 +35,12 @@ export function useReviewDashboard(activeSection: DashboardSection) {
   >({
     owned: false,
     assigned: false,
+    project: false,
     done: false,
   });
   const ownedLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const assignedLoadMoreRef = useRef<HTMLDivElement | null>(null);
+  const projectLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const doneLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const loadMoreRefs: Record<
     DashboardSection,
@@ -44,6 +48,7 @@ export function useReviewDashboard(activeSection: DashboardSection) {
   > = {
     owned: ownedLoadMoreRef,
     assigned: assignedLoadMoreRef,
+    project: projectLoadMoreRef,
     done: doneLoadMoreRef,
   };
 

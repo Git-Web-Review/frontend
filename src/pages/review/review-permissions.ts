@@ -1,11 +1,20 @@
 import type { ReviewCommit, ReviewItem } from "../../types/api";
 
+/** The review owner, or an owner of the review's project. */
+export const canManageReview = (
+  review: ReviewItem,
+  currentUserId: string | undefined,
+) =>
+  !!currentUserId &&
+  (review.ownerId === currentUserId ||
+    review.projectOwnerIds.includes(currentUserId));
+
 /** What the current user may do on the review, derived on every render. */
 export const reviewPermissions = (
   review: ReviewItem | null,
   currentUserId: string | undefined,
 ) => {
-  const isOwner = !!review && review.ownerId === currentUserId;
+  const isOwner = !!review && canManageReview(review, currentUserId);
   const currentReviewer = review?.reviewers.find(
     (reviewer) => reviewer.userId === currentUserId,
   );
@@ -17,12 +26,9 @@ export const reviewPermissions = (
     currentReviewer,
     canDeleteReview: isOwner,
     canEditReviewDetails: isOwner,
-    // Reviewers can bring other reviewers in; only the owner removes any.
+    // Reviewers can bring other reviewers in; only owners remove any.
     canAddReviewers: isOwner || !!currentReviewer,
-    canUpdateCommentDone:
-      !!review &&
-      (review.ownerId === currentUserId ||
-        review.reviewers.some((reviewer) => reviewer.userId === currentUserId)),
+    canUpdateCommentDone: isOwner || !!currentReviewer,
     commitAckedByMe,
     canAckCommit: (commit: ReviewCommit) =>
       !!currentReviewer &&

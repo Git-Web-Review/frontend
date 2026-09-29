@@ -17,7 +17,7 @@ export type CommitLogMatch = {
   index: number;
 };
 
-export type DashboardSection = "owned" | "assigned" | "done";
+export type DashboardSection = "owned" | "assigned" | "project" | "done";
 
 export const DASHBOARD_PAGE_SIZE = 10;
 

@@ -7,6 +7,7 @@ import { useConfirm } from "../../layout/ConfirmProvider";
 import { useToast } from "../../layout/ToastProvider";
 import type { ReviewDeletion, ReviewItem } from "../../types/api";
 import { errorText, fieldPlaceholder } from "../review/review-display";
+import { canManageReview } from "../review/review-permissions";
 import { commitLogMatches, type DashboardSection } from "./dashboard-utils";
 import { CreateReviewModal } from "./CreateReviewModal";
 import { DASHBOARD_PANEL_ID, ReviewSection } from "./ReviewSection";
@@ -14,8 +15,8 @@ import { useCreateReview } from "./useCreateReview";
 import { useReviewDashboard } from "./useReviewDashboard";
 
 /**
- * The three review lists, as tabs. Order matches the sections the dashboard
- * has always shown: reviews you opened, reviews waiting on you, closed ones.
+ * The review lists, as tabs: reviews you opened, reviews waiting on you,
+ * reviews of the projects you own, closed ones.
  */
 const DASHBOARD_TABS: Array<{
   section: DashboardSection;
@@ -34,6 +35,12 @@ const DASHBOARD_TABS: Array<{
     icon: "bi-inbox",
     labelKey: "assignedReviews",
     emptyKey: "emptyAssigned",
+  },
+  {
+    section: "project",
+    icon: "bi-folder2-open",
+    labelKey: "projectReviews",
+    emptyKey: "emptyProject",
   },
   {
     section: "done",
@@ -90,7 +97,7 @@ export function DashboardPage() {
   );
 
   const deleteReview = async (review: ReviewItem) => {
-    if (!idToken || review.ownerId !== currentUser?.id) {
+    if (!idToken || !canManageReview(review, currentUser?.id)) {
       return;
     }
 
@@ -122,6 +129,13 @@ export function DashboardPage() {
     }
   };
 
+  // Only project owners have project reviews: hide the empty tab for others.
+  const visibleTabs = DASHBOARD_TABS.filter(
+    (tab) =>
+      tab.section !== "project" ||
+      activeSection === "project" ||
+      reviews.dashboard.project.total > 0,
+  );
   const activeTab =
     DASHBOARD_TABS.find((tab) => tab.section === activeSection) ??
     DASHBOARD_TABS[0];
@@ -175,7 +189,7 @@ export function DashboardPage() {
 
       <div className="col-12">
         <ul className="nav nav-tabs dashboard-tabs" role="tablist">
-          {DASHBOARD_TABS.map((tab) => (
+          {visibleTabs.map((tab) => (
             <li className="nav-item" key={tab.section} role="presentation">
               <button
                 aria-controls={DASHBOARD_PANEL_ID}

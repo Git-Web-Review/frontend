@@ -12,6 +12,7 @@ import { CommitFileList } from "./CommitFileList";
 import { DiffFileCard } from "./DiffFileCard";
 import { linkedCommitLog } from "./gitweb-links";
 import { ReviewerActionSplit } from "./ReviewerActionSplit";
+import { canManageReview } from "./review-permissions";
 import {
   changeKindBadgeClass,
   type CommentTarget,
@@ -376,7 +377,7 @@ export function FilesTabPanel({
           }
           commentCount={fileCommentCount(commit.hash, file.path)}
           viewed={viewed}
-          canMarkViewed={review.ownerId === currentUserId || isReviewer}
+          canMarkViewed={canManageReview(review, currentUserId) || isReviewer}
           savingViewed={savingFileViewKeys.includes(viewKey)}
           onToggleViewed={() => toggleFileViewed(commit, file.path)}
           threadsForTarget={commentThreadsForTarget}
