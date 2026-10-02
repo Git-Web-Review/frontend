@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import ReactMarkdown from "react-markdown";
+import { memo, type ReactNode } from "react";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useAuth } from "../../auth/AuthProvider";
 import { hljs, languageFromClassName } from "./diff-highlight";
@@ -35,53 +35,62 @@ function Mention({
   );
 }
 
-export function MarkdownView({ value }: { value: string }) {
+const remarkPlugins = [remarkGfm, remarkMentions];
+
+const components: Components = {
+  a: ({ children, ...props }) => (
+    <a {...props} rel="noreferrer" target="_blank">
+      {children}
+    </a>
+  ),
+  span: ({ node: _node, ...props }) => {
+    const mentionUserId = (props as Record<string, unknown>)[
+      mentionUserIdAttribute
+    ];
+    return typeof mentionUserId === "string" ? (
+      <Mention userId={mentionUserId}>{props.children}</Mention>
+    ) : (
+      <span {...props} />
+    );
+  },
+  code: ({ className, children, node: _node, ...props }) => {
+    const code = String(children).replace(/\n$/, "");
+    const language = languageFromClassName(className);
+
+    if (!language) {
+      return (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      );
+    }
+
+    const highlighted = hljs.getLanguage(language)
+      ? hljs.highlight(code, { language }).value
+      : hljs.highlightAuto(code).value;
+
+    return (
+      <code
+        className={`hljs language-${language}`}
+        {...props}
+        dangerouslySetInnerHTML={{ __html: highlighted || " " }}
+      />
+    );
+  },
+};
+
+/**
+ * Memoized on `value`: a page holds many comments, and re-parsing (and
+ * re-highlighting) each one on every keystroke of a draft made typing lag.
+ */
+export const MarkdownView = memo(function MarkdownView({
+  value,
+}: {
+  value: string;
+}) {
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm, remarkMentions]}
-      components={{
-        a: ({ children, ...props }) => (
-          <a {...props} rel="noreferrer" target="_blank">
-            {children}
-          </a>
-        ),
-        span: ({ node: _node, ...props }) => {
-          const mentionUserId = (props as Record<string, unknown>)[
-            mentionUserIdAttribute
-          ];
-          return typeof mentionUserId === "string" ? (
-            <Mention userId={mentionUserId}>{props.children}</Mention>
-          ) : (
-            <span {...props} />
-          );
-        },
-        code: ({ className, children, node: _node, ...props }) => {
-          const code = String(children).replace(/\n$/, "");
-          const language = languageFromClassName(className);
-
-          if (!language) {
-            return (
-              <code className={className} {...props}>
-                {children}
-              </code>
-            );
-          }
-
-          const highlighted = hljs.getLanguage(language)
-            ? hljs.highlight(code, { language }).value
-            : hljs.highlightAuto(code).value;
-
-          return (
-            <code
-              className={`hljs language-${language}`}
-              {...props}
-              dangerouslySetInnerHTML={{ __html: highlighted || " " }}
-            />
-          );
-        },
-      }}
-    >
+    <ReactMarkdown remarkPlugins={remarkPlugins} components={components}>
       {value}
     </ReactMarkdown>
   );
-}
+});
