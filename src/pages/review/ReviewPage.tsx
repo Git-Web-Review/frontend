@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../auth/AuthProvider";
 import { useI18n } from "../../i18n/I18nProvider";
@@ -140,6 +140,16 @@ export function ReviewPage() {
     comments,
     reviewComments,
   });
+
+  // Kept stable while typing, or every mention on the page re-renders.
+  const mentionUsers = useMemo(
+    () => (review ? mentionableUsers(review, reviewComments) : []),
+    [review, reviewComments],
+  );
+  const commentThreads = useMemo(
+    () => commentThreadsFrom(reviewComments),
+    [reviewComments],
+  );
 
   if (!review && loadingReview) {
     return (
@@ -290,7 +300,7 @@ export function ReviewPage() {
 
         {activeReviewTab === "comments" ? (
           <CommentsTabPanel
-            threads={commentThreadsFrom(reviewComments)}
+            threads={commentThreads}
             currentUser={renderers.currentUserSummary}
             idToken={idToken}
             filter={discussionFilter}
@@ -352,7 +362,7 @@ export function ReviewPage() {
   );
 
   return (
-    <MentionUsersProvider users={mentionableUsers(review, reviewComments)}>
+    <MentionUsersProvider users={mentionUsers}>
       {reviewPageContent}
     </MentionUsersProvider>
   );

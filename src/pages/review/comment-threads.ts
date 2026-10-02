@@ -50,6 +50,29 @@ export const commentThreadsFrom = (
   return [...threadsById.values()].sort(byCreatedAt);
 };
 
+const noThreads: ReviewCommentThread[] = [];
+
+/**
+ * Threads looked up by target. Built once per list of comments: a diff asks
+ * for every one of its lines, and filtering all the comments on each of them
+ * made typing a comment slower the more comments the review had.
+ */
+export const commentThreadIndex = (comments: ReviewComment[]) => {
+  const threadsByTarget = new Map<string, ReviewCommentThread[]>();
+  for (const thread of commentThreadsFrom(comments)) {
+    const key = targetKey(thread);
+    const threads = threadsByTarget.get(key);
+    if (threads) {
+      threads.push(thread);
+    } else {
+      threadsByTarget.set(key, [thread]);
+    }
+  }
+
+  return (target: CommentTarget) =>
+    threadsByTarget.get(targetKey(target)) ?? noThreads;
+};
+
 export const commentThreadsForTarget = (
   comments: ReviewComment[],
   target: CommentTarget,

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useI18n } from "../../i18n/I18nProvider";
 import type { ReviewCommit, ReviewItem } from "../../types/api";
 import { languageForPath } from "./diff-highlight";
@@ -119,9 +119,9 @@ export function DiffFileCard({
   onOpenLocation,
 }: DiffFileCardProps) {
   const { t } = useI18n();
-  const rows = diffRenderRows(file.patch);
+  const rows = useMemo(() => diffRenderRows(file.patch), [file.patch]);
   const language = languageForPath(file.path);
-  const blobHashes = diffBlobHashes(file.patch);
+  const blobHashes = useMemo(() => diffBlobHashes(file.patch), [file.patch]);
   const fileTarget = {
     commitHash: commit.hash,
     filePath: file.path,

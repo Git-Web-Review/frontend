@@ -1,11 +1,11 @@
-import type { Dispatch, SetStateAction } from "react";
+import { useMemo, type Dispatch, type SetStateAction } from "react";
 import type {
   CommitLogLinkRule,
   ReviewComment,
   ReviewItem,
 } from "../../types/api";
 import {
-  commentThreadsForTarget,
+  commentThreadIndex,
   diffAnchorId,
   targetKey,
   threadCount,
@@ -54,6 +54,21 @@ export function ReviewFilesTab({
   commitActionMenuOpenId: string | null;
   setCommitActionMenuOpenId: (commitId: string | null) => void;
 }) {
+  const threadsForTarget = useMemo(
+    () => commentThreadIndex(reviewComments),
+    [reviewComments],
+  );
+  // Thread ids per commit and file, for the collapsed file card badges.
+  const fileThreadIds = useMemo(() => {
+    const threadIds = new Map<string, Set<string>>();
+    for (const comment of reviewComments) {
+      const key = `${comment.commitHash ?? ""}:${comment.filePath ?? ""}`;
+      const ids = threadIds.get(key) ?? new Set<string>();
+      ids.add(comment.commentId);
+      threadIds.set(key, ids);
+    }
+    return threadIds;
+  }, [reviewComments]);
   const activeCommit =
     review.commits.find(
       (commit) => commit.id === diffNavigation.activeCommitId,
@@ -98,19 +113,11 @@ export function ReviewFilesTab({
       commitLogLinkRules={commitLogLinkRules}
       inlineCommentTarget={inline.inlineCommentTarget}
       targetKey={targetKey}
-      commentThreadsForTarget={(target) =>
-        commentThreadsForTarget(reviewComments, target)
-      }
+      commentThreadsForTarget={threadsForTarget}
       // Comment threads hidden while a file card is collapsed, file-level
       // and line-level alike, so the header badge keeps them visible.
       fileCommentCount={(commitHash, filePath) =>
-        threadCount(
-          reviewComments.filter(
-            (comment) =>
-              comment.commitHash === commitHash &&
-              comment.filePath === filePath,
-          ),
-        )
+        fileThreadIds.get(`${commitHash}:${filePath}`)?.size ?? 0
       }
       toggleInlineComment={inline.toggleInlineComment}
       renderInlineCommentComposer={renderers.renderInlineCommentComposer}
