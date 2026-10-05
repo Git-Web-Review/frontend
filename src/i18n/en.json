@@ -124,7 +124,7 @@
     "emptyAssigned": "No review is waiting for you.",
     "emptyDone": "No done review for now.",
     "projectReviews": "My projects",
-    "emptyProject": "No other review on this project.",
+    "emptyProject": "No review on this project.",
     "reviewCreated": "Review created.",
     "reviewDeleted": "Review deleted.",
     "deleteReview": "Delete",
