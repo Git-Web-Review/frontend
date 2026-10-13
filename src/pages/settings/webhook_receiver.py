@@ -35,6 +35,9 @@ def on(*events):
 # reviewId, title, gitwebUrl, gitwebTitle, ownerEmail, sourceProject,
 # sourceBranch, sourceCommit.
 
+# Sent by the backend when the URL is tested or saved: message. It only
+# needs a 2xx within 5 seconds, which it gets even with no handler.
+on_test = on("TEST")
 # A message sent by an admin: title, message. No review fields.
 on_text = on("TEXT")
 # You were added as a reviewer.

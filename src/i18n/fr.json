@@ -328,6 +328,8 @@
     "ircNicknameRequired": "Le pseudo IRC est requis pour activer les notifications IRC.",
     "webhookNotifications": "Notifications webhook",
     "webhookUrl": "URL du webhook",
+    "webhookTest": "Tester",
+    "webhookTestSucceeded": "Le serveur a bien reçu l'événement de test.",
     "webhookExampleOpen": "Exemple de réception des webhooks",
     "webhookExampleTitle": "Recevoir les webhooks en Python",
     "webhookExampleHelp": "Un daemon Python sans dépendance pour démarrer : un décorateur par type de notification, avec les champs de chaque payload listés à côté. Lancez-le avec python3 webhook_receiver.py 8080, puis indiquez son adresse dans ce champ.",

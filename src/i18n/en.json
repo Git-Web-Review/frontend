@@ -328,6 +328,8 @@
     "ircNicknameRequired": "IRC nickname is required to enable IRC notifications.",
     "webhookNotifications": "Webhook notifications",
     "webhookUrl": "Webhook URL",
+    "webhookTest": "Test",
+    "webhookTestSucceeded": "The endpoint received the test event.",
     "webhookExampleOpen": "Webhook receiver example",
     "webhookExampleTitle": "Receiving webhooks in Python",
     "webhookExampleHelp": "A standard-library Python daemon to start from: one decorator per notification type, with the fields of each payload listed next to it. Run it with python3 webhook_receiver.py 8080, then set this URL to it.",
