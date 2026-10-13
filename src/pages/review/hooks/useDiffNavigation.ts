@@ -12,6 +12,13 @@ import type { CommentTarget, ReviewTab } from "../review-utils";
 
 const highlightClass = "diff-anchor-highlight";
 
+const diffLocationSignature = (
+  commit: string,
+  file: string | null,
+  line: string | null,
+  side: ReviewCommentSide,
+) => `${commit}:${file ?? ""}:${line ?? ""}:${side}`;
+
 /** Scrolls an element to the middle of the screen and flashes it. */
 export const highlightElement = (element: HTMLElement) => {
   element.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -39,8 +46,9 @@ export const scrollToNextComment = () => {
 };
 
 /**
- * The commit shown in the Files tab, and the diff locations that URLs such
- * as `?tab=files&commit=…&file=…&line=…` point to.
+ * The commit shown in the Files tab, kept in the URL as `?commit=…`, and the
+ * diff locations that URLs such as `?tab=files&commit=…&file=…&line=…` point
+ * to.
  */
 export function useDiffNavigation({
   review,
@@ -102,6 +110,27 @@ export function useDiffNavigation({
 
     const commitParam = searchParams.get("commit");
     if (!commitParam) {
+      // Puts the shown commit in the URL, so it can be shared and so
+      // back/forward return to it.
+      const activeCommit = review.commits.find(
+        (commit) => commit.id === activeCommitId,
+      );
+      if (activeCommit) {
+        handledDiffLocationRef.current = diffLocationSignature(
+          activeCommit.hash,
+          null,
+          null,
+          "AFTER",
+        );
+        setSearchParams(
+          (current) => {
+            const next = new URLSearchParams(current);
+            next.set("commit", activeCommit.hash);
+            return next;
+          },
+          { replace: true },
+        );
+      }
       return;
     }
 
@@ -109,7 +138,12 @@ export function useDiffNavigation({
     const lineParam = searchParams.get("line");
     const sideParam: ReviewCommentSide =
       searchParams.get("side") === "BEFORE" ? "BEFORE" : "AFTER";
-    const signature = `${commitParam}:${fileParam ?? ""}:${lineParam ?? ""}:${sideParam}`;
+    const signature = diffLocationSignature(
+      commitParam,
+      fileParam,
+      lineParam,
+      sideParam,
+    );
     if (handledDiffLocationRef.current === signature) {
       return;
     }
@@ -140,7 +174,7 @@ export function useDiffNavigation({
         side: sideParam,
       }),
     );
-  }, [review, searchParams, activeReviewTab]);
+  }, [review, searchParams, activeReviewTab, activeCommitId]);
 
   const openDiffLocation = (target: CommentTarget) => {
     const params: Record<string, string> = { tab: "files" };
@@ -161,5 +195,21 @@ export function useDiffNavigation({
     setSearchParams(params);
   };
 
-  return { activeCommitId, setActiveCommitId, openDiffLocation };
+  /** Shows a commit as a new history entry, without scrolling to it. */
+  const selectCommit = (commitId: string) => {
+    const commit = review?.commits.find((current) => current.id === commitId);
+    if (!commit) {
+      return;
+    }
+    handledDiffLocationRef.current = diffLocationSignature(
+      commit.hash,
+      null,
+      null,
+      "AFTER",
+    );
+    setActiveCommitId(commit.id);
+    setSearchParams({ tab: "files", commit: commit.hash });
+  };
+
+  return { activeCommitId, selectCommit, openDiffLocation };
 }
