@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ApiClientError, apiRequest } from "../../../api/client";
 import { useAuth } from "../../../auth/AuthProvider";
 import { RefreshButton } from "../../../components/RefreshButton";
+import { UserAvatar } from "../../../components/UserAvatar";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { useToast } from "../../../layout/ToastProvider";
 import { formatDateTime } from "../../../utils/formatDate";
@@ -29,6 +30,7 @@ export function UsersTab({ reloadKey, onEditUser }: UsersTabProps) {
   const [preview, setPreview] = useState<UserDeletionPreview | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [search, setSearch] = useState("");
 
   const errorLabel = (error: unknown) => {
     if (error instanceof ApiClientError) {
@@ -120,22 +122,41 @@ export function UsersTab({ reloadKey, onEditUser }: UsersTabProps) {
       ] as const
     ).filter(([count]) => count > 0);
 
+  const query = search.trim().toLowerCase();
+  const visibleUsers = query
+    ? users.filter((user) =>
+        [user.email, user.settings?.nickname, user.hostname].some((value) =>
+          value?.toLowerCase().includes(query),
+        ),
+      )
+    : users;
+
   return (
     <div className="col-12">
       <div className="card h-100">
         <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
           <h3 className="card-title mb-0">{t("users")}</h3>
-          <RefreshButton
-            disabled={!idToken}
-            loading={loadingUsers}
-            onClick={() => void loadUsers()}
-          />
+          <div className="d-flex align-items-center gap-2">
+            <input
+              aria-label={t("searchUsers")}
+              className="form-control form-control-sm"
+              placeholder={t("searchUsers")}
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+            <RefreshButton
+              disabled={!idToken}
+              loading={loadingUsers}
+              onClick={() => void loadUsers()}
+            />
+          </div>
         </div>
         <div className="card-body p-0">
           {errorMessage ? (
             <div className="alert alert-danger m-3">{errorMessage}</div>
           ) : null}
-          {users.length ? (
+          {visibleUsers.length ? (
             <div className="table-responsive">
               <table className="table table-hover align-middle mb-0">
                 <thead>
@@ -152,9 +173,28 @@ export function UsersTab({ reloadKey, onEditUser }: UsersTabProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((user) => (
+                  {visibleUsers.map((user) => (
                     <tr key={user.id}>
-                      <td className="fw-semibold text-break">{user.email}</td>
+                      <td className="fw-semibold text-break">
+                        <span className="d-inline-flex align-items-center gap-2">
+                          <UserAvatar
+                            idToken={idToken}
+                            user={{
+                              id: user.id,
+                              email: user.email,
+                              hostname: user.hostname,
+                              nickname: user.settings?.nickname ?? null,
+                              mailNotificationsEnabled: false,
+                              ircNotificationsEnabled: false,
+                              webhookNotificationsEnabled: false,
+                              hasProfileImage: !!user.profileImage,
+                              profileImageUrl:
+                                user.settings?.profileImageUrl ?? null,
+                            }}
+                          />
+                          {user.email}
+                        </span>
+                      </td>
                       <td>{user.settings?.nickname || t("notAvailable")}</td>
                       <td className="text-break">{user.hostname}</td>
                       <td>
@@ -226,7 +266,11 @@ export function UsersTab({ reloadKey, onEditUser }: UsersTabProps) {
             </div>
           ) : (
             <div className="empty-state">
-              {loadingUsers ? t("loadingUsers") : t("noUsers")}
+              {loadingUsers
+                ? t("loadingUsers")
+                : users.length
+                  ? t("noUserSearchResults")
+                  : t("noUsers")}
             </div>
           )}
         </div>

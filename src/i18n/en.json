@@ -24,6 +24,8 @@
     "noAdmins": "No admin configured.",
     "loadingUsers": "Loading users...",
     "noUsers": "No registered user.",
+    "searchUsers": "Search for a user...",
+    "noUserSearchResults": "No user found.",
     "refresh": "Refresh",
     "remove": "Remove",
     "add": "Add",
