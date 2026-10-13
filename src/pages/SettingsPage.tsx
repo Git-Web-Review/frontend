@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { NotificationCategoryToggles } from "../components/user-settings/NotificationCategoryToggles";
 import { useI18n } from "../i18n/I18nProvider";
 import type { UserLocale } from "../types/api";
 import { NotificationChannelRow } from "./settings/NotificationChannelRow";
 import { ProfileAvatarUpload } from "./settings/ProfileAvatarUpload";
 import { useSettingsForm } from "./settings/useSettingsForm";
+import { WebhookExampleModal } from "./settings/WebhookExampleModal";
 
 const categoryTogglesClassName = "notification-preference-toggles ms-4 mb-3";
 
@@ -11,6 +13,7 @@ export function SettingsPage() {
   const { t } = useI18n();
   const form = useSettingsForm();
   const { draft, update } = form;
+  const [webhookExampleOpen, setWebhookExampleOpen] = useState(false);
 
   return (
     <div className="row g-4">
@@ -88,7 +91,9 @@ export function SettingsPage() {
                 }
                 id="irc-nickname"
                 value={draft.ircNickname}
-                onChange={(event) => update({ ircNickname: event.target.value })}
+                onChange={(event) =>
+                  update({ ircNickname: event.target.value })
+                }
               />
               {form.ircNicknameMissing ? (
                 <div className="invalid-feedback">
@@ -115,6 +120,15 @@ export function SettingsPage() {
               <label className="form-label" htmlFor="webhook-url">
                 {t("webhookUrl")}
               </label>
+              <button
+                className="btn btn-link btn-sm p-0 ms-2 align-baseline"
+                type="button"
+                title={t("webhookExampleOpen")}
+                aria-label={t("webhookExampleOpen")}
+                onClick={() => setWebhookExampleOpen(true)}
+              >
+                <i className="bi bi-book" />
+              </button>
               <input
                 className={
                   form.webhookInvalid
@@ -163,6 +177,9 @@ export function SettingsPage() {
           ) : null}
         </div>
       </div>
+      {webhookExampleOpen ? (
+        <WebhookExampleModal onClose={() => setWebhookExampleOpen(false)} />
+      ) : null}
     </div>
   );
 }
