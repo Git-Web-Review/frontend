@@ -184,6 +184,8 @@
     "changeKindLOG_MODIFIED": "Log changed",
     "changeKindREBASED": "Rebased",
     "changeKindUNCHANGED": "Unchanged",
+    "selectAll": "Select all",
+    "unselectAll": "Unselect all",
     "commitSelectionTitle": "Commits to review",
     "commitSelectionEmpty": "No commits ahead of origin/master.",
     "noCommitsAheadOfMaster": "Nothing to review on branch \"{branch}\": it has no commits ahead of origin/master. Push your local commits to this branch, then retry.",

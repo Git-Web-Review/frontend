@@ -269,6 +269,7 @@ export function DashboardPage() {
           onTitleChange={create.changeTitle}
           createCommitHashes={create.commitHashes}
           onToggleCommitHash={create.toggleCommitHash}
+          onSetAllCommitHashes={create.setAllCommitHashes}
           createReviewerUserIds={create.reviewerUserIds}
           onReviewersChange={create.setReviewerUserIds}
           reviewFieldDefs={create.reviewFieldDefs}

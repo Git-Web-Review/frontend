@@ -17,6 +17,7 @@ type CreateReviewModalProps = {
   onTitleChange: (value: string) => void;
   createCommitHashes: string[];
   onToggleCommitHash: (hash: string) => void;
+  onSetAllCommitHashes: (hashes: string[]) => void;
   createReviewerUserIds: string[];
   onReviewersChange: (userIds: string[]) => void;
   reviewFieldDefs: ReviewField[];
@@ -40,6 +41,7 @@ export function CreateReviewModal({
   onTitleChange,
   createCommitHashes,
   onToggleCommitHash,
+  onSetAllCommitHashes,
   createReviewerUserIds,
   onReviewersChange,
   reviewFieldDefs,
@@ -90,9 +92,30 @@ export function CreateReviewModal({
                         <span className="fw-semibold">
                           {t("commitSelectionTitle")}
                         </span>
-                        <span className="badge review-meta-badge">
-                          {createCommitHashes.length}/
-                          {preview.commitOptions.length}
+                        <span className="d-flex align-items-center gap-2">
+                          {preview.commitOptions.length ? (
+                            <button
+                              className="btn btn-link btn-sm p-0"
+                              type="button"
+                              onClick={() =>
+                                onSetAllCommitHashes(
+                                  createCommitHashes.length
+                                    ? []
+                                    : preview.commitOptions.map((o) => o.hash),
+                                )
+                              }
+                            >
+                              {t(
+                                createCommitHashes.length
+                                  ? "unselectAll"
+                                  : "selectAll",
+                              )}
+                            </button>
+                          ) : null}
+                          <span className="badge review-meta-badge">
+                            {createCommitHashes.length}/
+                            {preview.commitOptions.length}
+                          </span>
                         </span>
                       </div>
                       {preview.commitOptions.length ? (

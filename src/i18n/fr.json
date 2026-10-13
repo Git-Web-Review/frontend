@@ -184,6 +184,8 @@
     "changeKindLOG_MODIFIED": "Log modifié",
     "changeKindREBASED": "Rebasé",
     "changeKindUNCHANGED": "Inchangé",
+    "selectAll": "Tout sélectionner",
+    "unselectAll": "Tout désélectionner",
     "commitSelectionTitle": "Commits à reviewer",
     "commitSelectionEmpty": "Aucun commit en avance sur origin/master.",
     "noCommitsAheadOfMaster": "Rien à reviewer sur la branche « {branch} » : elle n'a aucun commit en avance sur origin/master. Poussez vos commits locaux sur cette branche puis réessayez.",

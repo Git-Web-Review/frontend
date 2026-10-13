@@ -182,15 +182,21 @@ export function useCreateReview({
     }
   };
 
-  const toggleCommitHash = (hash: string) => {
+  const applyCommitSelection = (update: (current: string[]) => string[]) => {
     setCommitHashes((current) => {
-      const nextSelection = toggleId(current, hash);
+      const nextSelection = update(current);
       if (preview && !titleTouched) {
         setTitle(defaultCreateTitle(preview, nextSelection));
       }
       return nextSelection;
     });
   };
+
+  const toggleCommitHash = (hash: string) =>
+    applyCommitSelection((current) => toggleId(current, hash));
+
+  const setAllCommitHashes = (hashes: string[]) =>
+    applyCommitSelection(() => hashes);
 
   return {
     gitwebUrl,
@@ -207,6 +213,7 @@ export function useCreateReview({
     },
     commitHashes,
     toggleCommitHash,
+    setAllCommitHashes,
     reviewerUserIds,
     setReviewerUserIds,
     fieldValues,
