@@ -7,6 +7,7 @@ import {
   type CommentMessageActions,
 } from "./CommentMessages";
 import { CommentReplyForm } from "./CommentReplyForm";
+import { commentAnchorId } from "./comment-threads";
 import {
   CommentThreadControls,
   CommentThreadIdentityLine,
@@ -120,6 +121,7 @@ export function CommentsTabPanel({
       <div
         className={`review-comment-card${thread.done ? " is-done" : ""}`}
         key={thread.commentId}
+        id={commentAnchorId(thread.commentNumber)}
       >
         <div
           aria-expanded={expanded}

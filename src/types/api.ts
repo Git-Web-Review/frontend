@@ -434,6 +434,8 @@ export type ReviewCommentSide = "BEFORE" | "AFTER";
 export type ReviewComment = {
   id: string;
   commentId: string;
+  /** Short number, unique within the review. Comment links use it. */
+  commentNumber: number;
   reviewId: string;
   commitHash: string | null;
   filePath: string | null;

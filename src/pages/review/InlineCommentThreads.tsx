@@ -11,6 +11,7 @@ import {
   CommentThreadSummary,
 } from "./CommentThreadHeader";
 import type { ThreadExpansion } from "./hooks/useThreadExpansion";
+import { commentAnchorId } from "./comment-threads";
 import { MarkdownView } from "./MarkdownView";
 import { userLabel } from "./review-display";
 import {
@@ -65,7 +66,10 @@ function InlineCommentThread({
   const toggle = () => expansion.toggleCommentThreadExpanded(thread);
 
   return (
-    <div className={`diff-inline-comment${thread.done ? " is-done" : ""}`}>
+    <div
+      className={`diff-inline-comment${thread.done ? " is-done" : ""}`}
+      id={commentAnchorId(thread.commentNumber)}
+    >
       <div
         aria-expanded={expanded}
         className={`comment-thread-header${

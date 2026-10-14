@@ -177,6 +177,7 @@ export type CommentTarget = {
 
 export type ReviewCommentThread = CommentTarget & {
   commentId: string;
+  commentNumber: number;
   reviewId: string;
   done: boolean;
   doneBy: ReviewComment["doneBy"];

@@ -6,8 +6,12 @@ import {
   type SetStateAction,
 } from "react";
 import type { SetURLSearchParams } from "react-router-dom";
-import type { ReviewCommentSide, ReviewItem } from "../../../types/api";
-import { diffAnchorId } from "../comment-threads";
+import type {
+  ReviewComment,
+  ReviewCommentSide,
+  ReviewItem,
+} from "../../../types/api";
+import { commentAnchorId, diffAnchorId } from "../comment-threads";
 import type { CommentTarget, ReviewTab } from "../review-utils";
 
 const highlightClass = "diff-anchor-highlight";
@@ -46,18 +50,20 @@ export const scrollToNextComment = () => {
 };
 
 /**
- * The commit shown in the Files tab, kept in the URL as `?commit=…`, and the
+ * The commit shown in the Files tab, kept in the URL as `?commit=…`, the
  * diff locations that URLs such as `?tab=files&commit=…&file=…&line=…` point
- * to.
+ * to, and the comment threads that `?comment=<number>` points to.
  */
 export function useDiffNavigation({
   review,
+  reviewComments,
   activeReviewTab,
   searchParams,
   setSearchParams,
   setExpandedFileKeys,
 }: {
   review: ReviewItem | null;
+  reviewComments: ReviewComment[];
   activeReviewTab: ReviewTab;
   searchParams: URLSearchParams;
   setSearchParams: SetURLSearchParams;
@@ -68,6 +74,7 @@ export function useDiffNavigation({
     null,
   );
   const handledDiffLocationRef = useRef<string | null>(null);
+  const handledCommentRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!review) {
@@ -86,7 +93,7 @@ export function useDiffNavigation({
   }, [review]);
 
   useEffect(() => {
-    if (!pendingDiffAnchor || activeReviewTab !== "files") {
+    if (!pendingDiffAnchor || activeReviewTab === "overview") {
       return;
     }
 
@@ -175,6 +182,55 @@ export function useDiffNavigation({
       }),
     );
   }, [review, searchParams, activeReviewTab, activeCommitId]);
+
+  useEffect(() => {
+    const commentNumber = Number(searchParams.get("comment"));
+    if (
+      !review ||
+      !Number.isInteger(commentNumber) ||
+      handledCommentRef.current === commentNumber
+    ) {
+      return;
+    }
+
+    const comment = reviewComments.find(
+      (current) => current.commentNumber === commentNumber,
+    );
+    if (!comment) {
+      return;
+    }
+
+    handledCommentRef.current = commentNumber;
+    const commit = review.commits.find(
+      (current) => current.hash === comment.commitHash,
+    );
+    if (commit) {
+      // Diff comment: show its commit and open its file in the Files tab.
+      handledDiffLocationRef.current = diffLocationSignature(
+        commit.hash,
+        null,
+        null,
+        "AFTER",
+      );
+      setActiveCommitId(commit.id);
+      if (comment.filePath) {
+        setExpandedFileKeys((current) => ({
+          ...current,
+          [`${commit.id}:${comment.filePath}`]: true,
+        }));
+      }
+      setSearchParams(
+        { tab: "files", commit: commit.hash, comment: String(commentNumber) },
+        { replace: true },
+      );
+    } else {
+      setSearchParams(
+        { tab: "comments", comment: String(commentNumber) },
+        { replace: true },
+      );
+    }
+    setPendingDiffAnchor(commentAnchorId(commentNumber));
+  }, [review, reviewComments, searchParams]);
 
   const openDiffLocation = (target: CommentTarget) => {
     const params: Record<string, string> = { tab: "files" };

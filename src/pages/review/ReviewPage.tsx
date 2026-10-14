@@ -85,8 +85,10 @@ export function ReviewPage() {
   >(null);
   const [commitNavOpen, setCommitNavOpen] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
-  const [discussionFilter, setDiscussionFilter] =
-    useState<DiscussionFilter>("open");
+  // A `?comment=` link may point to a resolved thread, hidden by "open".
+  const [discussionFilter, setDiscussionFilter] = useState<DiscussionFilter>(
+    () => (searchParams.has("comment") ? "all" : "open"),
+  );
   const [discussionSort, setDiscussionSort] =
     useState<DiscussionSort>("recent");
 
@@ -111,6 +113,7 @@ export function ReviewPage() {
   const fileViews = useFileViews(data);
   const diffNavigation = useDiffNavigation({
     review,
+    reviewComments,
     activeReviewTab,
     searchParams,
     setSearchParams,

@@ -8,6 +8,10 @@ export const targetKey = (target: CommentTarget) =>
 export const diffAnchorId = (target: CommentTarget) =>
   `diff-anchor-${targetKey(target)}`;
 
+/** Element id of a comment thread, which `?comment=<number>` links scroll to. */
+export const commentAnchorId = (commentNumber: number) =>
+  `comment-${commentNumber}`;
+
 const byCreatedAt = (
   left: { createdAt: string },
   right: { createdAt: string },
@@ -34,6 +38,7 @@ export const commentThreadsFrom = (
 
     threadsById.set(comment.commentId, {
       commentId: comment.commentId,
+      commentNumber: comment.commentNumber,
       reviewId: comment.reviewId,
       commitHash: comment.commitHash,
       filePath: comment.filePath,
