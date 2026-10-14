@@ -51,6 +51,9 @@ export const reviewNotificationPayload = (
 
   return {
     reviewId,
+    commentNumber: Number.isInteger(payload.commentNumber)
+      ? (payload.commentNumber as number)
+      : null,
     title:
       typeof payload.title === "string" && payload.title
         ? payload.title

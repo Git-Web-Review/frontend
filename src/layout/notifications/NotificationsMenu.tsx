@@ -101,7 +101,11 @@ function NotificationEntry({
     }
     if (reviewPayload) {
       onOpened();
-      navigate(`/review/${reviewPayload.reviewId}`);
+      navigate(
+        reviewPayload.commentNumber === null
+          ? `/review/${reviewPayload.reviewId}`
+          : `/review/${reviewPayload.reviewId}?comment=${reviewPayload.commentNumber}`,
+      );
     }
   };
 
