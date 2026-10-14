@@ -78,12 +78,33 @@ function useCloseMenusOnOutsideClick(
   }, [anyOpen]);
 }
 
+/** Publishes the sticky top bar height as --app-header-height, so other sticky
+ * elements (diff file headers) can stick right below it. */
+function useHeaderHeightVar(ref: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const header = ref.current;
+    if (!header) {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty(
+        "--app-header-height",
+        `${header.offsetHeight}px`,
+      );
+    });
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, [ref]);
+}
+
 export function AppShell({ children }: AppShellProps) {
   const { appName, logoSrc } = useBranding();
   const { t } = useI18n();
   const location = useLocation();
   const notificationsRef = useRef<HTMLLIElement | null>(null);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
+  const headerRef = useRef<HTMLElement | null>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const notifications = useNotifications();
@@ -93,10 +114,11 @@ export function AppShell({ children }: AppShellProps) {
     { ref: notificationsRef, close: () => setNotificationsOpen(false) },
     { ref: accountMenuRef, close: () => setAccountMenuOpen(false) },
   ]);
+  useHeaderHeightVar(headerRef);
 
   return (
     <div className="app-wrapper">
-      <nav className="app-header navbar navbar-expand bg-body">
+      <nav ref={headerRef} className="app-header navbar navbar-expand bg-body">
         <div className="container-fluid">
           <NavLink className="app-brand" to="/dashboard">
             {logoSrc ? (

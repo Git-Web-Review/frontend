@@ -13,7 +13,7 @@
 
 .diff-file-header {
   position: sticky;
-  top: 0;
+  top: var(--app-header-height, 0);
   z-index: 20;
   padding: var(--space-2) var(--space-3) !important;
   border-bottom: 1px solid var(--color-divider);
