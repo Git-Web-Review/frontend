@@ -35,6 +35,13 @@ type ActiveMention = { start: number; query: string };
 
 const suggestionLimit = 6;
 
+/**
+ * How long typing has to pause before the page gets the new value. The draft
+ * lives in the review page, and re-rendering it on every keystroke made typing
+ * lag once a review held many comments.
+ */
+const commitDelayMs = 300;
+
 /** The `@query` the caret sits right after, if any. */
 function activeMentionAt(text: string, caret: number): ActiveMention | null {
   const match = /(?:^|[^\p{L}\p{N}_@])@([^\s@]{0,50})$/u.exec(
@@ -53,8 +60,8 @@ const userMatches = (user: ReviewUserSummary, query: string) =>
  * while the message it hands back keeps them as ids.
  */
 export function MentionTextarea({
-  value,
-  onChange,
+  value: committedValue,
+  onChange: commitChange,
   onKeyDown,
   onBlur,
   ...textareaProps
@@ -68,6 +75,37 @@ export function MentionTextarea({
   const [remoteUsers, setRemoteUsers] = useState<ReviewUserSummary[]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [menuStyle, setMenuStyle] = useState<CSSProperties | null>(null);
+  const [value, setValue] = useState(committedValue);
+  const pendingValueRef = useRef<string | null>(null);
+  const commitTimerRef = useRef<number | undefined>(undefined);
+  const commitChangeRef = useRef(commitChange);
+  commitChangeRef.current = commitChange;
+
+  const flush = () => {
+    window.clearTimeout(commitTimerRef.current);
+    const pending = pendingValueRef.current;
+    if (pending !== null) {
+      pendingValueRef.current = null;
+      commitChangeRef.current(pending);
+    }
+  };
+
+  const onChange = (next: string) => {
+    setValue(next);
+    pendingValueRef.current = next;
+    window.clearTimeout(commitTimerRef.current);
+    commitTimerRef.current = window.setTimeout(flush, commitDelayMs);
+  };
+
+  // The page changed it (posted, cancelled): take its value.
+  useEffect(() => {
+    if (pendingValueRef.current === null) {
+      setValue(committedValue);
+    }
+  }, [committedValue]);
+
+  // Nothing typed is lost when the textarea goes away.
+  useEffect(() => flush, []);
 
   const labelsById = mentionLabels(usersById);
   const draft = mentionsToLabels(value, labelsById);
@@ -251,6 +289,7 @@ export function MentionTextarea({
         ref={textareaRef}
         value={draft}
         onBlur={(event) => {
+          flush();
           setCaret(null);
           onBlur?.(event);
         }}
