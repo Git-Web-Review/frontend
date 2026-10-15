@@ -75,6 +75,22 @@ export function useDiffNavigation({
   );
   const handledDiffLocationRef = useRef<string | null>(null);
   const handledCommentRef = useRef<number | null>(null);
+  // Hash of a commit shown before its `?commit=` reached the URL: router
+  // navigation is async, so until then the URL still names the old commit.
+  const pendingCommitHashRef = useRef<string | null>(null);
+
+  /** Shows a commit right away, and ignores the stale URL until it updates. */
+  const showCommit = (commit: { id: string; hash: string }) => {
+    handledDiffLocationRef.current = diffLocationSignature(
+      commit.hash,
+      null,
+      null,
+      "AFTER",
+    );
+    pendingCommitHashRef.current =
+      searchParams.get("commit") === commit.hash ? null : commit.hash;
+    setActiveCommitId(commit.id);
+  };
 
   useEffect(() => {
     if (!review) {
@@ -139,6 +155,13 @@ export function useDiffNavigation({
         );
       }
       return;
+    }
+
+    if (pendingCommitHashRef.current) {
+      if (pendingCommitHashRef.current !== commitParam) {
+        return;
+      }
+      pendingCommitHashRef.current = null;
     }
 
     const fileParam = searchParams.get("file");
@@ -206,13 +229,7 @@ export function useDiffNavigation({
     );
     if (commit) {
       // Diff comment: show its commit and open its file in the Files tab.
-      handledDiffLocationRef.current = diffLocationSignature(
-        commit.hash,
-        null,
-        null,
-        "AFTER",
-      );
-      setActiveCommitId(commit.id);
+      showCommit(commit);
       if (comment.filePath) {
         setExpandedFileKeys((current) => ({
           ...current,
@@ -248,6 +265,7 @@ export function useDiffNavigation({
     }
 
     handledDiffLocationRef.current = null;
+    pendingCommitHashRef.current = null;
     setSearchParams(params);
   };
 
@@ -257,13 +275,7 @@ export function useDiffNavigation({
     if (!commit) {
       return;
     }
-    handledDiffLocationRef.current = diffLocationSignature(
-      commit.hash,
-      null,
-      null,
-      "AFTER",
-    );
-    setActiveCommitId(commit.id);
+    showCommit(commit);
     setSearchParams({ tab: "files", commit: commit.hash });
   };
 
