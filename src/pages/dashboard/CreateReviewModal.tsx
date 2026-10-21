@@ -4,11 +4,9 @@ import { useI18n } from "../../i18n/I18nProvider";
 import { formatDateTime } from "../../utils/formatDate";
 import { projectName } from "../../utils/projectName";
 import { gitwebFetchErrorLabel } from "../../utils/gitwebFetchError";
-import type {
-  ReviewField,
-  ReviewPreview,
-} from "../../types/api";
+import type { ReviewField, ReviewPreview } from "../../types/api";
 import type { CommitLogMatch } from "./dashboard-utils";
+import { closeOnBackdrop } from "../../utils/closeOnBackdrop";
 
 type CreateReviewModalProps = {
   idToken: string | null;
@@ -57,7 +55,12 @@ export function CreateReviewModal({
 
   return (
     <>
-      <div className="modal d-block" role="dialog" aria-modal="true">
+      <div
+        className="modal d-block"
+        onMouseDown={closeOnBackdrop(onClose)}
+        role="dialog"
+        aria-modal="true"
+      >
         <div className="modal-dialog modal-xxl modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">

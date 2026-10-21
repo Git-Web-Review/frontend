@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useI18n } from "../../i18n/I18nProvider";
 import { hljs } from "../review/diff-highlight";
 import webhookReceiver from "./webhook_receiver.py?raw";
+import { closeOnBackdrop } from "../../utils/closeOnBackdrop";
 
 const fileName = "webhook_receiver.py";
 
@@ -27,6 +28,7 @@ export function WebhookExampleModal({ onClose }: { onClose: () => void }) {
   return (
     <div
       className="modal fade show d-block"
+      onMouseDown={closeOnBackdrop(onClose)}
       role="dialog"
       tabIndex={-1}
       style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}

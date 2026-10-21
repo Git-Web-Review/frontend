@@ -1,4 +1,6 @@
+import { useRef } from "react";
 import { useI18n } from "../../i18n/I18nProvider";
+import { useCloseMenusOnOutsideClick } from "../../utils/useCloseMenusOnOutsideClick";
 
 type ReviewerActionSplitProps = {
   menuOpen: boolean;
@@ -15,6 +17,10 @@ type ReviewerActionSplitProps = {
 
 export function ReviewerActionSplit(options: ReviewerActionSplitProps) {
   const { t } = useI18n();
+  const groupRef = useRef<HTMLDivElement | null>(null);
+  useCloseMenusOnOutsideClick(options.menuOpen, [
+    { ref: groupRef, close: () => options.setMenuOpen(false) },
+  ]);
   const reviewDoneAction = options.canReviewDone
     ? {
         label: t("reviewDone"),
@@ -43,7 +49,7 @@ export function ReviewerActionSplit(options: ReviewerActionSplitProps) {
   const sizeClass = options.small ? " btn-sm" : "";
 
   return (
-    <div className="btn-group review-action-group flex-shrink-0">
+    <div className="btn-group review-action-group flex-shrink-0" ref={groupRef}>
       <button
         className={`btn btn-success${sizeClass} d-inline-flex align-items-center gap-2`}
         disabled={options.saving}

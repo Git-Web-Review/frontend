@@ -6,6 +6,7 @@ import { useI18n } from "../../../../i18n/I18nProvider";
 import { useToast } from "../../../../layout/ToastProvider";
 import type { ProjectDefaultReviewer } from "../../../../types/api";
 import type { ProjectUsersLabels } from "./ProjectUsersTab";
+import { closeOnBackdrop } from "../../../../utils/closeOnBackdrop";
 
 type ProjectUsersModalProps = {
   endpoint: string;
@@ -83,7 +84,12 @@ export function ProjectUsersModal({
 
   return (
     <>
-      <div className="modal d-block" role="dialog" aria-modal="true">
+      <div
+        className="modal d-block"
+        onMouseDown={closeOnBackdrop(onClose)}
+        role="dialog"
+        aria-modal="true"
+      >
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">

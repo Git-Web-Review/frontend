@@ -105,6 +105,7 @@ export function ReviewFilesTab({
       }
       commitNavOpen={commitNavOpen}
       onToggleCommitNav={() => setCommitNavOpen((current) => !current)}
+      onCloseCommitNav={() => setCommitNavOpen(false)}
       onSelectCommit={(commitId) => {
         diffNavigation.selectCommit(commitId);
         setCommitNavOpen(false);

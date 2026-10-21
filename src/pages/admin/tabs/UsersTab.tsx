@@ -11,6 +11,7 @@ import type {
   UserDeletionPreview,
   UserRemoval,
 } from "../../../types/api";
+import { closeOnBackdrop } from "../../../utils/closeOnBackdrop";
 
 type UsersTabProps = {
   reloadKey: number;
@@ -279,6 +280,11 @@ export function UsersTab({ reloadKey, onEditUser }: UsersTabProps) {
       {pendingDeletion ? (
         <div
           className="modal fade show d-block"
+          onMouseDown={closeOnBackdrop(() => {
+            if (!deleting) {
+              setPendingDeletion(null);
+            }
+          })}
           role="dialog"
           tabIndex={-1}
           style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}

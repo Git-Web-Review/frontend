@@ -18,6 +18,7 @@ import type {
   UserLocale,
   UserSettings,
 } from "../../types/api";
+import { closeOnBackdrop } from "../../utils/closeOnBackdrop";
 
 const togglesClassName = "notification-preference-toggles ms-4";
 
@@ -175,7 +176,12 @@ export function UserSettingsModal({
 
   return (
     <>
-      <div className="modal d-block" role="dialog" aria-modal="true">
+      <div
+        className="modal d-block"
+        onMouseDown={closeOnBackdrop(onClose)}
+        role="dialog"
+        aria-modal="true"
+      >
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">

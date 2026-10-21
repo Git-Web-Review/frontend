@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../../i18n/I18nProvider";
+import { closeOnBackdrop } from "../../utils/closeOnBackdrop";
 
 export type UnpostedCommentDraft = {
   key: string;
@@ -115,6 +116,7 @@ export function UnpostedCommentsModal({
         aria-labelledby="unposted-comments-title"
         aria-modal="true"
         className="modal d-block"
+        onMouseDown={closeOnBackdrop(onStay)}
         role="dialog"
       >
         <div className="modal-dialog modal-dialog-centered modal-lg">

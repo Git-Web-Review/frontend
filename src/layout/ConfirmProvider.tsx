@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { useI18n } from "../i18n/I18nProvider";
+import { closeOnBackdrop } from "../utils/closeOnBackdrop";
 
 type ConfirmOptions = {
   title: string;
@@ -95,11 +96,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             aria-modal="true"
             className="modal d-block"
             role="alertdialog"
-            onClick={(event) => {
-              if (event.target === event.currentTarget) {
-                settle(false);
-              }
-            }}
+            onMouseDown={closeOnBackdrop(() => settle(false))}
           >
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">

@@ -2,6 +2,7 @@ import { useI18n } from "../../i18n/I18nProvider";
 import type { TranslationKey } from "../../i18n/translations";
 import type { ReviewSyncPreview } from "../../types/api";
 import { changeKindBadgeClass } from "./review-utils";
+import { closeOnBackdrop } from "../../utils/closeOnBackdrop";
 
 type SyncModalProps = {
   syncPreview: ReviewSyncPreview | null;
@@ -26,7 +27,12 @@ export function SyncModal({
 
   return (
     <>
-      <div className="modal d-block" role="dialog" aria-modal="true">
+      <div
+        className="modal d-block"
+        onMouseDown={closeOnBackdrop(onClose)}
+        role="dialog"
+        aria-modal="true"
+      >
         <div className="modal-dialog modal-lg">
           <div className="modal-content">
             <div className="modal-header">
@@ -86,7 +92,9 @@ export function SyncModal({
                         <span
                           className={`badge ${changeKindBadgeClass(commit.changeKind)} flex-shrink-0`}
                         >
-                          {t(`changeKind${commit.changeKind}` as TranslationKey)}
+                          {t(
+                            `changeKind${commit.changeKind}` as TranslationKey,
+                          )}
                         </span>
                       </label>
                     ))}

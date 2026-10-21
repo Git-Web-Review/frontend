@@ -1,7 +1,9 @@
 import type { Dispatch, ReactNode, SetStateAction } from "react";
+import { useRef } from "react";
 import { useI18n } from "../../i18n/I18nProvider";
 import type { TranslationKey } from "../../i18n/translations";
 import { reviewCommitStatusBadgeClass } from "../../utils/reviewStatus";
+import { useCloseMenusOnOutsideClick } from "../../utils/useCloseMenusOnOutsideClick";
 import type {
   CommitLogLinkRule,
   ReviewCommit,
@@ -31,6 +33,7 @@ type FilesTabPanelProps = {
   commitLogTarget: CommentTarget | null;
   commitNavOpen: boolean;
   onToggleCommitNav: () => void;
+  onCloseCommitNav: () => void;
   onSelectCommit: (commitId: string) => void;
   onScrollToNextComment: () => void;
   commitLogLinkRules: CommitLogLinkRule[];
@@ -73,6 +76,7 @@ export function FilesTabPanel({
   commitLogTarget,
   commitNavOpen,
   onToggleCommitNav,
+  onCloseCommitNav,
   onSelectCommit,
   onScrollToNextComment,
   commitLogLinkRules,
@@ -105,6 +109,10 @@ export function FilesTabPanel({
   markCommitReviewed,
 }: FilesTabPanelProps) {
   const { t } = useI18n();
+  const commitNavRef = useRef<HTMLDivElement | null>(null);
+  useCloseMenusOnOutsideClick(commitNavOpen, [
+    { ref: commitNavRef, close: onCloseCommitNav },
+  ]);
   const activeCommitFiles = activeCommit ? commitDiffFiles(activeCommit) : [];
 
   const commitChangeKindBadge = (commit: ReviewCommit) =>
@@ -121,17 +129,13 @@ export function FilesTabPanel({
       {commit.acks.length ? (
         <span
           className="badge review-meta-badge flex-shrink-0"
-          title={commit.acks
-            .map((ack) => renderUserLabel(ack.user))
-            .join(", ")}
+          title={commit.acks.map((ack) => renderUserLabel(ack.user)).join(", ")}
         >
           <i className="bi bi-check2-circle me-1" aria-hidden="true" />
           {commit.acks.length}
         </span>
       ) : null}
-      {isReviewer &&
-      review.status !== "CLOSED" &&
-      commitAckedByMe(commit) ? (
+      {isReviewer && review.status !== "CLOSED" && commitAckedByMe(commit) ? (
         <button
           className="btn btn-outline-warning btn-sm d-inline-flex align-items-center gap-1"
           disabled={savingCommitAckIds.includes(commit.id)}
@@ -187,7 +191,10 @@ export function FilesTabPanel({
         <>
           {review.commits.length > 1 ? (
             <div className="review-commit-nav d-flex align-items-center gap-2 mb-3">
-              <div className="dropdown position-relative flex-grow-1 min-w-0">
+              <div
+                className="dropdown position-relative flex-grow-1 min-w-0"
+                ref={commitNavRef}
+              >
                 <button
                   aria-expanded={commitNavOpen}
                   className="btn btn-outline-secondary w-100 d-flex align-items-center gap-2 review-commit-nav-toggle"
@@ -208,7 +215,9 @@ export function FilesTabPanel({
                     <span
                       className={`badge ${reviewCommitStatusBadgeClass(activeCommit.status)} flex-shrink-0`}
                     >
-                      {t(`commitStatus${activeCommit.status}` as TranslationKey)}
+                      {t(
+                        `commitStatus${activeCommit.status}` as TranslationKey,
+                      )}
                     </span>
                   ) : null}
                   <i
@@ -272,7 +281,9 @@ export function FilesTabPanel({
                       <span
                         className={`badge ${reviewCommitStatusBadgeClass(activeCommit.status)}`}
                       >
-                        {t(`commitStatus${activeCommit.status}` as TranslationKey)}
+                        {t(
+                          `commitStatus${activeCommit.status}` as TranslationKey,
+                        )}
                       </span>
                     </div>
                     <div className="d-flex flex-wrap align-items-center gap-2">
