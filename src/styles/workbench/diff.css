@@ -131,3 +131,14 @@
 .diff-trailing-whitespace {
   background: color-mix(in srgb, var(--color-del) 45%, transparent);
 }
+
+/* Intra-line change: the part of a paired -/+ line that actually differs. */
+.diff-line-added .diff-word-changed {
+  background: color-mix(in srgb, var(--color-add) 35%, transparent);
+  border-radius: 2px;
+}
+
+.diff-line-removed .diff-word-changed {
+  background: color-mix(in srgb, var(--color-del) 35%, transparent);
+  border-radius: 2px;
+}

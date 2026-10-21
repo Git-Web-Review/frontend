@@ -3,6 +3,7 @@ import { useI18n } from "../../i18n/I18nProvider";
 import type { ReviewCommit, ReviewItem } from "../../types/api";
 import { languageForPath } from "./diff-highlight";
 import { diffLineClass, highlightedCode } from "./diff-line-highlight";
+import { changedRanges } from "./diff-word-highlight";
 import { diffMetaLink, gitwebBlobUrl } from "./gitweb-links";
 import {
   diffBlobHashes,
@@ -120,6 +121,7 @@ export function DiffFileCard({
 }: DiffFileCardProps) {
   const { t } = useI18n();
   const rows = useMemo(() => diffRenderRows(file.patch), [file.patch]);
+  const wordRanges = useMemo(() => changedRanges(rows), [rows]);
   const language = languageForPath(file.path);
   const blobHashes = useMemo(() => diffBlobHashes(file.patch), [file.patch]);
   const fileTarget = {
@@ -287,7 +289,11 @@ export function DiffFileCard({
                   </button>
                   <code
                     className="diff-line-code hljs"
-                    dangerouslySetInnerHTML={highlightedCode(row.text, language)}
+                    dangerouslySetInnerHTML={highlightedCode(
+                      row.text,
+                      language,
+                      wordRanges.get(row.key),
+                    )}
                   />
                 </div>
                 {inlineComposerOpen ? renderComposer() : null}
