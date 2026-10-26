@@ -52,7 +52,7 @@ export const reviewPermissions = (
       review.commits.some(
         (commit) => commit.status !== "ACKED" && commit.status !== "REVIEWED",
       ),
-    canCloseReview: isOwner && review?.status === "ACKED",
+    canCloseReview: (isOwner || !!currentReviewer) && review?.status === "ACKED",
   };
 };
 

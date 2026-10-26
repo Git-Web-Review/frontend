@@ -141,7 +141,9 @@ export function ReviewHeader({
               {t("syncReview")}
             </button>
           ) : null}
-          {canManageReview(review, currentUserId) && review.status !== "CLOSED" ? (
+          {(canManageReview(review, currentUserId) ||
+            review.reviewers.some((reviewer) => reviewer.userId === currentUserId)) &&
+          review.status !== "CLOSED" ? (
             <span
               className="disabled-button-tooltip"
               title={
