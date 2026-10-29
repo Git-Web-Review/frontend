@@ -46,10 +46,12 @@ export function ProfileAvatarUpload() {
   };
 
   return (
-    <div className="profile-avatar-panel">
+    <div className="profile-picture">
+      <span className="form-label">{t("profilePicture")}</span>
       <button
         className="profile-avatar-button"
         type="button"
+        aria-label={t("profilePicture")}
         disabled={uploading}
         onClick={() => inputRef.current?.click()}
       >
@@ -73,7 +75,6 @@ export function ProfileAvatarUpload() {
         accept="image/png,image/jpeg,image/webp,image/gif"
         onChange={(event) => void uploadProfileImage(event.target.files?.[0])}
       />
-      <h3>{t("profile")}</h3>
     </div>
   );
 }

@@ -1,24 +1,52 @@
 /* -------------------------------------------------------------- settings */
 
-.profile-avatar-panel {
-  justify-items: start;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-4);
-  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) var(--space-4);
-  padding: var(--space-4);
-  border-bottom: 1px solid var(--color-divider);
-  background: var(--color-surface);
+/* One scrolling page, GitHub-style: a ruled heading per section, profile
+   fields on the left and the picture on the right, then the channel list. */
+.settings-page {
+  display: grid;
+  gap: var(--space-8);
+  max-width: 880px;
 }
 
-.profile-avatar-panel h3 {
+.settings-subhead {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.settings-subhead h2 {
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
 }
 
+.settings-subhead p {
+  margin: 2px 0 0;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.settings-profile {
+  display: grid;
+  grid-template-columns: minmax(0, 440px) 1fr;
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.settings-profile-fields {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.profile-picture {
+  display: grid;
+  justify-self: end;
+  justify-items: start;
+}
+
 .profile-avatar-button {
-  width: 72px;
-  height: 72px;
+  width: 160px;
+  height: 160px;
   overflow: visible;
   border: 1px solid var(--color-divider);
   background: var(--color-bg);
@@ -31,19 +59,166 @@
 }
 
 .profile-avatar-button > span:not(.profile-avatar-overlay) {
-  font-size: 22px;
+  font-size: 48px;
   font-weight: 600;
 }
 
 .profile-avatar-overlay {
-  right: -2px;
-  bottom: -2px;
-  width: 26px;
-  height: 26px;
+  right: 8px;
+  bottom: 8px;
+  width: 32px;
+  height: 32px;
   border: 1px solid var(--color-bg);
   background: var(--color-accent);
   color: var(--primary-btn-ink);
   font-size: 13px;
+}
+
+/* --------------------------------------------- notification channel list */
+
+.notification-channel {
+  padding: var(--space-4);
+}
+
+.notification-channel + .notification-channel {
+  border-top: 1px solid var(--color-divider);
+}
+
+.notification-channel-head {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.notification-channel-icon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+.notification-channel.is-on .notification-channel-icon {
+  border-color: var(--color-accent-300);
+  background: var(--color-accent-100);
+  color: var(--color-accent-700);
+}
+
+.notification-channel-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.notification-channel-status {
+  background: var(--color-neutral-200);
+  color: var(--color-text);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.notification-channel-status.is-warn {
+  background: color-mix(in srgb, var(--color-warn) 18%, transparent);
+  color: var(--color-warn-ink);
+}
+
+.notification-channel-description {
+  color: var(--ink-2);
+  font-size: 12.5px;
+}
+
+.notification-channel-head .form-switch .form-check-input {
+  width: 2.25em;
+  height: 1.25em;
+  margin: 0;
+  float: none;
+}
+
+/* Indented to the text column: the 28px icon plus the gap. */
+.notification-channel-detail {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 440px;
+  margin: var(--space-3) 0 0 40px;
+}
+
+.notification-events {
+  position: relative;
+}
+
+.notification-events-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 280px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-md);
+  font-size: 13px;
+}
+
+.notification-events-title {
+  padding: var(--space-2) var(--space-3);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.notification-events-group {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  border-top: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.notification-events-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 7px var(--space-3);
+  border-top: 1px solid var(--color-divider);
+  cursor: pointer;
+}
+
+.notification-events-item:hover {
+  background: var(--color-accent-100);
+}
+
+/* Shown only while the draft differs from what was loaded. */
+.settings-savebar {
+  position: sticky;
+  z-index: 10;
+  bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-md);
+  font-size: 13px;
+}
+
+.settings-savebar-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-warn);
 }
 
 /* ----------------------------------------------------------------- admin */

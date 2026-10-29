@@ -35,10 +35,8 @@ export function useSettingsForm() {
   const [settingsError, setSettingsError] = useState("");
   const ircNicknameMissing = ircNicknameRequired(draft);
   const webhookInvalid = webhookUrlInvalid(draft);
-  const hasChanges = userSettingsDraftChanged(
-    draft,
-    draftFromUser(currentUser, "FR"),
-  );
+  const baseline = draftFromUser(currentUser, "FR");
+  const hasChanges = userSettingsDraftChanged(draft, baseline);
 
   useEffect(() => {
     if (hasChanges) {
@@ -62,6 +60,8 @@ export function useSettingsForm() {
     setDraft((current) =>
       withNotificationFormat(current, medium, type, format),
     );
+
+  const reset = () => setDraft(baseline);
 
   const save = async () => {
     if (!idToken || !hasChanges || ircNicknameMissing || webhookInvalid) {
@@ -105,7 +105,9 @@ export function useSettingsForm() {
     setFormat,
     ircNicknameMissing,
     webhookInvalid,
+    hasChanges,
     canSave: hasChanges && !!idToken && !ircNicknameMissing && !webhookInvalid,
+    reset,
     saving,
     settingsError,
     save,

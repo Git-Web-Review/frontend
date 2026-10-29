@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NotificationCategoryToggles } from "../components/user-settings/NotificationCategoryToggles";
+import { useAuth } from "../auth/AuthProvider";
 import { useI18n } from "../i18n/I18nProvider";
 import type { NotificationFormatMedium, UserLocale } from "../types/api";
 import { NotificationChannelRow } from "./settings/NotificationChannelRow";
@@ -8,10 +8,9 @@ import { ProfileAvatarUpload } from "./settings/ProfileAvatarUpload";
 import { useSettingsForm } from "./settings/useSettingsForm";
 import { WebhookUrlField } from "./settings/WebhookUrlField";
 
-const categoryTogglesClassName = "notification-preference-toggles ms-4 mb-3";
-
 export function SettingsPage() {
   const { t } = useI18n();
+  const { currentUser } = useAuth();
   const form = useSettingsForm();
   const { draft, update } = form;
   const [formatMedium, setFormatMedium] =
@@ -19,158 +18,197 @@ export function SettingsPage() {
 
   const formatButton = (medium: NotificationFormatMedium) => (
     <button
-      className="btn btn-link btn-sm p-0 ms-2 align-baseline"
+      className="btn btn-outline-secondary"
       type="button"
-      title={t("formatOpen")}
-      aria-label={t("formatOpen")}
       onClick={() => setFormatMedium(medium)}
     >
-      <i className="bi bi-gear" />
+      {t("formatOpen")}
     </button>
   );
 
+  const unsetChannels = [
+    form.ircNicknameMissing ? "IRC" : null,
+    form.webhookInvalid ? "Webhook" : null,
+  ].filter(Boolean);
+
   return (
-    <div className="row g-4">
-      <div className="col-12">
-        <div className="card card-primary card-outline">
-          <div className="card-body">
-            <ProfileAvatarUpload />
-            <div className="mb-3">
-              <label className="form-label">{t("nickname")}</label>
+    <div className="settings-page">
+      <section>
+        <div className="settings-subhead">
+          <h2>{t("profile")}</h2>
+        </div>
+        <div className="settings-profile">
+          <div className="settings-profile-fields">
+            <div>
+              <label className="form-label" htmlFor="settings-nickname">
+                {t("nickname")}
+              </label>
               <input
                 className="form-control"
+                id="settings-nickname"
                 value={draft.nickname}
                 onChange={(event) => update({ nickname: event.target.value })}
               />
+              <div className="form-text">{t("nicknameHelp")}</div>
             </div>
-            <div className="mb-3">
-              <label className="form-label">{t("hostname")}</label>
+            <div>
+              <label className="form-label" htmlFor="settings-email">
+                {t("email")}
+              </label>
               <input
                 className="form-control"
+                id="settings-email"
+                value={currentUser?.email ?? ""}
+                readOnly
+              />
+            </div>
+            <div>
+              <label className="form-label" htmlFor="settings-hostname">
+                {t("hostname")}
+              </label>
+              <input
+                className="form-control font-monospace"
+                id="settings-hostname"
                 value={draft.hostname}
                 onChange={(event) => update({ hostname: event.target.value })}
               />
+              <div className="form-text">{t("hostnameHelp")}</div>
             </div>
-            <div className="mb-3">
-              <label className="form-label">{t("locale")}</label>
+            <div>
+              <label className="form-label" htmlFor="settings-locale">
+                {t("locale")}
+              </label>
               <select
                 className="form-select"
+                id="settings-locale"
                 value={draft.locale}
                 onChange={(event) =>
                   update({ locale: event.target.value as UserLocale })
                 }
               >
-                <option value="FR">Francais</option>
+                <option value="FR">Français</option>
                 <option value="EN">English</option>
               </select>
             </div>
-            <div className="form-check form-switch mb-3">
-              <input
-                className="form-check-input"
-                id="mail-notifications"
-                type="checkbox"
-                checked={draft.mailNotificationsEnabled}
-                onChange={(event) =>
-                  update({ mailNotificationsEnabled: event.target.checked })
-                }
-              />
-              <label className="form-check-label" htmlFor="mail-notifications">
-                {t("mailNotifications")}
-              </label>
-              {draft.mailNotificationsEnabled ? formatButton("mail") : null}
-            </div>
-            {draft.mailNotificationsEnabled ? (
-              <NotificationCategoryToggles
-                medium="mail"
-                preferences={draft.notificationPreferences}
-                className={categoryTogglesClassName}
-                onToggle={form.toggleCategory}
-              />
-            ) : null}
-            <NotificationChannelRow
-              id="irc-notifications"
-              label={t("ircNotifications")}
-              enabled={draft.ircNotificationsEnabled}
-              onEnabledChange={(enabled) =>
-                update({ ircNotificationsEnabled: enabled })
+          </div>
+          <ProfileAvatarUpload />
+        </div>
+      </section>
+
+      <section>
+        <div className="settings-subhead">
+          <h2>{t("notifications")}</h2>
+          <p>{t("notificationsHelp")}</p>
+        </div>
+        <div className="card">
+          <div className="card-header">{t("notifChannels")}</div>
+          <NotificationChannelRow
+            medium="mail"
+            icon="bi-envelope"
+            label={t("notifChannelMail")}
+            description={t("notifChannelMailDescription", {
+              email: currentUser?.email ?? "",
+            })}
+            enabled={draft.mailNotificationsEnabled}
+            needsSetup={false}
+            onEnabledChange={(enabled) =>
+              update({ mailNotificationsEnabled: enabled })
+            }
+            preferences={draft.notificationPreferences}
+            onToggle={form.toggleCategory}
+            action={formatButton("mail")}
+          />
+          <NotificationChannelRow
+            medium="irc"
+            icon="bi-chat-left-text"
+            label="IRC"
+            description={t("notifChannelIrcDescription")}
+            enabled={draft.ircNotificationsEnabled}
+            needsSetup={form.ircNicknameMissing}
+            onEnabledChange={(enabled) =>
+              update({ ircNotificationsEnabled: enabled })
+            }
+            preferences={draft.notificationPreferences}
+            onToggle={form.toggleCategory}
+            action={formatButton("irc")}
+          >
+            <label className="form-label" htmlFor="irc-nickname">
+              {t("ircNickname")}
+            </label>
+            <input
+              className={
+                form.ircNicknameMissing
+                  ? "form-control is-invalid"
+                  : "form-control"
               }
-              action={
-                draft.ircNotificationsEnabled ? formatButton("irc") : null
-              }
-            >
-              <label className="form-label" htmlFor="irc-nickname">
-                {t("ircNickname")}
-              </label>
-              <input
-                className={
-                  form.ircNicknameMissing
-                    ? "form-control is-invalid"
-                    : "form-control"
-                }
-                id="irc-nickname"
-                value={draft.ircNickname}
-                onChange={(event) =>
-                  update({ ircNickname: event.target.value })
-                }
-              />
-              {form.ircNicknameMissing ? (
-                <div className="invalid-feedback">
-                  {t("ircNicknameRequired")}
-                </div>
-              ) : null}
-            </NotificationChannelRow>
-            {draft.ircNotificationsEnabled ? (
-              <NotificationCategoryToggles
-                medium="irc"
-                preferences={draft.notificationPreferences}
-                className={categoryTogglesClassName}
-                onToggle={form.toggleCategory}
-              />
-            ) : null}
-            <NotificationChannelRow
-              id="webhook-notifications"
-              label={t("webhookNotifications")}
-              enabled={draft.webhookNotificationsEnabled}
-              onEnabledChange={(enabled) =>
-                update({ webhookNotificationsEnabled: enabled })
-              }
-            >
-              <WebhookUrlField
-                value={draft.webhookUrl}
-                invalid={form.webhookInvalid}
-                onChange={(webhookUrl) => update({ webhookUrl })}
-              />
-            </NotificationChannelRow>
-            {draft.webhookNotificationsEnabled ? (
-              <NotificationCategoryToggles
-                medium="webhook"
-                preferences={draft.notificationPreferences}
-                className={categoryTogglesClassName}
-                onToggle={form.toggleCategory}
-              />
-            ) : null}
-            {form.settingsError ? (
-              <div className="alert alert-danger mb-0">
-                {form.settingsError}
+              id="irc-nickname"
+              value={draft.ircNickname}
+              onChange={(event) => update({ ircNickname: event.target.value })}
+            />
+            {form.ircNicknameMissing ? (
+              <div className="invalid-feedback">
+                {t("ircNicknameRequired")}
               </div>
             ) : null}
-          </div>
-          {form.canSave ? (
-            <div className="card-footer d-flex align-items-center gap-3">
-              <button
-                className="btn btn-success"
-                disabled={form.saving}
-                onClick={() => void form.save()}
-              >
-                {form.saving ? (
-                  <span className="spinner-border spinner-border-sm me-2" />
-                ) : null}
-                {t("save")}
-              </button>
-            </div>
-          ) : null}
+          </NotificationChannelRow>
+          <NotificationChannelRow
+            medium="webhook"
+            icon="bi-plug"
+            label="Webhook"
+            description={t("notifChannelWebhookDescription")}
+            enabled={draft.webhookNotificationsEnabled}
+            needsSetup={form.webhookInvalid}
+            onEnabledChange={(enabled) =>
+              update({ webhookNotificationsEnabled: enabled })
+            }
+            preferences={draft.notificationPreferences}
+            onToggle={form.toggleCategory}
+          >
+            <WebhookUrlField
+              value={draft.webhookUrl}
+              invalid={form.webhookInvalid}
+              onChange={(webhookUrl) => update({ webhookUrl })}
+            />
+          </NotificationChannelRow>
         </div>
-      </div>
+      </section>
+
+      {form.settingsError ? (
+        <div className="alert alert-danger mb-0">{form.settingsError}</div>
+      ) : null}
+
+      {form.hasChanges ? (
+        <div className="settings-savebar">
+          <span className="settings-savebar-dot" aria-hidden="true" />
+          <span>
+            {unsetChannels.length
+              ? t("settingsFinishSetup", { channels: unsetChannels.join(", ") })
+              : t("settingsUnsavedChanges")}
+          </span>
+          <div className="d-flex gap-2 ms-auto">
+            <button
+              className="btn btn-outline-secondary"
+              type="button"
+              disabled={form.saving}
+              onClick={form.reset}
+            >
+              {t("settingsDiscard")}
+            </button>
+            <button
+              className="btn btn-success"
+              type="button"
+              disabled={!form.canSave || form.saving}
+              onClick={() => void form.save()}
+            >
+              {form.saving ? (
+                <span className="spinner-border spinner-border-sm me-2" />
+              ) : null}
+              {t("save")}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {formatMedium ? (
         <NotificationFormatModal
           medium={formatMedium}

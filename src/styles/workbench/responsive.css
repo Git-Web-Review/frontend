@@ -26,9 +26,23 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .profile-avatar-panel {
+  .settings-profile {
     grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
+    gap: var(--space-4);
+  }
+
+  .profile-picture {
+    order: -1;
+    justify-self: start;
+  }
+
+  .profile-avatar-button {
+    width: 96px;
+    height: 96px;
+  }
+
+  .notification-channel-detail {
+    margin-left: 0;
   }
 
   /* The thread header stacks: the right cluster drops under the identity

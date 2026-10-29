@@ -1,43 +1,90 @@
 import type { ReactNode } from "react";
+import { useI18n } from "../../i18n/I18nProvider";
+import type {
+  NotificationCategory,
+  NotificationMedium,
+  NotificationPreferences,
+} from "../../types/api";
+import { NotificationEventsMenu } from "./NotificationEventsMenu";
 
-/** A notification switch, with the field it needs beside it once on. */
+/** One channel of the settings list: its switch, then once on its field,
+ * its own events and its actions. */
 export function NotificationChannelRow({
-  id,
+  medium,
+  icon,
   label,
+  description,
   enabled,
+  needsSetup,
   onEnabledChange,
+  preferences,
+  onToggle,
   action,
   children,
 }: {
-  id: string;
+  medium: NotificationMedium;
+  icon: string;
   label: string;
+  description: string;
   enabled: boolean;
+  needsSetup: boolean;
   onEnabledChange: (enabled: boolean) => void;
+  preferences: NotificationPreferences;
+  onToggle: (medium: NotificationMedium, category: NotificationCategory) => void;
   action?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
+  const { t } = useI18n();
+  const switchId = `${medium}-notifications`;
+
   return (
-    <div className="row g-3 mb-3">
-      <div className="col-md-5">
-        <div
-          className={`form-check form-switch mb-0${
-            enabled ? " irc-toggle-align" : ""
-          }`}
-        >
+    <div className={`notification-channel${enabled ? " is-on" : ""}`}>
+      <div className="notification-channel-head">
+        <span className="notification-channel-icon" aria-hidden="true">
+          <i className={`bi ${icon}`} />
+        </span>
+        <div>
+          <label className="notification-channel-name" htmlFor={switchId}>
+            {label}
+            {!enabled ? (
+              <span className="badge notification-channel-status">
+                {t("notifChannelOff")}
+              </span>
+            ) : needsSetup ? (
+              <span className="badge notification-channel-status is-warn">
+                {t("notifChannelNeedsSetup")}
+              </span>
+            ) : null}
+          </label>
+          <div className="notification-channel-description">{description}</div>
+        </div>
+        <div className="form-check form-switch m-0">
           <input
             className="form-check-input"
-            id={id}
+            id={switchId}
             type="checkbox"
             checked={enabled}
             onChange={(event) => onEnabledChange(event.target.checked)}
           />
-          <label className="form-check-label" htmlFor={id}>
-            {label}
-          </label>
-          {action}
         </div>
       </div>
-      {enabled ? <div className="col-md-7">{children}</div> : null}
+      {enabled ? (
+        <div className="notification-channel-detail">
+          {children ? <div>{children}</div> : null}
+          <div>
+            <div className="form-label">{t("notifNotifyMeAbout")}</div>
+            <div className="d-flex flex-wrap gap-2">
+              <NotificationEventsMenu
+                medium={medium}
+                label={label}
+                preferences={preferences}
+                onToggle={onToggle}
+              />
+              {action}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
