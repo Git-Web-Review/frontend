@@ -338,6 +338,8 @@
     "formatTitleMail": "Email format",
     "formatHelpIrc": "Write one printf-style format per notification type; each %x below is replaced by the notification's value, and a missing value prints nothing. Leave a type empty to keep the default message. Lines are joined with \" - \" into a single IRC message.",
     "formatHelpMail": "Write one printf-style format per notification type; each %x below is replaced by the notification's value, and a missing value prints nothing. Leave a type empty to keep the default email. The first line is the subject, the next lines the body.",
+    "formatType": "Notification type",
+    "formatText": "Format",
     "formatPreview": "Preview",
     "formatDefaultTemplate": "Default message",
     "formatSaveHint": "Changes are kept once you save the settings.",

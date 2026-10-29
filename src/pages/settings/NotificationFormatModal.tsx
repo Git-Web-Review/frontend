@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   FORMAT_SPECIFIERS,
   formatSample,
@@ -68,6 +69,8 @@ export function NotificationFormatModal({
   onClose: () => void;
 }) {
   const { t } = useI18n();
+  const [type, setType] = useState<NotificationType>(NOTIFICATION_TYPES[0]);
+  const format = formats[medium]?.[type] ?? "";
 
   return (
     <div
@@ -77,7 +80,7 @@ export function NotificationFormatModal({
       tabIndex={-1}
       style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
     >
-      <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+      <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">
@@ -104,36 +107,48 @@ export function NotificationFormatModal({
                 <code>%%</code> {t("formatSpecPercent")}
               </div>
             </div>
-            {NOTIFICATION_TYPES.map((type) => {
-              const id = `format-${medium}-${type}`;
-              const format = formats[medium]?.[type] ?? "";
-              return (
-                <div className="row g-3 mb-3" key={type}>
-                  <div className="col-md-6">
-                    <label className="form-label mb-1" htmlFor={id}>
-                      {t(notificationTitleKeys[type])}
-                    </label>
-                    <textarea
-                      className="form-control font-monospace"
-                      id={id}
-                      rows={2}
-                      maxLength={500}
-                      placeholder={t("formatDefaultTemplate")}
-                      value={format}
-                      onChange={(event) => onChange(type, event.target.value)}
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <div className="form-label mb-1 text-secondary">
-                      {t("formatPreview")}
-                    </div>
-                    <div className="border rounded bg-body-tertiary px-3 py-2 small text-break">
-                      <FormatPreview medium={medium} format={format} />
-                    </div>
-                  </div>
+            <div className="mb-3">
+              <label className="form-label" htmlFor="format-type">
+                {t("formatType")}
+              </label>
+              <select
+                className="form-select"
+                id="format-type"
+                value={type}
+                onChange={(event) =>
+                  setType(event.target.value as NotificationType)
+                }
+              >
+                {NOTIFICATION_TYPES.map((option) => (
+                  <option key={option} value={option}>
+                    {t(notificationTitleKeys[option])}
+                    {formats[medium]?.[option] ? " •" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label" htmlFor="format-text">
+                  {t("formatText")}
+                </label>
+                <textarea
+                  className="form-control font-monospace"
+                  id="format-text"
+                  rows={5}
+                  maxLength={500}
+                  placeholder={t("formatDefaultTemplate")}
+                  value={format}
+                  onChange={(event) => onChange(type, event.target.value)}
+                />
+              </div>
+              <div className="col-md-6">
+                <div className="form-label">{t("formatPreview")}</div>
+                <div className="border rounded bg-body-tertiary px-3 py-2 small text-break">
+                  <FormatPreview medium={medium} format={format} />
                 </div>
-              );
-            })}
+              </div>
+            </div>
           </div>
           <div className="modal-footer">
             <span className="text-secondary small me-auto">

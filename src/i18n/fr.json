@@ -338,6 +338,8 @@
     "formatTitleMail": "Format des emails",
     "formatHelpIrc": "Écrivez un format de style printf par type de notification : chaque %x ci-dessous est remplacé par la valeur de la notification, une valeur absente n'affiche rien. Laissez un type vide pour garder le message par défaut. Les lignes sont jointes par \" - \" en un seul message IRC.",
     "formatHelpMail": "Écrivez un format de style printf par type de notification : chaque %x ci-dessous est remplacé par la valeur de la notification, une valeur absente n'affiche rien. Laissez un type vide pour garder l'email par défaut. La première ligne est le sujet, les suivantes le corps.",
+    "formatType": "Type de notification",
+    "formatText": "Format",
     "formatPreview": "Aperçu",
     "formatDefaultTemplate": "Message par défaut",
     "formatSaveHint": "Les modifications sont conservées une fois les paramètres enregistrés.",
