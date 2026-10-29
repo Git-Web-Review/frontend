@@ -7,6 +7,7 @@ import {
   userSettingsDraftChanged,
   webhookUrlInvalid,
   withCategoryToggled,
+  withNotificationFormat,
   type UserSettingsDraft,
 } from "../../components/user-settings/user-settings-draft";
 import { useI18n } from "../../i18n/I18nProvider";
@@ -14,7 +15,9 @@ import { useToast } from "../../layout/ToastProvider";
 import type {
   CurrentUser,
   NotificationCategory,
+  NotificationFormatMedium,
   NotificationMedium,
+  NotificationType,
 } from "../../types/api";
 
 const nullableText = (value: string) => {
@@ -51,6 +54,15 @@ export function useSettingsForm() {
     category: NotificationCategory,
   ) => setDraft((current) => withCategoryToggled(current, medium, category));
 
+  const setFormat = (
+    medium: NotificationFormatMedium,
+    type: NotificationType,
+    format: string,
+  ) =>
+    setDraft((current) =>
+      withNotificationFormat(current, medium, type, format),
+    );
+
   const save = async () => {
     if (!idToken || !hasChanges || ircNicknameMissing || webhookInvalid) {
       return;
@@ -72,6 +84,7 @@ export function useSettingsForm() {
           webhookNotificationsEnabled: draft.webhookNotificationsEnabled,
           webhookUrl: nullableText(draft.webhookUrl),
           notificationPreferences: draft.notificationPreferences,
+          notificationFormats: draft.notificationFormats,
         }),
       });
       await refreshCurrentUser();
@@ -89,6 +102,7 @@ export function useSettingsForm() {
     draft,
     update,
     toggleCategory,
+    setFormat,
     ircNicknameMissing,
     webhookInvalid,
     canSave: hasChanges && !!idToken && !ircNicknameMissing && !webhookInvalid,

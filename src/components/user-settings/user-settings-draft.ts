@@ -2,7 +2,10 @@ import type { TranslationKey } from "../../i18n/translations";
 import type {
   CurrentUser,
   NotificationCategory,
+  NotificationFormatMedium,
+  NotificationFormats,
   NotificationMedium,
+  NotificationType,
   NotificationPreferences,
   UserLocale,
 } from "../../types/api";
@@ -18,6 +21,7 @@ export type UserSettingsDraft = {
   webhookNotificationsEnabled: boolean;
   webhookUrl: string;
   notificationPreferences: NotificationPreferences;
+  notificationFormats: NotificationFormats;
 };
 
 export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
@@ -68,6 +72,7 @@ export const draftFromUser = (
     user?.settings?.webhookNotificationsEnabled ?? false,
   webhookUrl: user?.settings?.webhookUrl ?? "",
   notificationPreferences: user?.settings?.notificationPreferences ?? {},
+  notificationFormats: user?.settings?.notificationFormats ?? {},
 });
 
 export const userSettingsDraftChanged = (
@@ -83,7 +88,9 @@ export const userSettingsDraftChanged = (
   draft.webhookNotificationsEnabled !== baseline.webhookNotificationsEnabled ||
   draft.webhookUrl !== baseline.webhookUrl ||
   JSON.stringify(draft.notificationPreferences) !==
-    JSON.stringify(baseline.notificationPreferences);
+    JSON.stringify(baseline.notificationPreferences) ||
+  JSON.stringify(draft.notificationFormats) !==
+    JSON.stringify(baseline.notificationFormats);
 
 /** IRC notifications need a nickname to be sent to. */
 export const ircNicknameRequired = (draft: UserSettingsDraft) =>
@@ -117,3 +124,21 @@ export const withCategoryToggled = (
     },
   },
 });
+
+/** An emptied format is dropped, so the relay falls back to its template. */
+export const withNotificationFormat = (
+  draft: UserSettingsDraft,
+  medium: NotificationFormatMedium,
+  type: NotificationType,
+  format: string,
+): UserSettingsDraft => {
+  const { [type]: _previous, ...others } =
+    draft.notificationFormats[medium] ?? {};
+  return {
+    ...draft,
+    notificationFormats: {
+      ...draft.notificationFormats,
+      [medium]: format.trim() ? { ...others, [type]: format } : others,
+    },
+  };
+};

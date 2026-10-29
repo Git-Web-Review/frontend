@@ -56,6 +56,13 @@ export type NotificationPreferences = Partial<
   Record<NotificationMedium, NotificationMediumPreferences>
 >;
 
+/** The media whose relays render text from a printf-style format. */
+export type NotificationFormatMedium = "irc" | "mail";
+
+export type NotificationFormats = Partial<
+  Record<NotificationFormatMedium, Partial<Record<NotificationType, string>>>
+>;
+
 export type UserSettings = {
   userId: string;
   nickname: string | null;
@@ -67,6 +74,7 @@ export type UserSettings = {
   webhookNotificationsEnabled: boolean;
   webhookUrl: string | null;
   notificationPreferences: NotificationPreferences | null;
+  notificationFormats: NotificationFormats | null;
 };
 
 export type UserProfileImage = {
@@ -242,16 +250,18 @@ export type ReviewFieldValue = {
   updatedAt: string;
 };
 
+export type NotificationType =
+  | "TEXT"
+  | "REVIEW_PENDING"
+  | "REVIEW_STATUS_CHANGED"
+  | "COMMENT_RECEIVED"
+  | "COMMENT_MENTION"
+  | "COMMIT_REVIEWED"
+  | "REVIEW_NEW_VERSION";
+
 export type NotificationItem = {
   id: string;
-  type:
-    | "TEXT"
-    | "REVIEW_PENDING"
-    | "REVIEW_STATUS_CHANGED"
-    | "COMMENT_RECEIVED"
-    | "COMMENT_MENTION"
-    | "COMMIT_REVIEWED"
-    | "REVIEW_NEW_VERSION";
+  type: NotificationType;
   payload: unknown;
   seen: boolean;
   createdAt: string;

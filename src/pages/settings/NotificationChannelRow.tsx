@@ -6,12 +6,14 @@ export function NotificationChannelRow({
   label,
   enabled,
   onEnabledChange,
+  action,
   children,
 }: {
   id: string;
   label: string;
   enabled: boolean;
   onEnabledChange: (enabled: boolean) => void;
+  action?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -32,6 +34,7 @@ export function NotificationChannelRow({
           <label className="form-check-label" htmlFor={id}>
             {label}
           </label>
+          {action}
         </div>
       </div>
       {enabled ? <div className="col-md-7">{children}</div> : null}

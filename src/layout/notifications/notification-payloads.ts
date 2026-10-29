@@ -74,7 +74,7 @@ export type ReviewNotificationPayload = NonNullable<
   ReturnType<typeof reviewNotificationPayload>
 >;
 
-const notificationTitleKeys = {
+export const notificationTitleKeys = {
   TEXT: "notificationText",
   REVIEW_PENDING: "notificationReviewPending",
   REVIEW_STATUS_CHANGED: "notificationReviewStatusChanged",

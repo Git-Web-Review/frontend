@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { NotificationCategoryToggles } from "../components/user-settings/NotificationCategoryToggles";
 import { useI18n } from "../i18n/I18nProvider";
-import type { UserLocale } from "../types/api";
+import type { NotificationFormatMedium, UserLocale } from "../types/api";
 import { NotificationChannelRow } from "./settings/NotificationChannelRow";
+import { NotificationFormatModal } from "./settings/NotificationFormatModal";
 import { ProfileAvatarUpload } from "./settings/ProfileAvatarUpload";
 import { useSettingsForm } from "./settings/useSettingsForm";
 import { WebhookUrlField } from "./settings/WebhookUrlField";
@@ -12,6 +14,20 @@ export function SettingsPage() {
   const { t } = useI18n();
   const form = useSettingsForm();
   const { draft, update } = form;
+  const [formatMedium, setFormatMedium] =
+    useState<NotificationFormatMedium | null>(null);
+
+  const formatButton = (medium: NotificationFormatMedium) => (
+    <button
+      className="btn btn-link btn-sm p-0 ms-2 align-baseline"
+      type="button"
+      title={t("formatOpen")}
+      aria-label={t("formatOpen")}
+      onClick={() => setFormatMedium(medium)}
+    >
+      <i className="bi bi-gear" />
+    </button>
+  );
 
   return (
     <div className="row g-4">
@@ -61,6 +77,7 @@ export function SettingsPage() {
               <label className="form-check-label" htmlFor="mail-notifications">
                 {t("mailNotifications")}
               </label>
+              {draft.mailNotificationsEnabled ? formatButton("mail") : null}
             </div>
             {draft.mailNotificationsEnabled ? (
               <NotificationCategoryToggles
@@ -76,6 +93,9 @@ export function SettingsPage() {
               enabled={draft.ircNotificationsEnabled}
               onEnabledChange={(enabled) =>
                 update({ ircNotificationsEnabled: enabled })
+              }
+              action={
+                draft.ircNotificationsEnabled ? formatButton("irc") : null
               }
             >
               <label className="form-label" htmlFor="irc-nickname">
@@ -151,6 +171,16 @@ export function SettingsPage() {
           ) : null}
         </div>
       </div>
+      {formatMedium ? (
+        <NotificationFormatModal
+          medium={formatMedium}
+          formats={draft.notificationFormats}
+          onChange={(type, format) =>
+            form.setFormat(formatMedium, type, format)
+          }
+          onClose={() => setFormatMedium(null)}
+        />
+      ) : null}
     </div>
   );
 }
