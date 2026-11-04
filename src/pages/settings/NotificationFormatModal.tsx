@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { apiRequest } from "../../api/client";
+import { useAuth } from "../../auth/AuthProvider";
 import {
   FORMAT_SPECIFIERS,
   formatSample,
@@ -56,6 +58,53 @@ function FormatPreview({
   );
 }
 
+type TestResult =
+  { state: "idle" | "sending" | "sent" } | { state: "failed"; message: string };
+
+/** Sends the format being edited, saved or not, to the user themselves. */
+function useFormatTest(
+  medium: NotificationFormatMedium,
+  type: NotificationType,
+  format: string,
+) {
+  const { t } = useI18n();
+  const { idToken, currentUser } = useAuth();
+  const [result, setResult] = useState<TestResult>({ state: "idle" });
+  const [tested, setTested] = useState({ type, format });
+  // The relay sends to the saved nickname, not to the one being typed.
+  const unavailable =
+    medium === "irc" && !currentUser?.settings?.ircNickname?.trim();
+
+  if (
+    result.state !== "idle" &&
+    (tested.type !== type || tested.format !== format)
+  ) {
+    setResult({ state: "idle" });
+  }
+
+  const send = async () => {
+    if (!idToken) {
+      return;
+    }
+    setTested({ type, format });
+    setResult({ state: "sending" });
+    try {
+      await apiRequest("/me/settings/notification-test", idToken, {
+        method: "POST",
+        body: JSON.stringify({ medium, type, format }),
+      });
+      setResult({ state: "sent" });
+    } catch (error) {
+      setResult({
+        state: "failed",
+        message: error instanceof Error ? error.message : t("backendError"),
+      });
+    }
+  };
+
+  return { result, unavailable, send };
+}
+
 /** One printf-style format per notification type, previewed as typed. */
 export function NotificationFormatModal({
   medium,
@@ -71,6 +120,7 @@ export function NotificationFormatModal({
   const { t } = useI18n();
   const [type, setType] = useState<NotificationType>(NOTIFICATION_TYPES[0]);
   const format = formats[medium]?.[type] ?? "";
+  const test = useFormatTest(medium, type, format);
 
   return (
     <div
@@ -111,29 +161,61 @@ export function NotificationFormatModal({
               <label className="form-label" htmlFor="format-type">
                 {t("formatType")}
               </label>
-              <select
-                className="form-select"
-                id="format-type"
-                value={type}
-                onChange={(event) =>
-                  setType(event.target.value as NotificationType)
-                }
-              >
-                {NOTIFICATION_TYPES.map((option) => (
-                  <option key={option} value={option}>
-                    {t(notificationTitleKeys[option])}
-                    {formats[medium]?.[option] ? " •" : ""}
-                  </option>
-                ))}
-              </select>
+              <div className="d-flex gap-2">
+                <select
+                  className="form-select"
+                  id="format-type"
+                  value={type}
+                  onChange={(event) =>
+                    setType(event.target.value as NotificationType)
+                  }
+                >
+                  {NOTIFICATION_TYPES.map((option) => (
+                    <option key={option} value={option}>
+                      {t(notificationTitleKeys[option])}
+                      {formats[medium]?.[option] ? " •" : ""}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="btn btn-primary d-inline-flex align-items-center gap-2 flex-shrink-0 text-nowrap"
+                  type="button"
+                  disabled={test.unavailable || test.result.state === "sending"}
+                  onClick={() => void test.send()}
+                >
+                  {test.result.state === "sending" ? (
+                    <span className="spinner-border spinner-border-sm" />
+                  ) : (
+                    <i className="bi bi-send" aria-hidden="true" />
+                  )}
+                  {t("formatTest")}
+                </button>
+              </div>
+              {test.unavailable ? (
+                <div className="form-text">
+                  {t("formatTestNeedsIrcNickname")}
+                </div>
+              ) : test.result.state === "sent" ? (
+                <div className="valid-feedback d-block">
+                  {t(
+                    medium === "irc"
+                      ? "formatTestSentIrc"
+                      : "formatTestSentMail",
+                  )}
+                </div>
+              ) : test.result.state === "failed" ? (
+                <div className="invalid-feedback d-block">
+                  {test.result.message}
+                </div>
+              ) : null}
             </div>
             <div className="row g-3">
-              <div className="col-md-6">
+              <div className="col-md-6 d-flex flex-column">
                 <label className="form-label" htmlFor="format-text">
                   {t("formatText")}
                 </label>
                 <textarea
-                  className="form-control font-monospace"
+                  className="form-control font-monospace flex-grow-1"
                   id="format-text"
                   rows={5}
                   maxLength={500}
@@ -142,9 +224,9 @@ export function NotificationFormatModal({
                   onChange={(event) => onChange(type, event.target.value)}
                 />
               </div>
-              <div className="col-md-6">
+              <div className="col-md-6 d-flex flex-column">
                 <div className="form-label">{t("formatPreview")}</div>
-                <div className="border rounded bg-body-tertiary px-3 py-2 small text-break">
+                <div className="border rounded bg-body-tertiary px-3 py-2 small text-break flex-grow-1">
                   <FormatPreview medium={medium} format={format} />
                 </div>
               </div>
