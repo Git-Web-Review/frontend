@@ -75,6 +75,42 @@ export const draftFromUser = (
   notificationFormats: user?.settings?.notificationFormats ?? {},
 });
 
+/**
+ * Deep equality that ignores key order: the backend stores these objects as
+ * JSONB, which hands keys back in its own order (shortest first), not in the
+ * order the form wrote them.
+ */
+const sameJson = (left: unknown, right: unknown): boolean => {
+  if (
+    !left ||
+    !right ||
+    typeof left !== "object" ||
+    typeof right !== "object"
+  ) {
+    return left === right;
+  }
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return (
+      Array.isArray(left) &&
+      Array.isArray(right) &&
+      left.length === right.length &&
+      left.every((value, index) => sameJson(value, right[index]))
+    );
+  }
+  const leftKeys = Object.keys(left);
+  return (
+    leftKeys.length === Object.keys(right).length &&
+    leftKeys.every(
+      (key) =>
+        Object.hasOwn(right, key) &&
+        sameJson(
+          (left as Record<string, unknown>)[key],
+          (right as Record<string, unknown>)[key],
+        ),
+    )
+  );
+};
+
 export const userSettingsDraftChanged = (
   draft: UserSettingsDraft,
   baseline: UserSettingsDraft,
@@ -87,10 +123,8 @@ export const userSettingsDraftChanged = (
   draft.ircNickname !== baseline.ircNickname ||
   draft.webhookNotificationsEnabled !== baseline.webhookNotificationsEnabled ||
   draft.webhookUrl !== baseline.webhookUrl ||
-  JSON.stringify(draft.notificationPreferences) !==
-    JSON.stringify(baseline.notificationPreferences) ||
-  JSON.stringify(draft.notificationFormats) !==
-    JSON.stringify(baseline.notificationFormats);
+  !sameJson(draft.notificationPreferences, baseline.notificationPreferences) ||
+  !sameJson(draft.notificationFormats, baseline.notificationFormats);
 
 /** IRC notifications need a nickname to be sent to. */
 export const ircNicknameRequired = (draft: UserSettingsDraft) =>
