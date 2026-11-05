@@ -1,6 +1,9 @@
 import type { RefObject } from "react";
 import type { ReviewItem } from "../../types/api";
-import { canManageReview } from "../review/review-permissions";
+import {
+  canManageReview,
+  type PermissionUser,
+} from "../review/review-permissions";
 import { ReviewListItem } from "./ReviewListItem";
 import type { DashboardSection } from "./dashboard-utils";
 
@@ -19,7 +22,7 @@ type ReviewSectionProps = {
   loadingMore: boolean;
   hasMore: boolean;
   loadMoreRef: RefObject<HTMLDivElement | null>;
-  currentUserId: string | undefined;
+  currentUser: PermissionUser;
   openReviewActionsId: string | null;
   onToggleActions: (reviewId: string) => void;
   deletingReviewId: string | null;
@@ -33,7 +36,7 @@ export function ReviewSection({
   loadingMore,
   hasMore,
   loadMoreRef,
-  currentUserId,
+  currentUser,
   openReviewActionsId,
   onToggleActions,
   deletingReviewId,
@@ -53,7 +56,7 @@ export function ReviewSection({
             <ReviewListItem
               key={review.id}
               review={review}
-              canDelete={canManageReview(review, currentUserId)}
+              canDelete={canManageReview(review, currentUser)}
               actionsOpen={openReviewActionsId === review.id}
               onToggleActions={() => onToggleActions(review.id)}
               deleting={deletingReviewId === review.id}

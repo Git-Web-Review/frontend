@@ -125,6 +125,8 @@
     "emptyOwned": "Aucune review ouverte pour le moment.",
     "emptyAssigned": "Aucune review ne vous attend.",
     "emptyDone": "Aucune review done pour le moment.",
+    "allOpenReviews": "Toutes les reviews en cours",
+    "emptyAllOpen": "Aucune review en cours pour le moment.",
     "projectReviews": "Mes projets",
     "emptyProject": "Aucune review sur ce projet.",
     "reviewCreated": "Review créée.",

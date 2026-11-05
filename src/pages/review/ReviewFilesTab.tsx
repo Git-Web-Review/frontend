@@ -20,13 +20,13 @@ import { fileViewKey, type useFileViews } from "./hooks/useFileViews";
 import type { InlineComment } from "./hooks/useInlineComment";
 import type { useReviewStatusActions } from "./hooks/useReviewStatusActions";
 import { commitDiffFiles, userLabel } from "./review-display";
-import type { ReviewPermissions } from "./review-permissions";
+import type { PermissionUser, ReviewPermissions } from "./review-permissions";
 
 /** The Files tab, wired to the page state it reads and changes. */
 export function ReviewFilesTab({
   review,
   reviewComments,
-  currentUserId,
+  currentUser,
   commitLogLinkRules,
   permissions,
   statusActions,
@@ -41,7 +41,7 @@ export function ReviewFilesTab({
 }: {
   review: ReviewItem;
   reviewComments: ReviewComment[];
-  currentUserId: string | undefined;
+  currentUser: PermissionUser;
   commitLogLinkRules: CommitLogLinkRule[];
   permissions: ReviewPermissions;
   statusActions: ReturnType<typeof useReviewStatusActions>;
@@ -79,7 +79,7 @@ export function ReviewFilesTab({
   return (
     <FilesTabPanel
       review={review}
-      currentUserId={currentUserId}
+      currentUser={currentUser}
       isReviewer={!!permissions.currentReviewer}
       activeCommit={activeCommit}
       activeCommitIndex={

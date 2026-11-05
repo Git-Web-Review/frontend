@@ -5,12 +5,12 @@ import { reviewStatusBadgeClass } from "../../utils/reviewStatus";
 import type { ReviewCommit, ReviewItem } from "../../types/api";
 import { gitwebBrowseUrl } from "./gitweb-links";
 import { ReviewerActionSplit } from "./ReviewerActionSplit";
-import { canManageReview } from "./review-permissions";
+import { canManageReview, type PermissionUser } from "./review-permissions";
 import type { ReviewTab } from "./review-utils";
 
 type ReviewHeaderProps = {
   review: ReviewItem;
-  currentUserId: string | undefined;
+  currentUser: PermissionUser;
   isReviewer: boolean;
   title: string;
   ownerLabel: ReactNode;
@@ -45,7 +45,7 @@ type ReviewHeaderProps = {
 
 export function ReviewHeader({
   review,
-  currentUserId,
+  currentUser,
   isReviewer,
   title,
   ownerLabel,
@@ -126,7 +126,7 @@ export function ReviewHeader({
               {t("unackReview")}
             </button>
           ) : null}
-          {canManageReview(review, currentUserId) && review.status !== "CLOSED" ? (
+          {canManageReview(review, currentUser) && review.status !== "CLOSED" ? (
             <button
               className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
               type="button"
@@ -141,8 +141,8 @@ export function ReviewHeader({
               {t("syncReview")}
             </button>
           ) : null}
-          {(canManageReview(review, currentUserId) ||
-            review.reviewers.some((reviewer) => reviewer.userId === currentUserId)) &&
+          {(canManageReview(review, currentUser) ||
+            review.reviewers.some((reviewer) => reviewer.userId === currentUser?.id)) &&
           review.status !== "CLOSED" ? (
             <span
               className="disabled-button-tooltip"

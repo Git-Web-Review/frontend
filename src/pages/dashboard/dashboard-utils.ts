@@ -17,7 +17,8 @@ export type CommitLogMatch = {
   index: number;
 };
 
-export type PersonalSection = "owned" | "assigned" | "done";
+/** "all" lists every open review and only exists for admins. */
+export type PersonalSection = "owned" | "assigned" | "done" | "all";
 
 /** A personal list, or the reviews of one project the user owns. */
 export type DashboardSection = PersonalSection | `project:${string}`;

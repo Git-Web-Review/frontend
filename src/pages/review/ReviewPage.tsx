@@ -95,7 +95,7 @@ export function ReviewPage() {
   const drafts = useReviewDetailsDrafts();
   const data = useReviewData(reviewId, drafts.resetDrafts);
   const { review, reviewComments, loadingReview, errorMessage } = data;
-  const permissions = reviewPermissions(review, currentUser?.id);
+  const permissions = reviewPermissions(review, currentUser);
   const details = useReviewDetailsForm(data, drafts, permissions);
   const statusActions = useReviewStatusActions(
     data,
@@ -190,7 +190,7 @@ export function ReviewPage() {
     <div className="review-page">
       <ReviewHeader
         review={review}
-        currentUserId={currentUser?.id}
+        currentUser={currentUser}
         isReviewer={!!currentReviewer}
         title={reviewTitle(review)}
         ownerLabel={userLabel(review.owner)}
@@ -286,7 +286,7 @@ export function ReviewPage() {
           <ReviewFilesTab
             review={review}
             reviewComments={reviewComments}
-            currentUserId={currentUser?.id}
+            currentUser={currentUser}
             commitLogLinkRules={data.commitLogLinkRules}
             permissions={permissions}
             statusActions={statusActions}

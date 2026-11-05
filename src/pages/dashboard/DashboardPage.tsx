@@ -48,6 +48,12 @@ const DASHBOARD_TABS: Array<{
     labelKey: "doneReviews",
     emptyKey: "emptyDone",
   },
+  {
+    section: "all",
+    icon: "bi-shield-lock",
+    labelKey: "allOpenReviews",
+    emptyKey: "emptyAllOpen",
+  },
 ];
 
 /** Closes the open review actions menu on a click anywhere outside one. */
@@ -97,7 +103,7 @@ export function DashboardPage() {
   );
 
   const deleteReview = async (review: ReviewItem) => {
-    if (!idToken || !canManageReview(review, currentUser?.id)) {
+    if (!idToken || !canManageReview(review, currentUser)) {
       return;
     }
 
@@ -135,7 +141,9 @@ export function DashboardPage() {
     label: string;
     emptyMessage: string;
   }> = [
-    ...DASHBOARD_TABS.map((tab) => ({
+    ...DASHBOARD_TABS.filter(
+      (tab) => tab.section !== "all" || currentUser?.role === "ADMIN",
+    ).map((tab) => ({
       section: tab.section,
       icon: tab.icon,
       label: t(tab.labelKey),
@@ -249,7 +257,7 @@ export function DashboardPage() {
           loadingMore={!!reviews.loadingSections[activeTab.section]}
           hasMore={reviews.hasMoreReviews(activeTab.section)}
           loadMoreRef={reviews.loadMoreRef}
-          currentUserId={currentUser?.id}
+          currentUser={currentUser}
           openReviewActionsId={openReviewActionsId}
           onToggleActions={(reviewId) =>
             setOpenReviewActionsId((currentId) =>

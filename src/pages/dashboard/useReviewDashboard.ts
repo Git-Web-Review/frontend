@@ -17,6 +17,7 @@ const dashboardQuery = (pages?: Partial<Record<PersonalSection, number>>) =>
     ownedPage: String(pages?.owned ?? 1),
     assignedPage: String(pages?.assigned ?? 1),
     donePage: String(pages?.done ?? 1),
+    allPage: String(pages?.all ?? 1),
     limit: String(DASHBOARD_PAGE_SIZE),
   }).toString();
 
@@ -26,6 +27,7 @@ const pagesFromDashboard = (
   owned: dashboard.owned,
   assigned: dashboard.assigned,
   done: dashboard.done,
+  ...(dashboard.all ? { all: dashboard.all } : {}),
   ...Object.fromEntries(
     dashboard.projects.map((page) => [projectSection(page.project), page]),
   ),
@@ -90,7 +92,7 @@ export function useReviewDashboard(activeSection: DashboardSection) {
       `/reviews/dashboard?${dashboardQuery({ [personalSection]: page })}`,
       token,
     );
-    return dashboard[personalSection];
+    return dashboard[personalSection] ?? emptyDashboardPage();
   };
 
   const loadNextPage = async (section: DashboardSection) => {

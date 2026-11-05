@@ -477,6 +477,8 @@ export type ReviewDashboard = {
   owned: ReviewDashboardPage;
   assigned: ReviewDashboardPage;
   done: ReviewDashboardPage;
+  /** Every open review; only set for admins. */
+  all: ReviewDashboardPage | null;
   /** Reviews of each owned project that are not in the personal lists. */
   projects: ReviewDashboardProjectPage[];
 };
