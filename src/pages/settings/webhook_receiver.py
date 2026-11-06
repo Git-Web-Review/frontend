@@ -44,11 +44,21 @@ on_text = on("TEXT")
 on_review_pending = on("REVIEW_PENDING")
 # previousStatus, nextStatus, actorEmail, actorNickname.
 on_review_status_changed = on("REVIEW_STATUS_CHANGED")
-# Someone commented on your review: commitHash, filePath, lineNumber (all
-# null for a general comment), commentExcerpt, actorEmail, actorNickname.
+# A new thread or a reply on a review you own, review or wrote in (never your
+# own message): commentId (the thread), commentNumber, messageId, isReply,
+# commitHash, filePath, lineNumber, side (location fields null for a general
+# comment), commentExcerpt, recipientRole ("owner", "reviewer" or
+# "participant"), actorEmail, actorNickname.
 on_comment_received = on("COMMENT_RECEIVED")
-# Same fields as COMMENT_RECEIVED, plus addedAsReviewer.
+# Same fields as COMMENT_RECEIVED, plus addedAsReviewer. Sent instead of
+# COMMENT_RECEIVED when the message mentions you, never both.
 on_comment_mention = on("COMMENT_MENTION")
+# A thread was marked done (done true) or reopened (done false): commentId,
+# commentNumber, done, recipientRole, actorEmail, actorNickname.
+on_comment_resolved = on("COMMENT_RESOLVED")
+# A reviewer acked (acked true) or unacked one commit: commitId, commitHash,
+# commitTitle, acked, recipientRole, actorEmail, actorNickname.
+on_commit_acked = on("COMMIT_ACKED")
 # Commits of your review were reviewed: commitCount, commitTitles (one per
 # line), actorEmail, actorNickname.
 on_commit_reviewed = on("COMMIT_REVIEWED")
@@ -64,8 +74,10 @@ on_review = on(
     "COMMENT_MENTION",
     "COMMIT_REVIEWED",
     "REVIEW_NEW_VERSION",
+    "COMMENT_RESOLVED",
+    "COMMIT_ACKED",
 )
-on_comment = on("COMMENT_RECEIVED", "COMMENT_MENTION")
+on_comment = on("COMMENT_RECEIVED", "COMMENT_MENTION", "COMMENT_RESOLVED")
 
 
 @dataclass

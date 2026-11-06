@@ -29,6 +29,8 @@ const reviewNotificationTypes: ReadonlySet<string> = new Set([
   "COMMENT_RECEIVED",
   "COMMENT_MENTION",
   "REVIEW_NEW_VERSION",
+  "COMMENT_RESOLVED",
+  "COMMIT_ACKED",
 ] satisfies NotificationItem["type"][]);
 
 export const reviewNotificationPayload = (
@@ -82,6 +84,8 @@ export const notificationTitleKeys = {
   COMMENT_RECEIVED: "notificationCommentReceived",
   COMMENT_MENTION: "notificationCommentMention",
   REVIEW_NEW_VERSION: "notificationReviewNewVersion",
+  COMMENT_RESOLVED: "notificationCommentResolved",
+  COMMIT_ACKED: "notificationCommitAcked",
 } as const satisfies Record<NotificationItem["type"], string>;
 
 export const notificationTitle = (
@@ -106,6 +110,8 @@ const actorLabelKeys = {
   COMMENT_RECEIVED: "commentedBy",
   COMMENT_MENTION: "mentionedBy",
   REVIEW_NEW_VERSION: "syncedBy",
+  COMMENT_RESOLVED: "updatedBy",
+  COMMIT_ACKED: "updatedBy",
 } as const;
 
 export const notificationActorLabel = (

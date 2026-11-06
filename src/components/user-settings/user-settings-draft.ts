@@ -32,6 +32,8 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   "reviewClosed",
   "commentReceived",
   "commentMention",
+  "commentResolved",
+  "commitAcked",
 ];
 
 export const NOTIFICATION_CATEGORY_LABELS: Record<
@@ -45,6 +47,8 @@ export const NOTIFICATION_CATEGORY_LABELS: Record<
   reviewClosed: "notifCategoryReviewClosed",
   commentReceived: "notifCategoryCommentReceived",
   commentMention: "notifCategoryCommentMention",
+  commentResolved: "notifCategoryCommentResolved",
+  commitAcked: "notifCategoryCommitAcked",
 };
 
 // The relay only ever posts over HTTP, so anything else is rejected here

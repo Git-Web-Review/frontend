@@ -44,7 +44,9 @@ export type NotificationCategory =
   | "reviewAcked"
   | "reviewClosed"
   | "commentReceived"
-  | "commentMention";
+  | "commentMention"
+  | "commentResolved"
+  | "commitAcked";
 
 export type NotificationMediumPreferences = Partial<
   Record<NotificationCategory, boolean>
@@ -257,7 +259,9 @@ export type NotificationType =
   | "COMMENT_RECEIVED"
   | "COMMENT_MENTION"
   | "COMMIT_REVIEWED"
-  | "REVIEW_NEW_VERSION";
+  | "REVIEW_NEW_VERSION"
+  | "COMMENT_RESOLVED"
+  | "COMMIT_ACKED";
 
 export type NotificationItem = {
   id: string;
