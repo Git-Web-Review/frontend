@@ -442,6 +442,7 @@
     "serviceAccountTokenHint": "Échangez ces identifiants contre un token sur POST /v1/auth/token.",
     "copy": "Copier",
     "copied": "Copié dans le presse-papiers.",
+    "copyFailed": "Impossible de copier dans le presse-papiers.",
     "close": "Fermer",
     "unpostedCommentsTitleOne": "Commentaire non publié",
     "unpostedCommentsTitleMany": "{count} commentaires non publiés",

@@ -442,6 +442,7 @@
     "serviceAccountTokenHint": "Exchange these credentials for a token on POST /v1/auth/token.",
     "copy": "Copy",
     "copied": "Copied to clipboard.",
+    "copyFailed": "Could not copy to the clipboard.",
     "close": "Close",
     "unpostedCommentsTitleOne": "Unposted comment",
     "unpostedCommentsTitleMany": "{count} unposted comments",

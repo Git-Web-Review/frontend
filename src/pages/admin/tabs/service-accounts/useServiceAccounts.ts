@@ -169,8 +169,20 @@ export function useServiceAccounts() {
     try {
       await navigator.clipboard.writeText(value);
       showToast(t("copied"));
+      return;
     } catch {
-      setErrorMessage(t("backendError"));
+      // navigator.clipboard is undefined over plain http: use execCommand.
+    }
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    if (copied) {
+      showToast(t("copied"));
+    } else {
+      setErrorMessage(t("copyFailed"));
     }
   };
 
