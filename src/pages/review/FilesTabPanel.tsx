@@ -176,16 +176,27 @@ export function FilesTabPanel({
   return (
     <div className="card-body review-files-pane">
       {activeCommitHasComments ? (
-        <button
-          className="btn btn-primary next-comment-button d-inline-flex align-items-center gap-2"
-          title={t("nextComment")}
-          type="button"
-          onClick={onScrollToNextComment}
-        >
-          <i className="bi bi-chat-left-text" aria-hidden="true" />
-          <i className="bi bi-arrow-down" aria-hidden="true" />
-          <span className="visually-hidden">{t("nextComment")}</span>
-        </button>
+        <div className="review-floating-nav">
+          <button
+            className="btn btn-primary review-floating-button d-inline-flex align-items-center gap-2"
+            title={t("nextComment")}
+            type="button"
+            onClick={onScrollToNextComment}
+          >
+            <i className="bi bi-chat-left-text" aria-hidden="true" />
+            <i className="bi bi-arrow-down" aria-hidden="true" />
+            <span className="visually-hidden">{t("nextComment")}</span>
+          </button>
+          <button
+            className="btn btn-primary review-floating-button d-inline-flex align-items-center"
+            title={t("backToTop")}
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >
+            <i className="bi bi-arrow-bar-up" aria-hidden="true" />
+            <span className="visually-hidden">{t("backToTop")}</span>
+          </button>
+        </div>
       ) : null}
       {review.commits.length ? (
         <>

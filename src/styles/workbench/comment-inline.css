@@ -37,9 +37,12 @@
   background: transparent;
 }
 
-.next-comment-button {
+.review-floating-nav {
   /* Below the modal layer, above the page. */
   z-index: 30;
+}
+
+.review-floating-button {
   border-radius: 999px;
   box-shadow: var(--shadow-lg);
 }

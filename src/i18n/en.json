@@ -234,6 +234,7 @@
     "gitwebFileLink": "Open {action} in git-web",
     "commitLogMatches": "Commit details",
     "nextComment": "Next comment",
+    "backToTop": "Back to top of the review",
     "commitLogMatch": "Match",
     "expandDescription": "Show full description",
     "collapseDescription": "Collapse description",
