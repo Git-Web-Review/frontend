@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/AuthProvider";
 import { useI18n } from "../../i18n/I18nProvider";
@@ -87,7 +88,10 @@ export function DashboardPage() {
   const { showToast } = useToast();
   const confirm = useConfirm();
   const [errorMessage, setErrorMessage] = useState("");
-  const [activeSection, setActiveSection] = useState<DashboardSection>("owned");
+  const [searchParams, setSearchParams] = useSearchParams();
+  // An unknown value falls back to the first tab, like a removed project.
+  const activeSection = (searchParams.get("tab") ??
+    "owned") as DashboardSection;
   const [openReviewActionsId, setOpenReviewActionsId] = useState<string | null>(
     null,
   );
@@ -237,7 +241,9 @@ export function DashboardPage() {
                       : undefined
                   }
                   type="button"
-                  onClick={() => setActiveSection(tab.section)}
+                  onClick={() =>
+                    setSearchParams({ tab: tab.section }, { replace: true })
+                  }
                 >
                   <i className={`bi ${tab.icon}`} aria-hidden="true" />
                   {tab.label}
