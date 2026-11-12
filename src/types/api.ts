@@ -119,6 +119,7 @@ export type ServiceAccount = {
   userId: string;
   email: string;
   role: UserRole;
+  hasProfileImage: boolean;
   createdAt: string;
   updatedAt: string;
 };

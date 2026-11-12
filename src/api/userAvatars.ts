@@ -9,6 +9,11 @@ import { apiRequestBlob } from "./client";
  */
 const avatarObjectUrls = new Map<string, Promise<string>>();
 
+/** Drops the cached image so the next render fetches the new one. */
+export function forgetUserAvatar(userId: string) {
+  avatarObjectUrls.delete(userId);
+}
+
 export function loadUserAvatar(
   userId: string,
   token: string,

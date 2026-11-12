@@ -4,7 +4,8 @@ import type { ReviewUserSummary } from "../types/api";
 import { profileInitialsFromEmail } from "../utils/profileInitials";
 
 type UserAvatarProps = {
-  user: ReviewUserSummary;
+  user: Pick<ReviewUserSummary, "id" | "email" | "hasProfileImage"> &
+    Partial<Pick<ReviewUserSummary, "profileImageUrl">>;
   idToken: string | null;
   className?: string;
 };

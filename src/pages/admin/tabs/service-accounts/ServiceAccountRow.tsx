@@ -1,3 +1,6 @@
+import { useRef } from "react";
+import { useAuth } from "../../../../auth/AuthProvider";
+import { UserAvatar } from "../../../../components/UserAvatar";
 import { useI18n } from "../../../../i18n/I18nProvider";
 import type { ServiceAccount } from "../../../../types/api";
 import { formatDateTime } from "../../../../utils/formatDate";
@@ -12,11 +15,54 @@ export function ServiceAccountRow({
   accounts: ServiceAccounts;
 }) {
   const { t } = useI18n();
+  const { idToken } = useAuth();
   const pending = accounts.pendingId === account.id;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const avatarUser = { ...account, id: account.userId };
 
   return (
     <tr>
       <td className="fw-semibold text-break">
+        <button
+          className="btn btn-link p-0 me-2 align-middle"
+          type="button"
+          title={t("profilePicture")}
+          aria-label={t("profilePicture")}
+          disabled={pending}
+          onClick={() => inputRef.current?.click()}
+        >
+          {/* Remounted after an upload so the new image is fetched. */}
+          <UserAvatar
+            key={accounts.avatarVersion}
+            user={avatarUser}
+            idToken={idToken}
+          />
+        </button>
+        {account.hasProfileImage ? (
+          <button
+            className="btn btn-link btn-sm p-0 me-2 text-danger align-middle"
+            type="button"
+            title={t("removeProfilePicture")}
+            aria-label={t("removeProfilePicture")}
+            disabled={pending}
+            onClick={() => void accounts.removeProfileImage(account)}
+          >
+            <i className="bi bi-x-circle" aria-hidden="true" />
+          </button>
+        ) : null}
+        <input
+          ref={inputRef}
+          className="visually-hidden"
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (file) {
+              void accounts.uploadProfileImage(account, file);
+            }
+          }}
+        />
         {account.name}
         {account.description ? (
           <div className="text-secondary small">{account.description}</div>

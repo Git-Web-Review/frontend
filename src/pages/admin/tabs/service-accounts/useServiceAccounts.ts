@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ApiClientError, apiRequest } from "../../../../api/client";
+import { forgetUserAvatar } from "../../../../api/userAvatars";
 import { useAuth } from "../../../../auth/AuthProvider";
 import { useI18n } from "../../../../i18n/I18nProvider";
 import type { TranslationKey } from "../../../../i18n/translations";
@@ -32,6 +33,7 @@ export function useServiceAccounts() {
   const [form, setForm] = useState(emptyServiceAccountForm);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [avatarVersion, setAvatarVersion] = useState(0);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [issuedSecret, setIssuedSecret] =
@@ -165,6 +167,35 @@ export function useServiceAccounts() {
       "serviceAccountRemoved",
     );
 
+  const uploadProfileImage = (account: ServiceAccount, file: File) =>
+    runAccountAction(
+      account,
+      async (token) => {
+        const body = new FormData();
+        body.append("file", file);
+        await apiRequest(`${accountPath(account)}/profile-image`, token, {
+          method: "PATCH",
+          body,
+        });
+        forgetUserAvatar(account.userId);
+        setAvatarVersion((version) => version + 1);
+      },
+      "profileImageSaved",
+    );
+
+  const removeProfileImage = (account: ServiceAccount) =>
+    runAccountAction(
+      account,
+      async (token) => {
+        await apiRequest(`${accountPath(account)}/profile-image`, token, {
+          method: "DELETE",
+        });
+        forgetUserAvatar(account.userId);
+        setAvatarVersion((version) => version + 1);
+      },
+      "profileImageRemoved",
+    );
+
   const copyToClipboard = async (value: string) => {
     try {
       await navigator.clipboard.writeText(value);
@@ -194,6 +225,7 @@ export function useServiceAccounts() {
     loading,
     saving,
     pendingId,
+    avatarVersion,
     errorMessage,
     issuedSecret,
     closeIssuedSecret: () => setIssuedSecret(null),
@@ -202,6 +234,8 @@ export function useServiceAccounts() {
     toggleActive,
     rotateSecret,
     removeAccount,
+    uploadProfileImage,
+    removeProfileImage,
     copyToClipboard,
   };
 }

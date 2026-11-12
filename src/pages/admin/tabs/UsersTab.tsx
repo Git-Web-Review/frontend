@@ -183,11 +183,6 @@ export function UsersTab({ reloadKey, onEditUser }: UsersTabProps) {
                             user={{
                               id: user.id,
                               email: user.email,
-                              hostname: user.hostname,
-                              nickname: user.settings?.nickname ?? null,
-                              mailNotificationsEnabled: false,
-                              ircNotificationsEnabled: false,
-                              webhookNotificationsEnabled: false,
                               hasProfileImage: !!user.profileImage,
                               profileImageUrl:
                                 user.settings?.profileImageUrl ?? null,
