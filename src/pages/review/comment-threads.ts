@@ -1,6 +1,37 @@
-import type { ReviewComment } from "../../types/api";
+import type { ReviewComment, ReviewCommit } from "../../types/api";
 import type { Translate } from "./review-display";
 import type { CommentTarget, ReviewCommentThread } from "./review-utils";
+
+/**
+ * The review commit a comment points at. Comments posted through the API
+ * (e.g. by an agent) may carry an abbreviated hash, or only a file and line:
+ * those resolve to the last commit of the review touching that file.
+ */
+export const commentTargetCommit = (
+  commits: ReviewCommit[],
+  target: CommentTarget,
+): ReviewCommit | undefined => {
+  const hash = target.commitHash;
+  const byHash = hash
+    ? (commits.find((commit) => commit.hash === hash) ??
+      (hash.length >= 7
+        ? commits.find((commit) => commit.hash.startsWith(hash))
+        : undefined))
+    : undefined;
+  if (byHash || !target.filePath) {
+    return byHash;
+  }
+
+  // Commits come ordered by position: the last one wins.
+  return [...commits]
+    .reverse()
+    .find((commit) =>
+      commit.gitDiff.files.some(
+        (file) =>
+          file.path === target.filePath || file.oldPath === target.filePath,
+      ),
+    );
+};
 
 export const targetKey = (target: CommentTarget) =>
   `${target.commitHash ?? ""}:${target.filePath ?? ""}:${target.lineNumber ?? ""}:${target.side}`;

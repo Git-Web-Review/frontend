@@ -5,6 +5,7 @@ import { useI18n } from "../../i18n/I18nProvider";
 import { CommentsTabPanel } from "./CommentsTabPanel";
 import { clearCommentDrafts, readCommentDrafts } from "./comment-drafts";
 import {
+  commentTargetCommit,
   commentTargetLabel,
   commentThreadsForTarget,
   commentThreadsFrom,
@@ -182,8 +183,7 @@ export function ReviewPage() {
     setSearchParams(tab === "overview" ? {} : { tab });
   };
   const threadDiffAvailable = (thread: ReviewCommentThread) =>
-    !!thread.commitHash &&
-    review.commits.some((commit) => commit.hash === thread.commitHash);
+    !!commentTargetCommit(review.commits, thread);
   const openComments = reviewComments.filter((comment) => !comment.done);
 
   const reviewPageContent = (
@@ -319,8 +319,12 @@ export function ReviewPage() {
             newReplyCount={renderers.newReplyCount}
             threadDiffAvailable={threadDiffAvailable}
             onOpenDiffForThread={(thread) => {
-              if (threadDiffAvailable(thread)) {
-                diffNavigation.openDiffLocation(thread);
+              const commit = commentTargetCommit(review.commits, thread);
+              if (commit) {
+                diffNavigation.openDiffLocation({
+                  ...thread,
+                  commitHash: commit.hash,
+                });
               }
             }}
             renderUserLabel={userLabel}
