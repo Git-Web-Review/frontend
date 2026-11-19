@@ -61,10 +61,12 @@
 
 [data-bs-theme="dark"] .hljs-addition {
   color: #aff5b4;
+  background-color: #033a16;
 }
 
 [data-bs-theme="dark"] .hljs-deletion {
   color: #ffdcd7;
+  background-color: #67060c;
 }
 
 .diff-inline-comment-panel,
