@@ -140,7 +140,7 @@ export function UsersTab({ reloadKey, onEditUser }: UsersTabProps) {
           <div className="d-flex align-items-center gap-2">
             <input
               aria-label={t("searchUsers")}
-              className="form-control form-control-sm"
+              className="form-control form-control-sm admin-search-input"
               placeholder={t("searchUsers")}
               type="search"
               value={search}

@@ -170,8 +170,8 @@ export function ProjectUsersTab({
             <div className="alert alert-danger">{errorMessage}</div>
           ) : null}
           <p className="text-secondary small mb-3">{t(labels.hint)}</p>
-          <div className="row g-2 align-items-start mb-3">
-            <div className="col-lg-4">
+          <div className="row g-2 align-items-end mb-3">
+            <div className="col-md-4">
               <label className="form-label" htmlFor={`${idPrefix}-project`}>
                 {t("sourceProject")}
               </label>
@@ -189,9 +189,12 @@ export function ProjectUsersTab({
                 ))}
               </datalist>
             </div>
-            <div className="col-lg-6">
-              <span className="form-label d-block">{t(labels.users)}</span>
+            <div className="col-md">
+              <label className="form-label" htmlFor={`${idPrefix}-users`}>
+                {t(labels.users)}
+              </label>
               <ReviewerSearchSelect
+                inputId={`${idPrefix}-users`}
                 idToken={idToken}
                 includeSelf
                 selectedUserIds={newUserIds}
@@ -199,7 +202,7 @@ export function ProjectUsersTab({
                 onChange={setNewUserIds}
               />
             </div>
-            <div className="col-lg-2 d-flex align-items-end align-self-stretch">
+            <div className="col-md-auto d-flex justify-content-end admin-form-actions">
               <button
                 className="btn btn-primary d-inline-flex align-items-center gap-2"
                 type="button"

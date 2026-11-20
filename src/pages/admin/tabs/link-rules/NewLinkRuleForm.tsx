@@ -53,7 +53,7 @@ export function NewLinkRuleForm({ rules }: { rules: LinkRules }) {
       <RuleTextField
         field="label"
         id="new-link-rule-label"
-        columnClassName="col-lg-2"
+        columnClassName="col-md-4 col-xl-2"
         label={t("ruleLabel")}
         placeholder="Label"
         rules={rules}
@@ -61,7 +61,7 @@ export function NewLinkRuleForm({ rules }: { rules: LinkRules }) {
       <RuleTextField
         field="regex"
         id="new-link-rule-regex"
-        columnClassName="col-lg-4"
+        columnClassName="col-md-8 col-xl"
         label={t("ruleRegex")}
         placeholder="Issue: (?<ISSUE_ID>\\d+)"
         monospace
@@ -70,13 +70,13 @@ export function NewLinkRuleForm({ rules }: { rules: LinkRules }) {
       <RuleTextField
         field="linkTemplate"
         id="new-link-rule-template"
-        columnClassName="col-lg-4"
+        columnClassName="col-md-8 col-xl"
         label={t("ruleLinkTemplate")}
         placeholder="https://tracker.example.test/issues/${ISSUE_ID}"
         monospace
         rules={rules}
       />
-      <div className="col-lg-2 d-flex flex-wrap align-items-center gap-2">
+      <div className="col-md-4 col-xl-auto d-flex align-items-center justify-content-end gap-3 admin-form-actions">
         <div className="form-check mb-0">
           <input
             className="form-check-input"

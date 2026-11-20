@@ -251,8 +251,30 @@
   object-fit: contain;
 }
 
+/* Grows to 34rem and shrinks next to the refresh button instead of wrapping
+   under it. */
 .admin-add-input {
-  width: min(34rem, 100%);
+  flex: 1 1 18rem;
+  max-width: 34rem;
+}
+
+.admin-search-input {
+  width: min(16rem, 100%);
+}
+
+/* Lets a long description wrap beside the header buttons. */
+.admin-header-text {
+  min-width: 0;
+}
+
+/* Add-form actions: as tall as the inputs they sit next to. */
+.admin-form-actions {
+  min-height: 36px;
+}
+
+.admin-form-actions .btn {
+  min-height: 36px;
+  white-space: nowrap;
 }
 
 .link-rule-cell {

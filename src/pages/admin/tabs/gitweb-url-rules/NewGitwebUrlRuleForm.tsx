@@ -55,7 +55,7 @@ export function NewGitwebUrlRuleForm({ rules }: { rules: GitwebUrlRules }) {
       <RuleTextField
         field="label"
         id="new-gitweb-url-rule-label"
-        columnClassName="col-lg-2"
+        columnClassName="col-md-6 col-xl-2"
         label={t("ruleLabel")}
         placeholder="Label"
         draft={draft}
@@ -64,7 +64,7 @@ export function NewGitwebUrlRuleForm({ rules }: { rules: GitwebUrlRules }) {
       <RuleTextField
         field="regex"
         id="new-gitweb-url-rule-regex"
-        columnClassName="col-lg-3"
+        columnClassName="col-md-6 col-xl"
         label={t("ruleRegex")}
         placeholder="^https?://(?<HOSTNAME>[^/?#]+)..."
         monospace
@@ -74,7 +74,7 @@ export function NewGitwebUrlRuleForm({ rules }: { rules: GitwebUrlRules }) {
       <RuleTextField
         field="remoteTemplate"
         id="new-gitweb-url-rule-template"
-        columnClassName="col-lg-2"
+        columnClassName="col-md-6 col-xl-2"
         label={t("ruleRemoteTemplate")}
         placeholder="git://${HOSTNAME}/${PROJECT}"
         monospace
@@ -84,14 +84,14 @@ export function NewGitwebUrlRuleForm({ rules }: { rules: GitwebUrlRules }) {
       <RuleTextField
         field="webTemplate"
         id="new-gitweb-url-rule-web-template"
-        columnClassName="col-lg-2"
+        columnClassName="col-md-6 col-xl-2"
         label={t("ruleWebTemplate")}
         placeholder="http://${HOSTNAME}/git/?p=${USERNAME}/${PROJECT}.git"
         monospace
         draft={draft}
         onChange={onChange}
       />
-      <div className="col-lg-1">
+      <div className="col-6 col-md-3 col-xl-1">
         <label className="form-label" htmlFor="new-gitweb-url-rule-priority">
           {t("rulePriority")}
         </label>
@@ -104,10 +104,13 @@ export function NewGitwebUrlRuleForm({ rules }: { rules: GitwebUrlRules }) {
           onChange={(event) => onChange({ priority: event.target.value })}
         />
       </div>
-      <div className="col-lg-2 d-flex flex-wrap align-items-center gap-2">
+      <div className="col-6 col-md-3 col-xl-1">
+        <label className="form-label" htmlFor="new-gitweb-url-rule-kind">
+          {t("ruleLinkKind")}
+        </label>
         <select
           className="form-select"
-          aria-label={t("ruleLinkKind")}
+          id="new-gitweb-url-rule-kind"
           value={draft.linkKind}
           onChange={(event) =>
             onChange({ linkKind: event.target.value as GitwebUrlRuleKind })
@@ -119,6 +122,8 @@ export function NewGitwebUrlRuleForm({ rules }: { rules: GitwebUrlRules }) {
             </option>
           ))}
         </select>
+      </div>
+      <div className="col-md-6 col-xl-auto d-flex align-items-center justify-content-end gap-3 admin-form-actions">
         <div className="form-check mb-0">
           <input
             className="form-check-input"

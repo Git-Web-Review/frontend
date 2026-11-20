@@ -202,7 +202,7 @@ export function ReviewFieldsTab() {
           ) : null}
           <p className="text-secondary small mb-3">{t("reviewFieldsHint")}</p>
           <div className="row g-2 align-items-end mb-3">
-            <div className="col-lg-5">
+            <div className="col-md">
               <label className="form-label" htmlFor="new-review-field-name">
                 {t("fieldName")}
               </label>
@@ -218,7 +218,7 @@ export function ReviewFieldsTab() {
                 }
               />
             </div>
-            <div className="col-lg-4">
+            <div className="col-md-4">
               <label className="form-label" htmlFor="new-review-field-type">
                 {t("fieldType")}
               </label>
@@ -240,7 +240,7 @@ export function ReviewFieldsTab() {
                 ))}
               </select>
             </div>
-            <div className="col-lg-3">
+            <div className="col-md-auto d-flex justify-content-end admin-form-actions">
               <button
                 className="btn btn-primary d-inline-flex align-items-center gap-2"
                 type="button"

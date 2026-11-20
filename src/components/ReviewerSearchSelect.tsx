@@ -7,6 +7,8 @@ import { UserAvatar } from "./UserAvatar";
 type ReviewerSearchSelectProps = {
   idToken: string | null;
   label?: string;
+  /** Id of the search input, for an outer `<label htmlFor>`. */
+  inputId?: string;
   selectedUserIds: string[];
   selectedUsers: ReviewUserSummary[];
   excludeUserIds?: string[];
@@ -25,6 +27,7 @@ const reviewerSearchLimit = 10;
 export function ReviewerSearchSelect({
   idToken,
   label,
+  inputId,
   selectedUserIds,
   selectedUsers,
   excludeUserIds = [],
@@ -229,6 +232,7 @@ export function ReviewerSearchSelect({
           <input
             ref={searchInputRef}
             className="form-control"
+            id={inputId}
             disabled={disabled}
             placeholder={t("searchReviewers")}
             type="search"

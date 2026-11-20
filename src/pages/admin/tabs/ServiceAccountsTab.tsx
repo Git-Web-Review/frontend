@@ -14,10 +14,10 @@ export function ServiceAccountsTab() {
   return (
     <div className="col-12">
       <div className="card h-100">
-        <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
-          <div>
+        <div className="card-header d-flex align-items-start justify-content-between gap-3">
+          <div className="admin-header-text">
             <h3 className="card-title mb-1">{t("serviceAccounts")}</h3>
-            <p className="text-secondary small mb-0">
+            <p className="text-secondary small fw-normal mb-0">
               {t("serviceAccountsHelp")}
             </p>
           </div>

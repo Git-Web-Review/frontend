@@ -96,7 +96,7 @@ export function AdminsTab() {
       <div className="card h-100">
         <div className="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
           <h3 className="card-title mb-0">{t("admins")}</h3>
-          <div className="d-flex flex-wrap align-items-center gap-2">
+          <div className="d-flex flex-wrap flex-grow-1 align-items-center justify-content-end gap-2">
             <div className="input-group input-group-sm admin-add-input">
               <span className="input-group-text">
                 <i className="bi bi-envelope" aria-hidden="true" />
