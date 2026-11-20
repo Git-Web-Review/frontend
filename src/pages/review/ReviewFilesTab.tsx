@@ -1,4 +1,4 @@
-import { useMemo, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, type Dispatch, type SetStateAction } from "react";
 import type {
   CommitLogLinkRule,
   ReviewComment,
@@ -75,6 +75,29 @@ export function ReviewFilesTab({
     ) ??
     review.commits[0] ??
     null;
+
+  // Left/right arrows move to the previous/next commit, unless typing.
+  const activeCommitId = activeCommit?.id;
+  useEffect(() => {
+    const moveOnArrow = (event: KeyboardEvent) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+        return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable]"))
+        return;
+      const index = review.commits.findIndex(
+        (commit) => commit.id === activeCommitId,
+      );
+      const next =
+        review.commits[index + (event.key === "ArrowRight" ? 1 : -1)];
+      if (!next) return;
+      event.preventDefault();
+      diffNavigation.selectCommit(next.id);
+    };
+    window.addEventListener("keydown", moveOnArrow);
+    return () => window.removeEventListener("keydown", moveOnArrow);
+  }, [review.commits, activeCommitId, diffNavigation]);
 
   return (
     <FilesTabPanel
