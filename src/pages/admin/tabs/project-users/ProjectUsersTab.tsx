@@ -170,7 +170,7 @@ export function ProjectUsersTab({
             <div className="alert alert-danger">{errorMessage}</div>
           ) : null}
           <p className="text-secondary small mb-3">{t(labels.hint)}</p>
-          <div className="row g-2 align-items-end mb-3">
+          <div className="row g-2 align-items-start mb-3">
             <div className="col-md-4">
               <label className="form-label" htmlFor={`${idPrefix}-project`}>
                 {t("sourceProject")}
@@ -202,20 +202,29 @@ export function ProjectUsersTab({
                 onChange={setNewUserIds}
               />
             </div>
-            <div className="col-md-auto d-flex justify-content-end admin-form-actions">
-              <button
-                className="btn btn-primary d-inline-flex align-items-center gap-2"
-                type="button"
-                disabled={!newProject.trim() || !newUserIds.length || saving}
-                onClick={() => void addEntries()}
+            <div className="col-md-auto">
+              {/* Keeps the button level with the inputs, under their labels. */}
+              <label
+                className="form-label invisible d-none d-md-inline-block"
+                aria-hidden="true"
               >
-                {saving ? (
-                  <span className="spinner-border spinner-border-sm" />
-                ) : (
-                  <i className="bi bi-plus-lg" aria-hidden="true" />
-                )}
                 {t("add")}
-              </button>
+              </label>
+              <div className="d-flex justify-content-end admin-form-actions">
+                <button
+                  className="btn btn-primary d-inline-flex align-items-center gap-2"
+                  type="button"
+                  disabled={!newProject.trim() || !newUserIds.length || saving}
+                  onClick={() => void addEntries()}
+                >
+                  {saving ? (
+                    <span className="spinner-border spinner-border-sm" />
+                  ) : (
+                    <i className="bi bi-plus-lg" aria-hidden="true" />
+                  )}
+                  {t("add")}
+                </button>
+              </div>
             </div>
           </div>
 

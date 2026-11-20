@@ -277,6 +277,14 @@
   white-space: nowrap;
 }
 
+.admin-row-actions .btn {
+  white-space: nowrap;
+}
+
+.service-account-name-cell {
+  min-width: 10rem;
+}
+
 .link-rule-cell {
   min-width: 12rem;
 }

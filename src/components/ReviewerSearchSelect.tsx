@@ -169,6 +169,48 @@ export function ReviewerSearchSelect({
   );
   const canLoadMore = page < totalPages;
 
+  // Above the search for a labelled picker, under the input otherwise, so
+  // the input lines up with the fields beside it in a form row.
+  const selectedChips = knownSelectedUsers.length ? (
+    <div className={`reviewer-selected-list ${label ? "mb-2" : "mt-2"}`}>
+      {knownSelectedUsers.map((user) => (
+        <span className="reviewer-selected-chip" key={user.id}>
+          <UserAvatar idToken={idToken} user={user} />
+          <span className="reviewer-selected-identity">
+            <span className="fw-semibold">{renderUserLabel(user)}</span>
+            <span className="reviewer-selected-email">{user.email}</span>
+          </span>
+          {reviewerNeedsManualNotice(user) ? (
+            <i
+              aria-label={t("reviewerNotificationsDisabled")}
+              className="bi bi-exclamation-triangle-fill reviewer-notification-warning"
+              title={t("reviewerNotificationsDisabled")}
+            />
+          ) : null}
+          {lockedUserIds.includes(user.id) ? (
+            lockedTitle ? (
+              <i
+                aria-label={lockedTitle}
+                className="bi bi-pin-angle-fill reviewer-selected-locked"
+                title={lockedTitle}
+              />
+            ) : null
+          ) : (
+            <button
+              className="btn btn-sm btn-link p-0 reviewer-selected-remove"
+              disabled={disabled}
+              type="button"
+              onClick={() => removeReviewer(user.id)}
+            >
+              <i className="bi bi-x-lg" aria-hidden="true" />
+              <span className="visually-hidden">{t("removeReviewer")}</span>
+            </button>
+          )}
+        </span>
+      ))}
+    </div>
+  ) : null;
+
   return (
     <div className="reviewer-search-select">
       {label ? (
@@ -186,47 +228,7 @@ export function ReviewerSearchSelect({
           ) : null}
         </div>
       ) : null}
-      {knownSelectedUsers.length ? (
-        <div className="reviewer-selected-list mb-2">
-          {knownSelectedUsers.map((user) => (
-            <span className="reviewer-selected-chip" key={user.id}>
-              <UserAvatar idToken={idToken} user={user} />
-              <span className="reviewer-selected-identity">
-                <span className="fw-semibold">{renderUserLabel(user)}</span>
-                <span className="reviewer-selected-email">{user.email}</span>
-              </span>
-              {reviewerNeedsManualNotice(user) ? (
-                <i
-                  aria-label={t("reviewerNotificationsDisabled")}
-                  className="bi bi-exclamation-triangle-fill reviewer-notification-warning"
-                  title={t("reviewerNotificationsDisabled")}
-                />
-              ) : null}
-              {lockedUserIds.includes(user.id) ? (
-                lockedTitle ? (
-                  <i
-                    aria-label={lockedTitle}
-                    className="bi bi-pin-angle-fill reviewer-selected-locked"
-                    title={lockedTitle}
-                  />
-                ) : null
-              ) : (
-                <button
-                  className="btn btn-sm btn-link p-0 reviewer-selected-remove"
-                  disabled={disabled}
-                  type="button"
-                  onClick={() => removeReviewer(user.id)}
-                >
-                  <i className="bi bi-x-lg" aria-hidden="true" />
-                  <span className="visually-hidden">
-                    {t("removeReviewer")}
-                  </span>
-                </button>
-              )}
-            </span>
-          ))}
-        </div>
-      ) : null}
+      {label ? selectedChips : null}
       <div className="position-relative">
         {!label ? (
           <input
@@ -296,7 +298,10 @@ export function ReviewerSearchSelect({
                   </button>
                 ))
               : null}
-            {query.trim() && !loading && !visibleResults.length && !errorMessage ? (
+            {query.trim() &&
+            !loading &&
+            !visibleResults.length &&
+            !errorMessage ? (
               <div className="dropdown-item-text text-secondary small">
                 {t("noReviewerSearchResults")}
               </div>
@@ -321,6 +326,7 @@ export function ReviewerSearchSelect({
           </div>
         ) : null}
       </div>
+      {label ? null : selectedChips}
     </div>
   );
 }
