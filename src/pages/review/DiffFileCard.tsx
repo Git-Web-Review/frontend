@@ -208,7 +208,7 @@ export function DiffFileCard({
       {expanded ? renderThreads(fileCommentThreads) : null}
       {expanded ? (
         <div className="diff-viewer">
-          {rows.map((row) => {
+          {rows.map((row, index) => {
             if (row.kind === "hunk") {
               return (
                 <div className="diff-line-block" key={row.key}>
@@ -233,9 +233,13 @@ export function DiffFileCard({
                 blobHashes,
                 commit.hash,
               );
+              // "\ No newline at end of file" takes the color of the line it marks.
+              const metaKind = row.text.startsWith("\\")
+                ? diffLineClass(rows[index - 1]?.text ?? "")
+                : "diff-line-context";
               return (
                 <div className="diff-line-block" key={row.key}>
-                  <div className="diff-line diff-line-context diff-meta-line">
+                  <div className={`diff-line ${metaKind} diff-meta-line`}>
                     <code
                       className="diff-line-code hljs"
                       {...(metaContent
