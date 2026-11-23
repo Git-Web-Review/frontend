@@ -10,6 +10,7 @@ type SyncModalProps = {
   syncCommitHashes: string[];
   syncingReview: boolean;
   onToggleCommit: (hash: string) => void;
+  onSetAllCommits: (hashes: string[]) => void;
   onClose: () => void;
   onApply: () => void;
 };
@@ -20,6 +21,7 @@ export function SyncModal({
   syncCommitHashes,
   syncingReview,
   onToggleCommit,
+  onSetAllCommits,
   onClose,
   onApply,
 }: SyncModalProps) {
@@ -71,6 +73,33 @@ export function SyncModal({
                       v{syncPreview.version + 1}
                     </span>
                   </p>
+                  <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
+                    <span className="fw-semibold">
+                      {t("commitSelectionTitle")}
+                    </span>
+                    <span className="d-flex align-items-center gap-2">
+                      <button
+                        className="btn btn-link btn-sm p-0"
+                        type="button"
+                        onClick={() =>
+                          onSetAllCommits(
+                            syncCommitHashes.length
+                              ? []
+                              : syncPreview.commits.map(
+                                  (commit) => commit.hash,
+                                ),
+                          )
+                        }
+                      >
+                        {t(
+                          syncCommitHashes.length ? "unselectAll" : "selectAll",
+                        )}
+                      </button>
+                      <span className="badge review-meta-badge">
+                        {syncCommitHashes.length}/{syncPreview.commits.length}
+                      </span>
+                    </span>
+                  </div>
                   <div className="list-group mb-3">
                     {syncPreview.commits.map((commit) => (
                       <label

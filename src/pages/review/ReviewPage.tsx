@@ -353,6 +353,7 @@ export function ReviewPage() {
           syncCommitHashes={sync.syncCommitHashes}
           syncingReview={sync.syncingReview}
           onToggleCommit={sync.toggleSyncCommit}
+          onSetAllCommits={sync.setAllSyncCommits}
           onClose={sync.closeSyncModal}
           onApply={() => void sync.applySync()}
         />
