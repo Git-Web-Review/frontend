@@ -52,6 +52,10 @@ export function useReviewSync(reviewId: string, onSynced: () => Promise<void>) {
     setSyncCommitHashes((current) => toggleId(current, hash));
   };
 
+  const setAllSyncCommits = (hashes: string[]) => {
+    setSyncCommitHashes(hashes);
+  };
+
   const applySync = async () => {
     if (!idToken || !syncPreview || syncCommitHashes.length === 0) {
       return;
@@ -82,6 +86,7 @@ export function useReviewSync(reviewId: string, onSynced: () => Promise<void>) {
     openSyncModal,
     closeSyncModal,
     toggleSyncCommit,
+    setAllSyncCommits,
     applySync,
   };
 }
